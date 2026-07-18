@@ -1041,21 +1041,6 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
           <p style={{ fontSize: 13, color: "#64748B", marginTop: 4 }}>Vue d'ensemble sur l'établissement (Accès Administrateur)</p>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button
-            onClick={resetApp}
-            className="btn-glow"
-            style={{
-              background: "#FEE2E2",
-              border: "1px solid #FCA5A5",
-              color: "#EF4444",
-              padding: "8px 16px",
-              borderRadius: 10,
-              fontSize: 12.5,
-              fontWeight: 700,
-            }}
-          >
-            🗑️ Vider toutes les données
-          </button>
           <div className="mono" style={{ fontSize: 13, color: "#64748B", background: "#EEF2F6", padding: "6px 12px", borderRadius: 8 }}>{today()}</div>
         </div>
       </div>
