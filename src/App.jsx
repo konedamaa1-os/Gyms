@@ -320,8 +320,8 @@ export default function GymApp() {
           }
         }
 
-        .btn-green-guide {
-          background: #10B981;
+        .btn-brown-guide {
+          background: #78350F;
           color: #FFFFFF;
           border: none;
           padding: 10px 18px;
@@ -330,18 +330,18 @@ export default function GymApp() {
           font-weight: 700;
           display: flex;
           align-items: center;
-          justifyContent: center;
+          justify-content: center;
           gap: 8px;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+          box-shadow: 0 4px 12px rgba(120, 53, 15, 0.25);
           width: 100%;
           margin-bottom: 14px;
         }
-        .btn-green-guide:hover {
+        .btn-brown-guide:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 18px rgba(16, 185, 129, 0.3);
-          background: #059669;
+          box-shadow: 0 6px 18px rgba(120, 53, 15, 0.35);
+          background: #5B2508;
         }
-        .btn-green-guide:active {
+        .btn-brown-guide:active {
           transform: translateY(0);
         }
       `}</style>
@@ -395,8 +395,8 @@ export default function GymApp() {
               </div>
             </div>
 
-            {/* Quick Start Guide Button (Matches requested green style) */}
-            <button className="btn-green-guide" onClick={() => setShowGuide(true)}>
+            {/* Quick Start Guide Button (Matches requested brown style) */}
+            <button className="btn-brown-guide" onClick={() => setShowGuide(true)}>
               <span>🚀</span> Guide de démarrage
             </button>
             
