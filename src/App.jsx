@@ -18,7 +18,7 @@ const LEVEL_ROLES = ["Administrateur", "Secretaire", "Comptable"];
 
 // Default seeds matching employee IDs
 const USERS_SEED = [
-  { id: "usr-admin", username: "admin", password: "admin123", role: "Administrateur", label: "Super Admin" }
+  { id: "usr-admin", username: "badrafaly@gmail.com", password: "B@dr@f@ly", role: "Administrateur", label: "Super Admin" }
 ];
 
 const seedMembers = () => [];

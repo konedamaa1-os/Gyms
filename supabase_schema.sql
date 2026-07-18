@@ -67,5 +67,5 @@ CREATE TABLE tickets (
 -- --- SEED DATA ---
 -- Default Super Admin account
 INSERT INTO users (id, username, password, role, label)
-VALUES ('usr-admin', 'admin', 'admin123', 'Administrateur', 'Super Admin')
+VALUES ('usr-admin', 'badrafaly@gmail.com', 'B@dr@f@ly', 'Administrateur', 'Super Admin')
 ON CONFLICT (username) DO NOTHING;
