@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "./supabaseClient";
 
 // Utilities
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -55,63 +56,52 @@ export default function GymApp() {
   const [loginForm, setLoginForm] = useState({ username: "", password: "" });
   const [loginError, setLoginError] = useState("");
 
-  // Load from Storage or Fallback
+  // Load from Supabase
   useEffect(() => {
     (async () => {
       try {
-        const keys = ["gym:members", "gym:staff", "gym:schedule", "gym:tx", "gym:tickets", "gym:users"];
-        const results = await Promise.all(keys.map(async (k) => {
-          try {
-            if (window.storage && typeof window.storage.get === "function") {
-              const r = await window.storage.get(k, true);
-              return r ? JSON.parse(r.value) : null;
-            } else {
-              const r = localStorage.getItem(k);
-              return r ? JSON.parse(r) : null;
-            }
-          } catch {
-            return null;
-          }
-        }));
-        setMembers(results[0] || seedMembers());
-        setStaff(results[1] || seedStaff());
-        setSchedule(results[2] || seedSchedule());
-        setTx(results[3] || seedTx());
-        setTickets(results[4] || seedTickets());
-        setUsers(results[5] || USERS_SEED);
-      } catch {
-        setMembers(seedMembers());
-        setStaff(seedStaff());
-        setSchedule(seedSchedule());
-        setTx(seedTx());
-        setTickets(seedTickets());
+        const [
+          { data: membersData, error: membersErr },
+          { data: staffData, error: staffErr },
+          { data: scheduleData, error: scheduleErr },
+          { data: txData, error: txErr },
+          { data: ticketsData, error: ticketsErr },
+          { data: usersData, error: usersErr }
+        ] = await Promise.all([
+          supabase.from("members").select("*"),
+          supabase.from("staff").select("*"),
+          supabase.from("schedule").select("*"),
+          supabase.from("tx").select("*"),
+          supabase.from("tickets").select("*"),
+          supabase.from("users").select("*")
+        ]);
+
+        if (membersErr) console.error("Error loading members:", membersErr);
+        if (staffErr) console.error("Error loading staff:", staffErr);
+        if (scheduleErr) console.error("Error loading schedule:", scheduleErr);
+        if (txErr) console.error("Error loading tx:", txErr);
+        if (ticketsErr) console.error("Error loading tickets:", ticketsErr);
+        if (usersErr) console.error("Error loading users:", usersErr);
+
+        setMembers(membersData || []);
+        setStaff(staffData || []);
+        setSchedule(scheduleData || []);
+        setTx(txData || []);
+        setTickets(ticketsData || []);
+        setUsers(usersData && usersData.length > 0 ? usersData : USERS_SEED);
+      } catch (err) {
+        console.error("Failed to load from Supabase:", err);
+        setMembers([]);
+        setStaff([]);
+        setSchedule([]);
+        setTx([]);
+        setTickets([]);
         setUsers(USERS_SEED);
       }
       setView("public");
       setLoaded(true);
     })();
   }, []);
-
-  // Save to Storage
-  const persist = useCallback(async (key, value) => {
-    try {
-      if (window.storage && typeof window.storage.set === "function") {
-        await window.storage.set(key, JSON.stringify(value), true);
-      } else {
-        localStorage.setItem(key, JSON.stringify(value));
-      }
-    } catch {
-      setToast("Sauvegarde locale échouée");
-      setTimeout(() => setToast(""), 3000);
-    }
-  }, []);
-
-  useEffect(() => { if (loaded) persist("gym:members", members); }, [members, loaded, persist]);
-  useEffect(() => { if (loaded) persist("gym:staff", staff); }, [staff, loaded, persist]);
-  useEffect(() => { if (loaded) persist("gym:schedule", schedule); }, [schedule, loaded, persist]);
-  useEffect(() => { if (loaded) persist("gym:tx", tx); }, [tx, loaded, persist]);
-  useEffect(() => { if (loaded) persist("gym:tickets", tickets); }, [tickets, loaded, persist]);
-  useEffect(() => { if (loaded) persist("gym:users", users); }, [users, loaded, persist]);
 
   // Financial Metrics
   const recettesTickets = tickets.reduce((s, t) => s + Number(t.montant || 0), 0);
@@ -179,19 +169,48 @@ export default function GymApp() {
     triggerToast("Déconnexion réussie");
   };
 
-  const resetApp = () => {
-    if (confirm("⚠️ Voulez-vous vraiment EFFACER toutes les données de test (membres, tickets, finances, planning, personnel) pour recommencer à zéro ? Cette action est irréversible !")) {
-      const keys = ["gym:members", "gym:staff", "gym:schedule", "gym:tx", "gym:tickets", "gym:users"];
-      keys.forEach(k => localStorage.removeItem(k));
-      setMembers([]);
-      setStaff([]);
-      setSchedule([]);
-      setTx([]);
-      setTickets([]);
-      setUsers(USERS_SEED);
-      setUser(USERS_SEED[0]);
-      setTab("dashboard");
-      triggerToast("Toutes les données ont été effacées. Base de données réinitialisée !");
+  const resetApp = async () => {
+    if (confirm("⚠️ Voulez-vous vraiment EFFACER toutes les données de test (membres, tickets, finances, planning, personnel) sur Supabase pour recommencer à zéro ? Cette action est irréversible !")) {
+      try {
+        const [
+          { error: err1 },
+          { error: err2 },
+          { error: err3 },
+          { error: err4 },
+          { error: err5 },
+          { error: err6 }
+        ] = await Promise.all([
+          supabase.from("tickets").delete().neq("id", ""),
+          supabase.from("tx").delete().neq("id", ""),
+          supabase.from("schedule").delete().neq("id", ""),
+          supabase.from("members").delete().neq("id", ""),
+          supabase.from("users").delete().neq("id", ""),
+          supabase.from("staff").delete().neq("id", "")
+        ]);
+
+        if (err1 || err2 || err3 || err4 || err5 || err6) {
+          triggerToast("Erreur lors de la réinitialisation sur Supabase");
+          console.error({ err1, err2, err3, err4, err5, err6 });
+          return;
+        }
+
+        // Re-insert Super Admin
+        const { error: adminErr } = await supabase.from("users").insert([USERS_SEED[0]]);
+        if (adminErr) console.error(adminErr);
+
+        setMembers([]);
+        setStaff([]);
+        setSchedule([]);
+        setTx([]);
+        setTickets([]);
+        setUsers(USERS_SEED);
+        setUser(USERS_SEED[0]);
+        setTab("dashboard");
+        triggerToast("Toutes les données ont été effacées sur Supabase. Base réinitialisée !");
+      } catch (err) {
+        console.error(err);
+        triggerToast("Échec de la réinitialisation");
+      }
     }
   };
 
@@ -1232,7 +1251,7 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("Tous");
 
-  const add = () => {
+  const add = async () => {
     if (!form.nom.trim()) {
       triggerToast("Le nom du membre est obligatoire");
       return;
@@ -1258,26 +1277,43 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
       expiration: expDate,
     };
 
+    const { error: memberError } = await supabase.from("members").insert([newMember]);
+    if (memberError) {
+      triggerToast("Erreur lors de l'inscription sur Supabase");
+      console.error(memberError);
+      return;
+    }
+
     setMembers([...members, newMember]);
     
     // Auto post subscription transaction to accountant ledger
-    setTx(prev => [
-      ...prev,
-      {
-        id: uid(),
-        type: "recette",
-        description: `Adhésion ${form.carte} - ${form.nom}`,
-        montant: selectedTier.price,
-        date: today()
-      }
-    ]);
+    const newTx = {
+      id: uid(),
+      type: "recette",
+      description: `Adhésion ${form.carte} - ${form.nom}`,
+      montant: selectedTier.price,
+      date: today()
+    };
+
+    const { error: txError } = await supabase.from("tx").insert([newTx]);
+    if (txError) {
+      console.error("Failed to post tx to Supabase:", txError);
+    } else {
+      setTx(prev => [...prev, newTx]);
+    }
 
     triggerToast(`Membre inscrit avec succès ! Carte ${form.carte} générée.`);
     setForm({ nom: "", tel: "", carte: "Bronze", expiration: "" });
   };
 
-  const remove = (id) => {
+  const remove = async (id) => {
     if (confirm("Voulez-vous vraiment retirer ce membre ?")) {
+      const { error } = await supabase.from("members").delete().eq("id", id);
+      if (error) {
+        triggerToast("Erreur lors de la suppression sur Supabase");
+        console.error(error);
+        return;
+      }
       setMembers(members.filter(m => m.id !== id));
       triggerToast("Membre retiré");
     }
@@ -1415,7 +1451,7 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
 function Planning({ schedule, setSchedule, staff, triggerToast }) {
   const [form, setForm] = useState({ activite: "", coach: "", jour: "Lun", debut: "08:00", fin: "09:00" });
 
-  const add = () => {
+  const add = async () => {
     if (!form.activite.trim()) {
       triggerToast("L'activité est obligatoire");
       return;
@@ -1425,13 +1461,27 @@ function Planning({ schedule, setSchedule, staff, triggerToast }) {
       return;
     }
     
-    setSchedule([...schedule, { id: uid(), ...form }]);
+    const newCourse = { id: uid(), ...form };
+    const { error } = await supabase.from("schedule").insert([newCourse]);
+    if (error) {
+      triggerToast("Erreur lors de la planification sur Supabase");
+      console.error(error);
+      return;
+    }
+
+    setSchedule([...schedule, newCourse]);
     triggerToast("Cours planifié");
     setForm({ activite: "", coach: "", jour: form.jour, debut: "08:00", fin: "09:00" });
   };
 
-  const remove = (id) => {
+  const remove = async (id) => {
     if (confirm("Supprimer ce cours ?")) {
+      const { error } = await supabase.from("schedule").delete().eq("id", id);
+      if (error) {
+        triggerToast("Erreur lors de la suppression sur Supabase");
+        console.error(error);
+        return;
+      }
       setSchedule(schedule.filter(s => s.id !== id));
       triggerToast("Cours supprimé");
     }
@@ -1547,7 +1597,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
     }
   };
 
-  const issue = () => {
+  const issue = async () => {
     if (!name.trim()) {
       triggerToast("Entrez un nom pour émettre le ticket");
       return;
@@ -1566,21 +1616,34 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
 
     setIsPrinting(true);
     
+    const { error: ticketErr } = await supabase.from("tickets").insert([t]);
+    if (ticketErr) {
+      triggerToast("Erreur lors de la création du ticket sur Supabase");
+      console.error(ticketErr);
+      setIsPrinting(false);
+      return;
+    }
+
+    if (price > 0) {
+      const newTx = {
+        id: uid(),
+        type: "recette",
+        description: `Ticket Entrée - ${name}`,
+        montant: price,
+        date: today()
+      };
+      const { error: txErr } = await supabase.from("tx").insert([newTx]);
+      if (txErr) {
+        console.error("Failed to post visitor tx to Supabase:", txErr);
+      } else {
+        setTx(prev => [...prev, newTx]);
+      }
+    }
+
     // Animate printing delay
     setTimeout(() => {
       setTickets(prev => [...prev, t]);
       setLastTicket(t);
-      
-      // Auto ledger entry if visitor ticket
-      if (price > 0) {
-        setTx(prev => [...prev, {
-          id: uid(),
-          type: "recette",
-          description: `Ticket Entrée - ${name}`,
-          montant: price,
-          date: today()
-        }]);
-      }
       
       triggerToast(`Ticket émis avec succès (${newId})`);
       setIsPrinting(false);
@@ -1795,26 +1858,40 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
   const [filterType, setFilterType] = useState("Tous");
   const [search, setSearch] = useState("");
 
-  const add = () => {
+  const add = async () => {
     if (!form.description.trim() || !form.montant) {
       triggerToast("Tous les champs sont requis");
       return;
     }
     
-    setTx([...tx, {
+    const newTxObj = {
       id: uid(),
       type: form.type,
       description: form.description,
       montant: Number(form.montant),
       date: today()
-    }]);
+    };
 
+    const { error } = await supabase.from("tx").insert([newTxObj]);
+    if (error) {
+      triggerToast("Erreur lors de l'enregistrement sur Supabase");
+      console.error(error);
+      return;
+    }
+    
+    setTx([...tx, newTxObj]);
     triggerToast("Opération comptable enregistrée");
     setForm({ type: form.type, description: "", montant: "" });
   };
 
-  const remove = (id) => {
+  const remove = async (id) => {
     if (confirm("Voulez-vous supprimer cette transaction ?")) {
+      const { error } = await supabase.from("tx").delete().eq("id", id);
+      if (error) {
+        triggerToast("Erreur lors de la suppression sur Supabase");
+        console.error(error);
+        return;
+      }
       setTx(tx.filter(t => t.id !== id));
       triggerToast("Transaction supprimée");
     }
@@ -1829,7 +1906,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
     });
   };
 
-  const payAllSalaries = () => {
+  const payAllSalaries = async () => {
     const unpaid = getUnpaidStaff();
     if (unpaid.length === 0) {
       triggerToast("Tous les salaires de ce mois sont déjà réglés !");
@@ -1845,6 +1922,13 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
         date: today(),
         staffId: s.id
       }));
+
+      const { error } = await supabase.from("tx").insert(entries);
+      if (error) {
+        triggerToast("Erreur lors du versement des salaires sur Supabase");
+        console.error(error);
+        return;
+      }
 
       setTx(prev => [...prev, ...entries]);
       triggerToast(`${unpaid.length} salaires versés en lot.`);
@@ -2055,7 +2139,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     setShowModal(true);
   };
 
-  const saveStaff = () => {
+  const saveStaff = async () => {
     if (!form.nom.trim() || !form.salaire) {
       triggerToast("Le nom et le salaire sont obligatoires");
       return;
@@ -2079,18 +2163,32 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     
     if (editingStaffId) {
       // Modify existing staff member
-      setStaff(prev => prev.map(s => s.id === editingStaffId ? { ...s, nom: form.nom, role: form.role, tel: form.tel, salaire: Number(form.salaire) } : s));
+      const updatedStaff = { nom: form.nom, role: form.role, tel: form.tel, salaire: Number(form.salaire) };
+      const { error } = await supabase.from("staff").update(updatedStaff).eq("id", editingStaffId);
+      if (error) {
+        triggerToast("Erreur lors de la modification sur Supabase");
+        console.error(error);
+        return;
+      }
+      setStaff(prev => prev.map(s => s.id === editingStaffId ? { ...s, ...updatedStaff } : s));
       triggerToast(`Profil de ${form.nom} mis à jour !`);
     } else {
       // Create new staff member
       staffId = uid();
-      setStaff([...staff, {
+      const newStaff = {
         id: staffId,
         nom: form.nom,
         role: form.role,
         tel: form.tel,
         salaire: Number(form.salaire),
-      }]);
+      };
+      const { error } = await supabase.from("staff").insert([newStaff]);
+      if (error) {
+        triggerToast("Erreur lors de la création sur Supabase");
+        console.error(error);
+        return;
+      }
+      setStaff([...staff, newStaff]);
       triggerToast(`Employé ${form.nom} inscrit avec succès.`);
     }
 
@@ -2108,13 +2206,23 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
         label: form.nom
       };
       
-      setUsers(prev => {
-        const otherUsers = prev.filter(u => u.id !== staffId);
-        return [...otherUsers, userObj];
-      });
-      triggerToast(`Accès de connexion (${accessUsername}) configuré pour ${form.nom}`);
+      const { error } = await supabase.from("users").upsert([userObj]);
+      if (error) {
+        console.error("Failed to upsert user on Supabase:", error);
+      } else {
+        setUsers(prev => {
+          const otherUsers = prev.filter(u => u.id !== staffId);
+          return [...otherUsers, userObj];
+        });
+        triggerToast(`Accès de connexion (${accessUsername}) configuré pour ${form.nom}`);
+      }
     } else {
-      setUsers(prev => prev.filter(u => u.id !== staffId));
+      const { error } = await supabase.from("users").delete().eq("id", staffId);
+      if (error) {
+        console.error("Failed to delete user on Supabase:", error);
+      } else {
+        setUsers(prev => prev.filter(u => u.id !== staffId));
+      }
     }
 
     // Reset Form & Close Modal
@@ -2126,15 +2234,22 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     setShowModal(false);
   };
 
-  const removeStaff = (id) => {
+  const removeStaff = async (id) => {
     if (confirm("Voulez-vous supprimer cet employé ? (Cela supprimera aussi son compte d'accès)")) {
+      const { error: staffErr } = await supabase.from("staff").delete().eq("id", id);
+      const { error: userErr } = await supabase.from("users").delete().eq("id", id);
+      if (staffErr || userErr) {
+        triggerToast("Erreur lors de la suppression sur Supabase");
+        console.error({ staffErr, userErr });
+        return;
+      }
       setStaff(staff.filter(s => s.id !== id));
       setUsers(users.filter(u => u.id !== id));
       triggerToast("Employé supprimé et accès de connexion supprimé");
     }
   };
 
-  const payOne = (s) => {
+  const payOne = async (s) => {
     const currentMonth = today().slice(0, 7);
     const isPaid = tx.some(t => t.type === "salaire" && t.staffId === s.id && t.date.slice(0, 7) === currentMonth);
     
@@ -2143,22 +2258,28 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
       return;
     }
 
-    setTx(prev => [
-      ...prev,
-      {
-        id: uid(),
-        type: "salaire",
-        description: `Salaire - ${s.nom} (${s.role}) - ${currentMonth}`,
-        montant: Number(s.salaire),
-        date: today(),
-        staffId: s.id
-      }
-    ]);
+    const newTx = {
+      id: uid(),
+      type: "salaire",
+      description: `Salaire - ${s.nom} (${s.role}) - ${currentMonth}`,
+      montant: Number(s.salaire),
+      date: today(),
+      staffId: s.id
+    };
+
+    const { error } = await supabase.from("tx").insert([newTx]);
+    if (error) {
+      triggerToast("Erreur lors du versement sur Supabase");
+      console.error(error);
+      return;
+    }
+
+    setTx(prev => [...prev, newTx]);
     triggerToast(`Salaire versé pour ${s.nom} (${fmt(s.salaire)} F)`);
   };
 
   // --- USER ACCOUNTS ACTIONS ---
-  const saveUserAccount = () => {
+  const saveUserAccount = async () => {
     if (!userForm.username.trim() || !userForm.password.trim() || !userForm.label.trim()) {
       triggerToast("Tous les champs du compte utilisateur sont obligatoires");
       return;
@@ -2171,17 +2292,32 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     }
 
     if (editingUserId) {
-      setUsers(prev => prev.map(u => u.id === editingUserId ? { ...u, username: userForm.username, password: userForm.password, role: userForm.role, label: userForm.label } : u));
+      const updatedUser = { username: userForm.username, password: userForm.password, role: userForm.role, label: userForm.label };
+      const { error } = await supabase.from("users").update(updatedUser).eq("id", editingUserId);
+      if (error) {
+        triggerToast("Erreur lors de la modification du compte sur Supabase");
+        console.error(error);
+        return;
+      }
+      setUsers(prev => prev.map(u => u.id === editingUserId ? { ...u, ...updatedUser } : u));
       triggerToast(`Compte de ${userForm.label} modifié avec succès`);
       setEditingUserId(null);
     } else {
-      setUsers([...users, {
-        id: uid(),
+      const newUserId = uid();
+      const newUserObj = {
+        id: newUserId,
         username: userForm.username,
         password: userForm.password,
         role: userForm.role,
         label: userForm.label
-      }]);
+      };
+      const { error } = await supabase.from("users").insert([newUserObj]);
+      if (error) {
+        triggerToast("Erreur lors de la création du compte sur Supabase");
+        console.error(error);
+        return;
+      }
+      setUsers([...users, newUserObj]);
       triggerToast(`Nouveau compte ${userForm.label} créé !`);
     }
     setUserForm({ username: "", password: "", role: "Secretaire", label: "" });
@@ -2192,12 +2328,18 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     setEditingUserId(u.id);
   };
 
-  const removeUserAccount = (id) => {
+  const removeUserAccount = async (id) => {
     if (currentUser && currentUser.id === id) {
       triggerToast("Vous ne pouvez pas supprimer votre propre compte actif !");
       return;
     }
     if (confirm("Voulez-vous supprimer ce compte de connexion ?")) {
+      const { error } = await supabase.from("users").delete().eq("id", id);
+      if (error) {
+        triggerToast("Erreur lors de la suppression du compte sur Supabase");
+        console.error(error);
+        return;
+      }
       setUsers(users.filter(u => u.id !== id));
       triggerToast("Compte utilisateur supprimé");
     }
