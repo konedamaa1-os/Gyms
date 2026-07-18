@@ -530,7 +530,7 @@ function GuideModal({ onClose }) {
       title: "1. Présentation Générale",
       content: (
         <div>
-          <p style={S.guideText}>Bienvenue sur <strong>FORGE.GYM</strong>, la plateforme SaaS d'élite pour la gestion de votre salle de sport à Abidjan.</p>
+          <p style={S.guideText}>Bienvenue sur <strong>FORGE.GYM</strong>, la plateforme SaaS d'élite pour la gestion de votre salle de sport à Divo.</p>
           <p style={S.guideText}>L'application s'articule autour de 3 rôles métiers majeurs :</p>
           <ul style={S.guideList}>
             <li>🔑 <strong>Administrateur</strong> (accès complet, gestion des salariés et des comptes utilisateurs)</li>
@@ -768,7 +768,7 @@ function PublicLanding({ setView, schedule }) {
       <section id="hero" style={S.heroSection}>
         <div style={S.heroOverlay} />
         <div style={S.heroContent}>
-          <div style={S.heroBadge}>CLUB DE FITNESS PREMIUM — ABIDJAN</div>
+          <div style={S.heroBadge}>CLUB DE RÉFÉRENCE — DIVO</div>
           <h1 style={S.heroTitle}>
             FORGEZ VOTRE CORPS<br />
             <span style={{ color: "#6366F1" }}>DOMINEZ VOTRE ESPRIT</span>
@@ -937,7 +937,7 @@ function PublicLanding({ setView, schedule }) {
             <p style={{ color: "#64748B", fontSize: 12, marginTop: 4 }}>Le temple de la force et de la santé</p>
           </div>
           <div style={{ textAlign: "right", fontSize: 12, color: "#64748B" }}>
-            <div>Zone 4, Rue du Canal, Abidjan, Côte d'Ivoire</div>
+            <div>Divo, Côte d'Ivoire</div>
             <div style={{ marginTop: 4 }}>Contact: info@forgegym.ci | Tel: +225 07 00 00 00 00</div>
           </div>
         </div>
@@ -1738,7 +1738,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
               <div style={S.ticketPaper} className="animate-ticket printable-receipt">
                 <div style={{ textAlign: "center", marginBottom: 12 }}>
                   <div className="disp" style={{ fontSize: 18, color: "#000", fontWeight: 800 }}>FORGE.GYM</div>
-                  <div style={{ fontSize: 10, color: "#444" }}>Zone 4, Rue du Canal, Abidjan</div>
+                  <div style={{ fontSize: 10, color: "#444" }}>Divo, Côte d'Ivoire</div>
                   <div style={{ fontSize: 10, color: "#444" }}>Tel: +225 07 00 00 00 00</div>
                   <div style={{ borderBottom: "1px dashed #444", margin: "10px 0" }} />
                   <div className="disp" style={{ fontSize: 12, color: "#000", fontWeight: 700 }}>ACCÈS SEANCE</div>
@@ -1819,7 +1819,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
             <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
-            <div style={{ fontSize: 10 }}>Zone 4, Rue du Canal, Abidjan</div>
+            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
             <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
             <div style={{ fontSize: 14, fontWeight: "bold" }}>TICKET ENTRÉE</div>
