@@ -3363,8 +3363,7 @@ function Boutique({ setTx, triggerToast }) {
 // ACCUEIL / TICKETS (SECRETAIRE)
 // ==========================================
 function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUser, cardTiers = [] }) {
-  const ticketTier = cardTiers.find(c => c.key.includes("Ticket Unique")) || { price: 1000 };
-  const ticketPrice = Number(ticketTier.price) || 1000;
+  const ticketPrice = 1000; // Frais d'entrée unique par défaut 1000 F CFA
 
   const [name, setName] = useState("");
   const [montant, setMontant] = useState(ticketPrice); // Walk-in default price
@@ -3660,6 +3659,27 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
   );
 }
 
+const parseWithdrawalDescription = (desc) => {
+  if (!desc || !desc.startsWith("[RETRAIT CAISSE]")) return null;
+  try {
+    const parts = desc.replace("[RETRAIT CAISSE] ", "").split(" | ");
+    const getVal = (part, label) => {
+      const prefix = label + ": ";
+      const found = parts.find(p => p.startsWith(prefix));
+      return found ? found.substring(prefix.length) : "";
+    };
+    return {
+      motif: getVal(parts, "Motif"),
+      beneficiaire: getVal(parts, "Bénéficiaire"),
+      validePar: getVal(parts, "Validé par"),
+      justificatif: getVal(parts, "Réf"),
+      mode: getVal(parts, "Mode")
+    };
+  } catch (e) {
+    return null;
+  }
+};
+
 // ==========================================
 // FINANCES (COMPTABLE)
 // ==========================================
@@ -3702,7 +3722,19 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
   const [filterType, setFilterType] = useState("Tous");
   const [search, setSearch] = useState("");
 
+  const [isWithdrawal, setIsWithdrawal] = useState(false);
+  const [withdrawalForm, setWithdrawalForm] = useState({
+    beneficiaire: "",
+    validePar: currentUser?.label || currentUser?.username || "Comptable",
+    justificatif: "",
+    mode: "Espèces"
+  });
+  const [activeWithdrawalReceipt, setActiveWithdrawalReceipt] = useState(null);
+
   const handleTypeChange = (newType) => {
+    if (newType !== "depense") {
+      setIsWithdrawal(false);
+    }
     const defaultPreset = PREDEFINED_DESCRIPTIONS[newType][0];
     setSelectedPreset(defaultPreset);
     setCustomDescription("");
@@ -3728,20 +3760,31 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
   };
 
   const add = async () => {
-    if (!form.description.trim() || !form.montant) {
-      triggerToast("Tous les champs sont requis");
-      return;
+    if (form.type === "depense" && isWithdrawal) {
+      if (!form.description.trim() || !form.montant || !withdrawalForm.beneficiaire.trim() || !withdrawalForm.validePar.trim()) {
+        triggerToast("Le motif, montant, bénéficiaire et validateur sont requis.");
+        return;
+      }
+    } else {
+      if (!form.description.trim() || !form.montant) {
+        triggerToast("Tous les champs sont requis");
+        return;
+      }
     }
 
     if (form.type === "salaire" && !isAdmin) {
       triggerToast("Seul l'Administrateur est autorisé à verser les salaires.");
       return;
     }
+
+    const finalDescription = (form.type === "depense" && isWithdrawal)
+      ? `[RETRAIT CAISSE] Motif: ${form.description} | Bénéficiaire: ${withdrawalForm.beneficiaire.trim()} | Validé par: ${withdrawalForm.validePar.trim()} | Réf: ${withdrawalForm.justificatif.trim() || "Aucun"} | Mode: ${withdrawalForm.mode}`
+      : form.description;
     
     const newTxObj = {
       id: uid(),
       type: form.type,
-      description: form.description,
+      description: finalDescription,
       montant: Number(form.montant),
       date: today()
     };
@@ -3755,6 +3798,29 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
     
     setTx([...tx, newTxObj]);
     triggerToast("Opération comptable enregistrée");
+
+    if (form.type === "depense" && isWithdrawal) {
+      const printTx = {
+        id: newTxObj.id,
+        date: newTxObj.date,
+        montant: newTxObj.montant,
+        motif: form.description,
+        beneficiaire: withdrawalForm.beneficiaire.trim(),
+        validePar: withdrawalForm.validePar.trim(),
+        justificatif: withdrawalForm.justificatif.trim() || "Aucun",
+        mode: withdrawalForm.mode
+      };
+      setActiveWithdrawalReceipt(printTx);
+      setTimeout(() => {
+        window.print();
+      }, 150);
+
+      setWithdrawalForm(prev => ({
+        ...prev,
+        beneficiaire: "",
+        justificatif: ""
+      }));
+    }
     
     const nextDefaultPreset = PREDEFINED_DESCRIPTIONS[form.type][0];
     setSelectedPreset(nextDefaultPreset);
@@ -3863,8 +3929,24 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                 {isAdmin && <option value="salaire">Salaire (-)</option>}
               </select>
             </div>
+
+            {form.type === "depense" && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "4px 0" }}>
+                <input 
+                  type="checkbox" 
+                  id="isWithdrawalCheckbox" 
+                  checked={isWithdrawal} 
+                  onChange={e => setIsWithdrawal(e.target.checked)} 
+                  style={{ cursor: "pointer", width: 16, height: 16 }}
+                />
+                <label htmlFor="isWithdrawalCheckbox" style={{ fontSize: 13, fontWeight: 600, color: "#4F46E5", cursor: "pointer" }}>
+                  Enregistrer comme Retrait de Caisse
+                </label>
+              </div>
+            )}
+
             <div>
-              <label style={S.labelStyle}>Libellé explicatif</label>
+              <label style={S.labelStyle}>{isWithdrawal ? "Motif du retrait" : "Libellé explicatif"}</label>
               <select 
                 style={{ ...S.input, marginBottom: selectedPreset === "Autre (Saisie libre)" ? 10 : 0 }} 
                 value={selectedPreset} 
@@ -3877,17 +3959,66 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
               {selectedPreset === "Autre (Saisie libre)" && (
                 <input 
                   style={S.input} 
-                  placeholder="Saisir un libellé personnalisé..." 
+                  placeholder={isWithdrawal ? "Saisir un motif personnalisé..." : "Saisir un libellé personnalisé..."}
                   value={customDescription} 
                   onChange={e => handleCustomDescriptionChange(e.target.value)} 
                 />
               )}
             </div>
+
+            {form.type === "depense" && isWithdrawal && (
+              <>
+                <div>
+                  <label style={S.labelStyle}>Bénéficiaire (Qui reçoit les fonds) *</label>
+                  <input 
+                    style={S.input} 
+                    placeholder="Ex: Yao Koffi..." 
+                    value={withdrawalForm.beneficiaire} 
+                    onChange={e => setWithdrawalForm({ ...withdrawalForm, beneficiaire: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label style={S.labelStyle}>Validé par (Nom du responsable) *</label>
+                  <input 
+                    style={S.input} 
+                    placeholder="Ex: Super Admin..." 
+                    value={withdrawalForm.validePar} 
+                    onChange={e => setWithdrawalForm({ ...withdrawalForm, validePar: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label style={S.labelStyle}>Mode de Retrait</label>
+                  <select 
+                    style={S.input} 
+                    value={withdrawalForm.mode} 
+                    onChange={e => setWithdrawalForm({ ...withdrawalForm, mode: e.target.value })}
+                  >
+                    <option value="Espèces">Espèces (Caisse)</option>
+                    <option value="Mobile Money">Mobile Money (Wave/Orange)</option>
+                    <option value="Chèque">Chèque</option>
+                    <option value="Virement Bancaire">Virement Bancaire</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={S.labelStyle}>Réf. Pièce Justificative (Optionnel)</label>
+                  <input 
+                    style={S.input} 
+                    placeholder="Ex: FAC-2026-0045, reçu..." 
+                    value={withdrawalForm.justificatif} 
+                    onChange={e => setWithdrawalForm({ ...withdrawalForm, justificatif: e.target.value })} 
+                  />
+                </div>
+              </>
+            )}
+
             <div>
               <label style={S.labelStyle}>Montant (F CFA)</label>
               <input style={S.input} type="number" placeholder="F CFA" value={form.montant} onChange={e => setForm({ ...form, montant: e.target.value })} />
             </div>
-            <button className="btn-glow" style={{ ...S.btnPrimary, height: 38 }} onClick={add}>Enregistrer la transaction</button>
+            <button className="btn-glow" style={{ ...S.btnPrimary, height: 38 }} onClick={add}>
+              {isWithdrawal ? "Valider & Imprimer le Bon" : "Enregistrer la transaction"}
+            </button>
           </div>
         </CardPanel>
 
@@ -3978,14 +4109,63 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                         {t.type}
                       </span>
                     </td>
-                    <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.description}</td>
+                    <td style={{ ...S.td, color: "#0F172A" }}>
+                      {(() => {
+                        const w = parseWithdrawalDescription(t.description);
+                        if (w) {
+                          return (
+                            <div>
+                              <div style={{ fontWeight: 600, color: "#B91C1C" }}>⚠️ Retrait : {w.motif}</div>
+                              <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                                Bénéficiaire: <strong>{w.beneficiaire}</strong> &bull; Validé par: {w.validePar}
+                                {w.justificatif !== "Aucun" && ` &bull; Réf: ${w.justificatif}`}
+                                {` &bull; Mode: ${w.mode}`}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return <span style={{ fontWeight: 600 }}>{t.description}</span>;
+                      })()}
+                    </td>
                     <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: t.type === "recette" ? "#059669" : "#EF4444" }}>
                       {t.type === "recette" ? "+" : "-"}{fmt(t.montant)} F
                     </td>
                     <td style={S.td}>
-                      {isAdmin && (
-                        <button style={S.btnDangerIcon} onClick={() => remove(t.id)}>×</button>
-                      )}
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+                        {(() => {
+                          const w = parseWithdrawalDescription(t.description);
+                          if (w) {
+                            return (
+                              <button 
+                                className="btn-secondary no-print" 
+                                style={{ ...S.btnGhost, padding: "2px 6px", fontSize: 11, color: "#4F46E5", border: "1px solid #E2E8F0" }}
+                                onClick={() => {
+                                  setActiveWithdrawalReceipt({
+                                    id: t.id,
+                                    date: t.date,
+                                    montant: t.montant,
+                                    motif: w.motif,
+                                    beneficiaire: w.beneficiaire,
+                                    validePar: w.validePar,
+                                    justificatif: w.justificatif,
+                                    mode: w.mode
+                                  });
+                                  setTimeout(() => {
+                                    window.print();
+                                  }, 150);
+                                }}
+                                title="Réimprimer le Bon de Caisse"
+                              >
+                                🖨️ Bon
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                        {isAdmin && (
+                          <button style={S.btnDangerIcon} onClick={() => remove(t.id)}>×</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -3994,6 +4174,67 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
           </div>
         )}
       </CardPanel>
+
+      {/* Hidden print template for cash withdrawal voucher */}
+      {activeWithdrawalReceipt && (
+        <div className="print-only" style={{ display: "none" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
+            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold" }}>BON DE DÉCAISSEMENT CAISSE</div>
+          </div>
+          
+          <div style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 14 }}>
+            <div>RÉF CAISSE : BD-{activeWithdrawalReceipt.id.substring(0, 8).toUpperCase()}</div>
+            <div>DATE DU RETRAIT : {activeWithdrawalReceipt.date}</div>
+            <div>MODE DE PAIEMENT : {activeWithdrawalReceipt.mode}</div>
+            {activeWithdrawalReceipt.justificatif && activeWithdrawalReceipt.justificatif !== "Aucun" && (
+              <div>RÉF PIÈCE JUSTIF. : {activeWithdrawalReceipt.justificatif}</div>
+            )}
+            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
+              <span>MOTIF :</span>
+              <span>{activeWithdrawalReceipt.motif}</span>
+            </div>
+            <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between" }}>
+              <span>BÉNÉFICIAIRE :</span>
+              <span style={{ fontWeight: "bold" }}>{activeWithdrawalReceipt.beneficiaire}</span>
+            </div>
+            <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between" }}>
+              <span>VALIDATEUR :</span>
+              <span>{activeWithdrawalReceipt.validePar}</span>
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+            <div style={{ fontSize: 16, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
+              <span>MONTANT DÉBITÉ :</span>
+              <span>{fmt(activeWithdrawalReceipt.montant)} F CFA</span>
+            </div>
+          </div>
+          
+          <div style={{ borderBottom: "1px dashed #000", margin: "15px 0" }} />
+          
+          {/* Signature lines */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20, fontSize: 10, height: 70 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: "45%" }}>
+              <div style={{ borderBottom: "1px solid #000", paddingBottom: 2, fontWeight: "bold", textAlign: "center" }}>Signature Bénéficiaire</div>
+              <div style={{ height: 40 }}></div>
+              <div style={{ fontSize: 8, color: "#666", textAlign: "center" }}>(Précédée de "Lu et approuvé")</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: "45%" }}>
+              <div style={{ borderBottom: "1px solid #000", paddingBottom: 2, fontWeight: "bold", textAlign: "center" }}>Signature Caissier / Validateur</div>
+              <div style={{ height: 40 }}></div>
+              <div style={{ fontSize: 8, color: "#666", textAlign: "center" }}>(Signature & Cachet)</div>
+            </div>
+          </div>
+          
+          <div style={{ borderBottom: "1px dashed #000", margin: "15px 0 10px 0" }} />
+          <div style={{ textAlign: "center", fontSize: 9, color: "#333", marginTop: 10 }}>
+            Forge.Gym &copy; {new Date().getFullYear()} - Document comptable officiel
+          </div>
+        </div>
+      )}
     </div>
   );
 }
