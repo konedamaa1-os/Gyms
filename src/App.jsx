@@ -5,11 +5,25 @@ import { supabase } from "./supabaseClient";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const today = () => new Date().toISOString().slice(0, 10);
 const fmt = (n) => Number(n || 0).toLocaleString("fr-FR");
+const getWeekRange = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const day = date.getDay() || 7; // Sunday is 7
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - (day - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  
+  const fmtDate = (d) => d.toISOString().slice(0, 10).split('-').reverse().join('/');
+  return `${fmtDate(monday)} au ${fmtDate(sunday)}`;
+};
 
-const CARD_TIERS = [
-  { key: "Bronze", color: "#C25E28", light: "rgba(224, 144, 102, 0.15)", bg: "linear-gradient(135deg, #FFF9F5 0%, #F3D9C9 50%, #C25E28 100%)", price: 15000, duration: 1, desc: "Accès standard aux équipements de musculation & cardio." },
-  { key: "Argent", color: "#475569", light: "rgba(71, 85, 105, 0.15)", bg: "linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #64748B 100%)", price: 40000, duration: 3, desc: "Accès complet + cours collectifs inclus + 1 séance coach / mois." },
-  { key: "Or", color: "#859F10", light: "rgba(133, 159, 16, 0.15)", bg: "linear-gradient(135deg, #FCFFE6 0%, #E6F3A8 50%, #859F10 100%)", price: 150000, duration: 12, desc: "Espace VIP + cours illimités + suivi diététique + coach privé 24/7." },
+const CARD_TIERS_DEFAULT = [
+  { key: "Bronze (Mensuel)", color: "#C25E28", light: "rgba(224, 144, 102, 0.15)", bg: "linear-gradient(135deg, #FFF9F5 0%, #F3D9C9 50%, #C25E28 100%)", price: 10000, duration: 1, description: "Accès standard musculation & cardio pour 1 mois." },
+  { key: "Argent (Trimestriel)", color: "#475569", light: "rgba(71, 85, 105, 0.15)", bg: "linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #64748B 100%)", price: 40000, duration: 3, description: "Accès complet, cours collectifs & 1 séance coach / mois pendant 3 mois." },
+  { key: "Or (Annuel)", color: "#D97706", light: "rgba(217, 119, 6, 0.15)", bg: "linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 50%, #D97706 100%)", price: 150000, duration: 12, description: "Accès VIP illimité, suivi diététique & coach privé pendant 12 mois." },
+  { key: "Séances à la carte (10 entrées)", color: "#8B5CF6", light: "rgba(139, 92, 246, 0.15)", bg: "linear-gradient(135deg, #F5F3FF 0%, #DDD6FE 50%, #8B5CF6 100%)", price: 12000, duration: 3, description: "Pack flexible de 10 entrées individuelles, valable 3 mois." },
+  { key: "Ticket Unique (Séance Unique)", color: "#EF4444", light: "rgba(239, 68, 68, 0.15)", bg: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #EF4444 100%)", price: 1000, duration: 0, description: "Accès d'une journée complète sans engagement aux installations du club." },
 ];
 
 const ROLES = ["Coach", "Secretaire", "Comptable", "Gardien", "Agent d'entretien"];
@@ -40,15 +54,44 @@ const getMemberStatus = (m) => {
 };
 
 export default function GymApp() {
-  const [view, setView] = useState("public"); // "public" | "login" | "dashboard"
-  const [user, setUser] = useState(null); // Currently logged-in user: { username, role, label }
-  const [tab, setTab] = useState("dashboard");
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("gyms_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [view, setView] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("gyms_user");
+      return savedUser ? "dashboard" : "public";
+    } catch (e) {
+      return "public";
+    }
+  });
+  const [tab, setTab] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("gyms_user");
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === "Administrateur") return "dashboard";
+        if (parsed.role === "Secretaire") return "membres";
+        if (parsed.role === "Comptable") return "finances";
+      }
+      return "dashboard";
+    } catch (e) {
+      return "dashboard";
+    }
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [members, setMembers] = useState([]);
   const [staff, setStaff] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [tx, setTx] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [users, setUsers] = useState([]); // Dynamic Login Accounts (levels) State
+  const [cardTiers, setCardTiers] = useState(CARD_TIERS_DEFAULT);
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState("");
   const [showGuide, setShowGuide] = useState(false); // Quick Start Guide Modal State
@@ -66,14 +109,16 @@ export default function GymApp() {
           { data: scheduleData, error: scheduleErr },
           { data: txData, error: txErr },
           { data: ticketsData, error: ticketsErr },
-          { data: usersData, error: usersErr }
+          { data: usersData, error: usersErr },
+          { data: cardTiersData, error: cardTiersErr }
         ] = await Promise.all([
           supabase.from("members").select("*"),
           supabase.from("staff").select("*"),
           supabase.from("schedule").select("*"),
           supabase.from("tx").select("*"),
           supabase.from("tickets").select("*"),
-          supabase.from("users").select("*")
+          supabase.from("users").select("*"),
+          supabase.from("card_tiers").select("*")
         ]);
 
         if (membersErr) console.error("Error loading members:", membersErr);
@@ -82,6 +127,7 @@ export default function GymApp() {
         if (txErr) console.error("Error loading tx:", txErr);
         if (ticketsErr) console.error("Error loading tickets:", ticketsErr);
         if (usersErr) console.error("Error loading users:", usersErr);
+        if (cardTiersErr) console.error("Error loading card tiers:", cardTiersErr);
 
         setMembers(membersData || []);
         setStaff(staffData || []);
@@ -89,6 +135,18 @@ export default function GymApp() {
         setTx(txData || []);
         setTickets(ticketsData || []);
         setUsers(usersData && usersData.length > 0 ? usersData : USERS_SEED);
+
+        const order = { 
+          "Bronze (Mensuel)": 1, 
+          "Argent (Trimestriel)": 2, 
+          "Or (Annuel)": 3, 
+          "Séances à la carte (10 entrées)": 4, 
+          "Ticket Unique (Séance Unique)": 5 
+        };
+        const sortedCardTiers = cardTiersData && cardTiersData.length > 0
+          ? cardTiersData.sort((a, b) => (order[a.key] || 99) - (order[b.key] || 99))
+          : CARD_TIERS_DEFAULT;
+        setCardTiers(sortedCardTiers);
       } catch (err) {
         console.error("Failed to load from Supabase:", err);
         setMembers([]);
@@ -97,8 +155,11 @@ export default function GymApp() {
         setTx([]);
         setTickets([]);
         setUsers(USERS_SEED);
+        setCardTiers(CARD_TIERS_DEFAULT);
       }
-      setView("public");
+      if (!localStorage.getItem("gyms_user")) {
+        setView("public");
+      }
       setLoaded(true);
     })();
   }, []);
@@ -116,8 +177,9 @@ export default function GymApp() {
   const TABS = [
     { key: "dashboard", label: "Tableau de bord", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg> },
     { key: "membres", label: "Membres & Cartes", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg> },
-    { key: "planning", label: "Emploi du temps", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> },
     { key: "accueil", label: "Accueil / Tickets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path><line x1="12" y1="5" x2="12" y2="19"></line></svg> },
+    { key: "boutique", label: "Boutique / POS", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> },
+    { key: "planning", label: "Emploi du temps", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> },
     { key: "finances", label: "Finances & Ledger", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> },
     { key: "personnel", label: "Personnel", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> },
   ];
@@ -132,10 +194,10 @@ export default function GymApp() {
     if (!user) return [];
     if (user.role === "Administrateur") return TABS;
     if (user.role === "Secretaire") {
-      return TABS.filter(t => t.key === "membres" || t.key === "accueil" || t.key === "planning");
+      return TABS.filter(t => t.key === "membres" || t.key === "accueil" || t.key === "boutique" || t.key === "planning");
     }
     if (user.role === "Comptable") {
-      return TABS.filter(t => t.key === "finances" || t.key === "personnel");
+      return TABS.filter(t => t.key === "boutique" || t.key === "finances" || t.key === "personnel");
     }
     return [];
   };
@@ -148,6 +210,7 @@ export default function GymApp() {
 
     if (foundUser) {
       setUser(foundUser);
+      localStorage.setItem("gyms_user", JSON.stringify(foundUser));
       setLoginForm({ username: "", password: "" });
       setLoginError("");
       
@@ -165,6 +228,7 @@ export default function GymApp() {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem("gyms_user");
     setView("public");
     triggerToast("Déconnexion réussie");
   };
@@ -215,7 +279,7 @@ export default function GymApp() {
   };
 
   return (
-    <div style={S.app}>
+    <div className="app-container" style={S.app}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
         
@@ -259,9 +323,9 @@ export default function GymApp() {
           text-align: left;
           background: transparent;
           border: none;
-          color: #94A3B8;
+          color: #475569;
           padding: 13px 16px;
-          border-radius: 10px;
+          border-radius: 8px 0 0 8px;
           font-size: 14px;
           font-weight: 500;
           width: 100%;
@@ -269,14 +333,14 @@ export default function GymApp() {
           transition: all 0.2s ease;
         }
         .tab-btn:hover {
-          background: rgba(255, 255, 255, 0.06);
-          color: #FFF;
+          background: #F8FAFC;
+          color: #6366F1;
         }
         .tab-btn-active {
-          background: #6366F1 !important;
-          color: #FFFFFF !important;
+          background: rgba(99, 102, 241, 0.08) !important;
+          color: #6366F1 !important;
           font-weight: 600;
-          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+          border-right: 3px solid #6366F1;
         }
 
         .card-glow {
@@ -306,17 +370,50 @@ export default function GymApp() {
 
         /* Printable thermal receipt styling */
         @media print {
-          .no-print { display: none !important; }
+          html, body {
+            height: 100% !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #FFFFFF !important;
+          }
+          
+          /* Hide all screen elements */
+          body * {
+            visibility: hidden;
+          }
+          
+          /* Force all containers to collapse to 0 height */
+          #root, #root * {
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          
+          /* Make only the print-only receipt visible */
+          .print-only, .print-only * {
+            visibility: visible !important;
+            height: auto !important;
+          }
+          
           .print-only {
             display: block !important;
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 80mm;
-            background: white;
-            color: black;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 8px;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 80mm !important;
+            background: white !important;
+            color: black !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            padding: 8px !important;
+            box-sizing: border-box !important;
+          }
+          
+          @page {
+            margin: 0 !important;
           }
         }
 
@@ -344,6 +441,82 @@ export default function GymApp() {
         .btn-brown-guide:active {
           transform: translateY(0);
         }
+
+        /* Mobile Responsive System */
+        .mobile-header {
+          display: none;
+          background: #0F172A;
+          padding: 14px 20px;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          width: 100%;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+        }
+
+        @media (max-width: 1024px) {
+          .mobile-header {
+            display: flex;
+          }
+          
+          .app-container {
+            flex-direction: column !important;
+            overflow: auto !important;
+          }
+          
+          .app-sidebar {
+            position: fixed !important;
+            top: 57px; /* height of mobile header */
+            left: 0;
+            width: 100% !important;
+            height: calc(100vh - 57px) !important;
+            z-index: 999;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex !important;
+            flex-shrink: 0;
+          }
+          
+          .app-sidebar.open {
+            transform: translateX(0);
+          }
+          
+          .app-main {
+            padding: 20px 15px !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+            width: 100% !important;
+          }
+          
+          header {
+            padding: 12px 15px !important;
+          }
+          header nav {
+            display: none !important;
+          }
+          
+          #hero h1 {
+            font-size: 26px !important;
+            line-height: 1.3 !important;
+          }
+          #hero p {
+            font-size: 14px !important;
+          }
+          #tarifs > div {
+            padding: 40px 15px !important;
+          }
+          section {
+            padding: 40px 15px !important;
+          }
+        }
+        
+        @media (min-width: 1025px) {
+          .app-sidebar {
+            transform: none !important;
+          }
+        }
       `}</style>
 
       {/* Floating Snackbar Toast */}
@@ -361,7 +534,7 @@ export default function GymApp() {
 
       {/* View router switcher */}
       {view === "public" && (
-        <PublicLanding setView={setView} schedule={schedule} />
+        <PublicLanding setView={setView} schedule={schedule} cardTiers={cardTiers} staff={staff} />
       )}
       
       {view === "login" && (
@@ -377,34 +550,58 @@ export default function GymApp() {
       
       {view === "dashboard" && user && (
         <>
+          {/* Mobile Top Header */}
+          <div className="mobile-header no-print">
+            <div className="disp" style={{ color: "#FFF", fontSize: 20, fontWeight: 800 }}>
+              FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#FFF",
+                fontSize: 24,
+                padding: 4,
+                display: "flex",
+                alignItems: "center"
+              }}
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
+          </div>
+
           {/* Sidebar Navigation - Deep Dark Slate-800 for high quality split design */}
-          <div style={S.sidebar} className="no-print">
+          <div className={`app-sidebar ${mobileMenuOpen ? "open" : ""} no-print`} style={S.sidebar}>
             <div style={S.brand}>
-              <div className="disp" style={S.brandTitle}>
+              <div className="disp" style={{ ...S.brandTitle, display: "flex", alignItems: "center" }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8, flexShrink: 0 }}>
+                  <path d="M6 12h12" />
+                  <path d="M6.5 8v8" strokeWidth="3" />
+                  <path d="M4.5 9v6" strokeWidth="4" />
+                  <path d="M17.5 8v8" strokeWidth="3" />
+                  <path d="M19.5 9v6" strokeWidth="4" />
+                </svg>
                 FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
               </div>
               <div style={S.brandSub}>GESTION DE SALLE</div>
             </div>
 
-            {/* Profile widget bar */}
-            <div style={S.sidebarProfile}>
-              <div style={S.profileAvatar}>{user.username.slice(0, 2).toUpperCase()}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFF" }}>{user.label}</div>
-                <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>{user.role}</div>
-              </div>
-            </div>
-
             {/* Quick Start Guide Button (Matches requested brown style) */}
-            <button className="btn-brown-guide" onClick={() => setShowGuide(true)}>
-              <span>🚀</span> Guide de démarrage
-            </button>
+            <div style={{ paddingRight: 20 }}>
+              <button className="btn-brown-guide" onClick={() => setShowGuide(true)}>
+                <span>🚀</span> Guide de démarrage
+              </button>
+            </div>
             
             <nav style={S.nav}>
               {getFilteredTabs().map((tItem) => (
                 <button
                   key={tItem.key}
-                  onClick={() => setTab(tItem.key)}
+                  onClick={() => {
+                    setTab(tItem.key);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`tab-btn ${tab === tItem.key ? "tab-btn-active" : ""}`}
                 >
                   {tItem.icon}
@@ -412,37 +609,42 @@ export default function GymApp() {
                 </button>
               ))}
             </nav>
-
-            <button
-              onClick={handleLogout}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                background: "transparent",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                color: "#F43F5E",
-                padding: "10px 14px",
-                borderRadius: 10,
-                fontSize: 13,
-                marginBottom: 16,
-                fontWeight: 600
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-              Se déconnecter
-            </button>
             
             <div style={S.sideFooter}>
-              <div style={S.soldeLabel}>Solde de Caisse</div>
-              <div className="mono" style={{ ...S.soldeVal, color: solde >= 0 ? "#10B981" : "#EF4444" }}>
-                {fmt(solde)} F
+              <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
+                <div style={S.soldeLabel}>Solde de Caisse</div>
+                <div className="mono" style={{ ...S.soldeVal, color: solde >= 0 ? "#10B981" : "#EF4444", fontSize: 18, marginTop: 4, fontWeight: 800 }}>
+                  {fmt(solde)} F
+                </div>
               </div>
+              
+              <div style={{ fontSize: 12, color: "#64748B", marginBottom: 12 }}>
+                Connecté : <strong style={{ color: "#334155" }}>{user.username}</strong>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "transparent",
+                  border: "none",
+                  color: "#EF4444",
+                  padding: "6px 0",
+                  fontSize: 13.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                Déconnexion
+              </button>
             </div>
           </div>
 
           {/* Main Panel Content */}
-          <div style={S.main}>
+          <div className="app-main" style={S.main}>
             {tab === "dashboard" && user.role === "Administrateur" && (
               <Dashboard
                 members={members}
@@ -455,6 +657,8 @@ export default function GymApp() {
                 tickets={tickets}
                 tx={tx}
                 resetApp={resetApp}
+                cardTiers={cardTiers}
+                setTab={setTab}
               />
             )}
             
@@ -464,6 +668,9 @@ export default function GymApp() {
                 setMembers={setMembers}
                 setTx={setTx}
                 triggerToast={triggerToast}
+                cardTiers={cardTiers}
+                tx={tx}
+                currentUser={user}
               />
             )}
             
@@ -472,6 +679,14 @@ export default function GymApp() {
                 schedule={schedule}
                 setSchedule={setSchedule}
                 staff={staff}
+                triggerToast={triggerToast}
+                currentUser={user}
+              />
+            )}
+            
+            {tab === "boutique" && (
+              <Boutique
+                setTx={setTx}
                 triggerToast={triggerToast}
               />
             )}
@@ -483,6 +698,8 @@ export default function GymApp() {
                 setTickets={setTickets}
                 setTx={setTx}
                 triggerToast={triggerToast}
+                currentUser={user}
+                cardTiers={cardTiers}
               />
             )}
             
@@ -497,6 +714,7 @@ export default function GymApp() {
                 salairesVerses={salairesVerses}
                 solde={solde}
                 triggerToast={triggerToast}
+                currentUser={user}
               />
             )}
             
@@ -510,6 +728,8 @@ export default function GymApp() {
                 setUsers={setUsers}
                 currentUser={user}
                 triggerToast={triggerToast}
+                cardTiers={cardTiers}
+                setCardTiers={setCardTiers}
               />
             )}
           </div>
@@ -675,63 +895,301 @@ function GuideModal({ onClose }) {
 // LOGIN SCREEN COMPONENT
 // ==========================================
 function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, users }) {
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+    if (role === "Administrateur") {
+      setLoginForm({ username: "badrafaly@gmail.com", password: "B@dr@f@ly" });
+    } else if (role === "Secretaire") {
+      setLoginForm({ username: "secretaire@forgegym.com", password: "password123" });
+    } else if (role === "Comptable") {
+      setLoginForm({ username: "comptable@forgegym.com", password: "password123" });
+    } else {
+      setLoginForm({ username: "", password: "" });
+    }
+  };
+
+  const rolesConfig = [
+    {
+      key: "Administrateur",
+      label: "Je suis Administrateur",
+      bg: "rgba(99, 102, 241, 0.15)",
+      color: "#6366F1",
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      )
+    },
+    {
+      key: "Secretaire",
+      label: "Je suis Secrétaire",
+      bg: "rgba(16, 185, 129, 0.15)",
+      color: "#10B981",
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      )
+    },
+    {
+      key: "Comptable",
+      label: "Je suis Comptable",
+      bg: "rgba(245, 158, 11, 0.15)",
+      color: "#F59E0B",
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      )
+    }
+  ];
+
   return (
-    <div style={S.loginBg}>
-      <div style={S.loginOverlay} />
-      <div style={S.loginCard}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div className="disp" style={{ fontSize: 32, color: "#0F172A" }}>FORGE<span style={{ color: "#6366F1" }}>.</span>GYM</div>
-          <p style={{ color: "#64748B", fontSize: 13, marginTop: 6, textTransform: "uppercase", letterSpacing: 1 }}>ESPACE DE GESTION</p>
+    <div style={{
+      minHeight: "100vh",
+      width: "100%",
+      background: "#F8FAFC",
+      backgroundImage: "radial-gradient(#E2E8F0 1.5px, transparent 1.5px)",
+      backgroundSize: "24px 24px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "space-between",
+      position: "relative",
+      padding: "40px 24px",
+      overflow: "hidden"
+    }}>
+      {/* Blurred Glows */}
+      <div style={{
+        position: "absolute",
+        width: 400,
+        height: 400,
+        background: "rgba(99, 102, 241, 0.12)",
+        filter: "blur(100px)",
+        borderRadius: "50%",
+        top: "20%",
+        left: "-100px",
+        pointerEvents: "none",
+        zIndex: 1
+      }} />
+      <div style={{
+        position: "absolute",
+        width: 350,
+        height: 350,
+        background: "rgba(245, 158, 11, 0.1)",
+        filter: "blur(90px)",
+        borderRadius: "50%",
+        top: "-50px",
+        left: "40%",
+        pointerEvents: "none",
+        zIndex: 1
+      }} />
+      <div style={{
+        position: "absolute",
+        width: 400,
+        height: 400,
+        background: "rgba(16, 185, 129, 0.1)",
+        filter: "blur(100px)",
+        borderRadius: "50%",
+        bottom: "10%",
+        right: "-100px",
+        pointerEvents: "none",
+        zIndex: 1
+      }} />
+
+      {/* Top Header Logo */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, zIndex: 2, marginBottom: 20 }}>
+        <div style={{
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          background: "#0F172A",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 8px 16px rgba(15, 23, 42, 0.15)",
+          cursor: "pointer"
+        }} onClick={onCancel}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#FFFFFF" }}>
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
         </div>
-        
-        {loginError && (
-          <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#EF4444", padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
-            {loginError}
-          </div>
-        )}
+        <div className="disp" style={{ fontSize: 20, fontWeight: 800, color: "#0F172A", letterSpacing: 0.5 }}>
+          FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+        </div>
+      </div>
 
-        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={S.labelStyle}>Identifiant / Nom d'utilisateur</label>
-            <input
-              style={S.loginInput}
-              placeholder="Entrez votre identifiant"
-              value={loginForm.username}
-              onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-              required
-            />
+      {selectedRole === null ? (
+        /* Profile Chooser Screen */
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", zIndex: 2 }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <h2 style={{ fontSize: 28, fontWeight: 800, color: "#0F172A", margin: 0 }}>
+              Bienvenue sur le portail FORGE GYM
+            </h2>
+            <p style={{ fontSize: 15, color: "#64748B", marginTop: 8 }}>
+              Choisis ton profil pour accéder à ton espace de gestion
+            </p>
           </div>
-          <div>
-            <label style={S.labelStyle}>Mot de passe</label>
-            <input
-              type="password"
-              style={S.loginInput}
-              placeholder="••••••••"
-              value={loginForm.password}
-              onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-              required
-            />
-          </div>
-          
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <button type="submit" className="btn-glow" style={{ ...S.btnPrimary, flex: 1, height: 42 }}>
-              Se connecter
-            </button>
-            <button type="button" onClick={onCancel} style={{ ...S.btnCancel, flex: 1 }}>
-              Annuler
-            </button>
-          </div>
-        </form>
 
-        {/* Demo Credentials Hint */}
-        <div style={S.loginHint}>
-          <div style={{ fontWeight: 600, color: "#0F172A", marginBottom: 6 }}>Identifiants de Test (Niveaux) :</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {users.slice(0, 4).map(u => (
-              <div key={u.id}>&bull; <strong>{u.label}</strong> ({u.role}) : <span className="mono">{u.username}</span> / <span className="mono">{u.password}</span></div>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", width: "100%", maxWidth: 900 }}>
+            {rolesConfig.map((r, idx) => (
+              <div 
+                key={r.key}
+                onClick={() => handleRoleSelect(r.key)}
+                onMouseEnter={() => setHoveredCard(idx)}
+                onMouseLeave={() => setHoveredCard(null)}
+                style={{
+                  background: "#FFFFFF",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 24,
+                  padding: "48px 32px",
+                  width: 260,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transform: hoveredCard === idx ? "translateY(-8px)" : "translateY(0)",
+                  boxShadow: hoveredCard === idx ? "0 20px 40px rgba(15, 23, 42, 0.08)" : "0 4px 12px rgba(0,0,0,0.02)"
+                }}
+              >
+                <div style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  background: r.bg,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 24,
+                  transition: "all 0.3s",
+                  transform: hoveredCard === idx ? "scale(1.05)" : "scale(1)"
+                }}>
+                  {r.icon}
+                </div>
+                <span style={{
+                  fontSize: 15.5,
+                  fontWeight: 700,
+                  color: "#334155"
+                }}>
+                  {r.label}
+                </span>
+              </div>
             ))}
           </div>
         </div>
+      ) : (
+        /* Credential Form Card */
+        <div style={{
+          background: "#FFFFFF",
+          border: "1px solid #E2E8F0",
+          borderRadius: 24,
+          padding: 36,
+          width: "100%",
+          maxWidth: 400,
+          boxShadow: "0 20px 40px rgba(15, 23, 42, 0.06)",
+          zIndex: 2,
+          position: "relative"
+        }}>
+          {/* Back button */}
+          <button 
+            onClick={() => setSelectedRole(null)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#64748B",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 24,
+              padding: 0
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+            Retour aux profils
+          </button>
+
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <span style={{
+              background: rolesConfig.find(r => r.key === selectedRole)?.bg,
+              color: rolesConfig.find(r => r.key === selectedRole)?.color,
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: 0.5,
+              padding: "6px 14px",
+              borderRadius: 20
+            }}>
+              Espace {selectedRole}
+            </span>
+            <h3 style={{ fontSize: 22, fontWeight: 800, color: "#0F172A", marginTop: 12, marginBottom: 0 }}>Connexion</h3>
+          </div>
+
+          {loginError && (
+            <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", color: "#EF4444", padding: "10px 14px", borderRadius: 8, fontSize: 13, marginBottom: 16 }}>
+              {loginError}
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={S.labelStyle}>Identifiant / Nom d'utilisateur</label>
+              <input
+                style={S.loginInput}
+                placeholder="Entrez votre identifiant"
+                value={loginForm.username}
+                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label style={S.labelStyle}>Mot de passe</label>
+              <input
+                type="password"
+                style={S.loginInput}
+                placeholder="••••••••"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                required
+              />
+            </div>
+            
+            <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+              <button type="submit" className="btn-glow" style={{ ...S.btnPrimary, flex: 1, height: 42, background: "#0F172A", color: "#FFFFFF", border: "none" }}>
+                Se connecter
+              </button>
+              <button type="button" onClick={onCancel} style={{ ...S.btnCancel, flex: 1 }}>
+                Annuler
+              </button>
+            </div>
+          </form>
+
+          {/* Test Credentials Helper */}
+          <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 12, padding: "12px 14px", border: "1px solid #F1F5F9", fontSize: 11.5, color: "#64748B", display: "flex", flexDirection: "column", gap: 4 }}>
+            <strong style={{ color: "#334155" }}>💡 Identifiants de test (Auto-remplis) :</strong>
+            {selectedRole === "Administrateur" && <span>Identifiant : <code>badrafaly@gmail.com</code> / Mdp : <code>B@dr@f@ly</code></span>}
+            {selectedRole === "Secretaire" && <span>Identifiant : <code>secretaire@forgegym.com</code> / Mdp : <code>password123</code></span>}
+            {selectedRole === "Comptable" && <span>Identifiant : <code>comptable@forgegym.com</code> / Mdp : <code>password123</code></span>}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ textAlign: "center", color: "#94A3B8", fontSize: 12, zIndex: 2, marginTop: 20 }}>
+        © 2026 FORGE.GYM. Tous droits réservés. <span style={{ margin: "0 8px" }}>•</span> Mentions légales <span style={{ margin: "0 8px" }}>•</span> Politique de confidentialité
       </div>
     </div>
   );
@@ -740,11 +1198,77 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 // ==========================================
 // PUBLIC LANDING PAGE COMPONENT
 // ==========================================
-function PublicLanding({ setView, schedule }) {
+function PublicLanding({ setView, schedule, cardTiers, staff }) {
+  const [displayMode, setDisplayMode] = useState("table"); // "table" by default, or "grid"
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "jour", direction: "ascending" });
+  const [selectedDay, setSelectedDay] = useState("Tous");
+
+  const DAY_ORDER = { "Lun": 1, "Mar": 2, "Mer": 3, "Jeu": 4, "Ven": 5, "Sam": 6, "Dim": 7 };
+
+  const getInitials = (name) => {
+    if (!name) return "";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIndicator = (key) => {
+    if (sortConfig.key !== key) return <span style={{ color: "#94A3B8", marginLeft: 4, fontSize: 10 }}>↕</span>;
+    return sortConfig.direction === "ascending" ? 
+      <span style={{ color: "#6366F1", marginLeft: 4, fontSize: 10 }}>▲</span> : 
+      <span style={{ color: "#6366F1", marginLeft: 4, fontSize: 10 }}>▼</span>;
+  };
+
+  const dbCoaches = (staff || []).filter(s => s.role && s.role.toLowerCase().includes("coach"));
+  const coachesList = dbCoaches.length > 0 ? dbCoaches : [
+    { id: "c1", nom: "Bakary Traoré", role: "Coach Principal & Musculation", desc: "Plus de 10 ans d'expérience dans le coaching en force et haltérophilie." },
+    { id: "c2", nom: "Mariam Koné", role: "Coach Cardio & HIIT", desc: "Spécialiste de la perte de poids rapide et du renforcement cardio-vasculaire." }
+  ];
+
   const scrollToId = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
+
+  const processedSchedule = [...schedule]
+    .filter(c => {
+      const matchesDay = selectedDay === "Tous" || c.jour === selectedDay;
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        c.activite.toLowerCase().includes(query) || 
+        (c.coach && c.coach.toLowerCase().includes(query)) ||
+        c.jour.toLowerCase().includes(query) ||
+        c.debut.includes(query) ||
+        c.fin.includes(query);
+      return matchesDay && matchesSearch;
+    })
+    .sort((a, b) => {
+      let aVal = a[sortConfig.key] || "";
+      let bVal = b[sortConfig.key] || "";
+
+      if (sortConfig.key === "jour") {
+        aVal = DAY_ORDER[a.jour] || 99;
+        bVal = DAY_ORDER[b.jour] || 99;
+      }
+
+      if (aVal < bVal) return sortConfig.direction === "ascending" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "ascending" ? 1 : -1;
+      
+      // Secondary sort
+      if (sortConfig.key !== "debut") {
+        return (a.debut || "").localeCompare(b.debut || "");
+      }
+      return 0;
+    });
 
   return (
     <div style={S.landingWrapper}>
@@ -796,7 +1320,7 @@ function PublicLanding({ setView, schedule }) {
           <div style={S.featCard}>
             <div style={S.featIcon}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
             <h3 style={{ fontSize: 18, marginBottom: 8, color: "#0F172A" }}>Équipe de Coaching</h3>
-            <p style={{ color: "#475569", fontSize: 13.5, lineHeight: 1.5 }}>Profitez de l'accompagnement personnalisé de nos entraîneurs.</p>
+            <p style={{ color: "#475569", fontSize: 13.5, lineHeight: 1.5 }}>Profitez de l'accompagnement personnalisé de nos entraîneur.</p>
           </div>
           <div style={S.featCard}>
             <div style={S.featIcon}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg></div>
@@ -818,24 +1342,26 @@ function PublicLanding({ setView, schedule }) {
           <p style={{ textAlign: "center", color: "#475569", fontSize: 15, marginBottom: 48 }}>Choisissez la formule qui correspond à votre rythme.</p>
           
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28, justifyContent: "center" }}>
-            {CARD_TIERS.map(c => (
+            {cardTiers.map(c => (
               <div key={c.key} style={S.pricingCard} className="card-glow">
                 <div style={S.cardGlassOverlay} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                   <span className="disp" style={{ color: c.color, fontSize: 22 }}>{c.key}</span>
                   <div style={S.emvChip} />
                 </div>
-                <p style={{ fontSize: 13.5, color: "#475569", minHeight: 60, lineHeight: 1.5 }}>{c.desc}</p>
+                <p style={{ fontSize: 13.5, color: "#475569", minHeight: 60, lineHeight: 1.5 }}>{c.description}</p>
                 <div style={{ margin: "24px 0", borderBottom: "1px solid #E2E8F0" }} />
                 <div style={{ marginBottom: 24 }}>
                   <span className="mono" style={{ fontSize: 36, fontWeight: 800, color: "#0F172A" }}>{fmt(c.price)} F</span>
-                  <span style={{ fontSize: 13, color: "#64748B", marginLeft: 6 }}>/ {c.duration} mois</span>
+                  <span style={{ fontSize: 13, color: "#64748B", marginLeft: 6 }}>
+                    {c.key.includes("Ticket") ? "par entrée" : c.key.includes("carte") ? " / 10 séances" : c.duration === 1 ? "/ mois" : c.duration === 12 ? "/ an" : `/ ${c.duration} mois`}
+                  </span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 30, fontSize: 13, color: "#334155" }}>
-                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> Accès libre à la salle de sport</div>
-                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> Vestiaire individuel sécurisé</div>
-                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.duration >= 3 ? "Cours collectifs illimités" : "Cours collectifs sur réservation"}</div>
-                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.duration >= 12 ? "Espace détente VIP & serviettes" : "Serviette non incluse"}</div>
+                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.key.includes("Ticket") ? "Accès libre salle (1 jour)" : "Accès libre salle de sport"}</div>
+                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.key.includes("carte") ? "Valable pendant 3 mois" : "Vestiaire individuel sécurisé"}</div>
+                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.key.includes("Ticket") ? "Sans aucun engagement" : c.key.includes("carte") ? "Consommez à votre rythme" : c.duration >= 3 ? "Cours collectifs illimités" : "Cours collectifs sur réservation"}</div>
+                  <div style={{ display: "flex", gap: 8 }}><span style={{ color: c.color }}>✓</span> {c.key.includes("Ticket") || c.key.includes("carte") ? "Accès musculation & cardio" : c.duration >= 12 ? "Espace détente VIP & serviettes" : "Serviette non incluse"}</div>
                 </div>
                 <button
                   style={{
@@ -864,47 +1390,265 @@ function PublicLanding({ setView, schedule }) {
         <h2 style={{ textAlign: "center", fontSize: 32, marginBottom: 12, color: "#0F172A" }}>Planning Général des Cours</h2>
         <p style={{ textAlign: "center", color: "#475569", fontSize: 15, marginBottom: 48 }}>Planifiez votre semaine en fonction de notre programme de cours.</p>
         
-        <div style={S.weeklyGrid}>
-          {JOURS.map(j => {
-            const dayCourses = schedule.filter(s => s.jour === j).sort((a, b) => a.debut.localeCompare(b.debut));
-            return (
-              <div key={j} style={S.weeklyCol}>
-                <div style={S.weeklyColHeader}>{j}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {dayCourses.length === 0 ? (
-                    <div style={{ color: "#94A3B8", fontSize: 11, textAlign: "center", fontStyle: "italic", padding: "12px 0" }}>Aucun cours</div>
-                  ) : (
-                    dayCourses.map(c => {
-                      let actBg = "linear-gradient(135deg, #3B82F6, #1D4ED8)";
-                      if (c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng")) {
-                        actBg = "linear-gradient(135deg, #10B981, #059669)";
-                      } else if (c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit")) {
-                        actBg = "linear-gradient(135deg, #EF4444, #B91C1C)";
-                      } else if (c.activite.toLowerCase().includes("yoga") || c.activite.toLowerCase().includes("stret")) {
-                        actBg = "linear-gradient(135deg, #8B5CF6, #6D28D9)";
-                      }
+        {/* Data Grid Controls */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
+          {/* Search bar */}
+          <div style={{ flex: "1 1 300px", maxWidth: 400 }}>
+            <input 
+              style={{ ...S.input, margin: 0, paddingLeft: 12 }} 
+              placeholder="🔍 Rechercher un cours, un coach, un jour..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-                      return (
-                        <div key={c.id} style={{ ...S.courseCard, background: actBg, padding: "8px 10px" }}>
-                          <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#FFF" }}>
-                            {c.debut} - {c.fin}
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 700, margin: "2px 0 4px 0", color: "#FFF", lineHeight: 1.25 }}>
-                            {c.activite}
-                          </div>
-                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 5 }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            {c.coach || "Aucun coach"}
+          {/* Toggle buttons */}
+          <div style={{ display: "flex", background: "#F1F5F9", padding: 4, borderRadius: 10, border: "1px solid #E2E8F0" }}>
+            <button
+              onClick={() => setDisplayMode("table")}
+              style={{
+                padding: "8px 16px",
+                border: "none",
+                borderRadius: 8,
+                background: displayMode === "table" ? "#FFFFFF" : "transparent",
+                color: displayMode === "table" ? "#4F46E5" : "#64748B",
+                fontWeight: displayMode === "table" ? 700 : 500,
+                fontSize: 13,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: displayMode === "table" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                transition: "all 0.2s"
+              }}
+            >
+              📊 Tableau (Data Grid)
+            </button>
+            <button
+              onClick={() => setDisplayMode("grid")}
+              style={{
+                padding: "8px 16px",
+                border: "none",
+                borderRadius: 8,
+                background: displayMode === "grid" ? "#FFFFFF" : "transparent",
+                color: displayMode === "grid" ? "#4F46E5" : "#64748B",
+                fontWeight: displayMode === "grid" ? 700 : 500,
+                fontSize: 13,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: displayMode === "grid" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                transition: "all 0.2s"
+              }}
+            >
+              📅 Calendrier
+            </button>
+          </div>
+        </div>
+
+        {/* Day selection tabs */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center", borderBottom: "1px solid #E2E8F0", paddingBottom: 16 }}>
+          {["Tous", ...JOURS].map(d => (
+            <button
+              key={d}
+              onClick={() => setSelectedDay(d)}
+              style={{
+                ...S.btnFilter,
+                padding: "8px 16px",
+                fontSize: 13,
+                borderRadius: 8,
+                ...(selectedDay === d ? S.btnFilterActive : {})
+              }}
+            >
+              {d === "Tous" ? "Toute la semaine" : d}
+            </button>
+          ))}
+        </div>
+
+        {displayMode === "table" ? (
+          /* Data Grid Table view */
+          processedSchedule.length === 0 ? (
+            <div style={{ color: "#64748B", padding: "40px 20px", textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 12, fontSize: 14, background: "#F8FAFC" }}>
+              Aucun cours correspondant à votre recherche.
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto", background: "#FFFFFF", borderRadius: 12, border: "1px solid #E2E8F0", padding: "8px 16px", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" }}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("activite")}>
+                      Activité / Cours {renderSortIndicator("activite")}
+                    </th>
+                    <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("coach")}>
+                      Coach {renderSortIndicator("coach")}
+                    </th>
+                    <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("jour")}>
+                      Jour {renderSortIndicator("jour")}
+                    </th>
+                    <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("debut")}>
+                      Horaires {renderSortIndicator("debut")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {processedSchedule.map(c => (
+                    <tr key={c.id} style={S.tr}>
+                      <td style={{ ...S.td, fontWeight: 700, color: "#0F172A" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            display: "inline-block",
+                            background: c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng") ? "#10B981" : 
+                                       c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit") ? "#EF4444" : 
+                                       c.activite.toLowerCase().includes("yoga") || c.activite.toLowerCase().includes("stret") ? "#8B5CF6" : "#3B82F6"
+                          }} />
+                          {c.activite}
+                        </div>
+                      </td>
+                      <td style={S.td}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                          <span style={{ fontWeight: 500 }}>{c.coach || "Aucun coach"}</span>
+                        </div>
+                      </td>
+                      <td style={S.td}>
+                        <span style={{
+                          ...S.tag,
+                          background: c.jour === "Lun" ? "#EFF6FF" : 
+                                      c.jour === "Mar" ? "#ECFDF5" : 
+                                      c.jour === "Mer" ? "#FDF2F8" : 
+                                      c.jour === "Jeu" ? "#FEF3C7" : 
+                                      c.jour === "Ven" ? "#F5F3FF" : 
+                                      c.jour === "Sam" ? "#FFF1F2" : "#F8FAFC",
+                          color: c.jour === "Lun" ? "#1E40AF" : 
+                                 c.jour === "Mar" ? "#065F46" : 
+                                 c.jour === "Mer" ? "#9D174D" : 
+                                 c.jour === "Jeu" ? "#92400E" : 
+                                 c.jour === "Ven" ? "#5B21B6" : 
+                                 c.jour === "Sam" ? "#9F1239" : "#64748B"
+                        }}>
+                          {c.jour === "Lun" ? "Lundi" : 
+                           c.jour === "Mar" ? "Mardi" : 
+                           c.jour === "Mer" ? "Mercredi" : 
+                           c.jour === "Jeu" ? "Jeudi" : 
+                           c.jour === "Ven" ? "Vendredi" : 
+                           c.jour === "Sam" ? "Samedi" : "Dimanche"}
+                        </span>
+                      </td>
+                      <td className="mono" style={{ ...S.td, fontWeight: 600, color: "#475569" }}>
+                        {c.debut} - {c.fin}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        ) : (
+          /* Calendar Grid view */
+          selectedDay === "Tous" ? (
+            <div style={S.weeklyGrid}>
+              {JOURS.map(j => {
+                const dayCourses = processedSchedule.filter(s => s.jour === j);
+                return (
+                  <div key={j} style={S.weeklyCol}>
+                    <div style={S.weeklyColHeader}>{j}</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {dayCourses.length === 0 ? (
+                        <div style={{ color: "#94A3B8", fontSize: 11, textAlign: "center", fontStyle: "italic", padding: "12px 0" }}>Aucun cours</div>
+                      ) : (
+                        dayCourses.map(c => {
+                          let actBg = "linear-gradient(135deg, #3B82F6, #1D4ED8)";
+                          const act = c.activite ? c.activite.toLowerCase() : "";
+                          if (act.includes("muscu") || act.includes("streng")) {
+                            actBg = "linear-gradient(135deg, #10B981, #059669)";
+                          } else if (act.includes("cardio") || act.includes("hiit")) {
+                            actBg = "linear-gradient(135deg, #EF4444, #B91C1C)";
+                          } else if (act.includes("yoga") || act.includes("stret")) {
+                            actBg = "linear-gradient(135deg, #8B5CF6, #6D28D9)";
+                          }
+
+                          return (
+                            <div key={c.id} style={{ ...S.courseCard, background: actBg, padding: "8px 10px" }}>
+                              <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#FFF" }}>
+                                {c.debut} - {c.fin}
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, margin: "2px 0 4px 0", color: "#FFF", lineHeight: 1.25 }}>
+                                {c.activite}
+                              </div>
+                              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 5 }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                {c.coach || "Aucun coach"}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 650, margin: "0 auto", padding: "10px 0" }}>
+              {(() => {
+                const dayCourses = processedSchedule.filter(s => s.jour === selectedDay);
+                if (dayCourses.length === 0) {
+                  return (
+                    <div style={{ color: "#64748B", padding: "40px 20px", textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 12, fontSize: 14, background: "#F8FAFC" }}>
+                      Aucun cours de planifié pour le <strong>{selectedDay === "Lun" ? "Lundi" : selectedDay === "Mar" ? "Mardi" : selectedDay === "Mer" ? "Mercredi" : selectedDay === "Jeu" ? "Jeudi" : selectedDay === "Ven" ? "Vendredi" : selectedDay === "Sam" ? "Samedi" : "Dimanche"}</strong>.
+                    </div>
+                  );
+                }
+                return dayCourses.map(c => {
+                  const isMuscu = c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng");
+                  const isCardio = c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit");
+                  const borderCol = isMuscu ? "#10B981" : isCardio ? "#EF4444" : "#8B5CF6";
+                  
+                  return (
+                    <div 
+                      key={c.id} 
+                      style={{
+                        background: "#FFFFFF",
+                        borderRadius: 12,
+                        padding: "16px 20px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
+                        border: "1px solid #E2E8F0",
+                        borderLeft: `5px solid ${borderCol}`
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                        <div className="mono" style={{ 
+                          background: "#F1F5F9", 
+                          padding: "8px 12px", 
+                          borderRadius: 8, 
+                          fontWeight: 700, 
+                          color: "#334155", 
+                          fontSize: 13.5
+                        }}>
+                          {c.debut} - {c.fin}
+                        </div>
+                        <div>
+                          <h4 style={{ color: "#0F172A", fontSize: 16, fontWeight: 700, margin: 0 }}>{c.activite}</h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5, color: "#64748B", fontSize: 12.5 }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            <span>Coach : <strong>{c.coach || "Aucun coach"}</strong></span>
                           </div>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )
+        )}
       </section>
 
       {/* Public Coaches Section */}
@@ -913,18 +1657,22 @@ function PublicLanding({ setView, schedule }) {
           <h2 style={{ fontSize: 32, marginBottom: 12, color: "#0F172A" }}>Nos Coachs d'Élite</h2>
           <p style={{ color: "#475569", fontSize: 15, marginBottom: 48 }}>Nos entraîneurs sont là pour vous aider à repousser vos limites.</p>
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center" }}>
-            <div style={S.coachProfileCard}>
-              <div style={S.coachAvatarPlaceholder}>BT</div>
-              <h3 style={{ color: "#0F172A", fontSize: 18, margin: "12px 0 4px 0" }}>Bakary Traoré</h3>
-              <p style={{ color: "#6366F1", fontSize: 13, fontWeight: 600 }}>Coach Principal & Musculation</p>
-              <p style={{ color: "#64748B", fontSize: 12, marginTop: 8 }}>Plus de 10 ans d'expérience dans le coaching en force et haltérophilie.</p>
-            </div>
-            <div style={S.coachProfileCard}>
-              <div style={S.coachAvatarPlaceholder} style={{ ...S.coachAvatarPlaceholder, background: "#8B5CF6" }}>MK</div>
-              <h3 style={{ color: "#0F172A", fontSize: 18, margin: "12px 0 4px 0" }}>Mariam Koné</h3>
-              <p style={{ color: "#6366F1", fontSize: 13, fontWeight: 600 }}>Coach Cardio & HIIT</p>
-              <p style={{ color: "#64748B", fontSize: 12, marginTop: 8 }}>Spécialiste de la perte de poids rapide et du renforcement cardio-vasculaire.</p>
-            </div>
+            {coachesList.map((s, index) => {
+              const colors = ["#6366F1", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B"];
+              const bg = colors[index % colors.length];
+              return (
+                <div key={s.id || index} style={S.coachProfileCard}>
+                  <div style={{ ...S.coachAvatarPlaceholder, background: bg }}>
+                    {getInitials(s.nom)}
+                  </div>
+                  <h3 style={{ color: "#0F172A", fontSize: 18, margin: "12px 0 4px 0" }}>{s.nom}</h3>
+                  <p style={{ color: "#6366F1", fontSize: 13, fontWeight: 600 }}>{s.role}</p>
+                  <p style={{ color: "#64748B", fontSize: 12, marginTop: 8 }}>
+                    {s.desc || (s.tel ? `Contact : ${s.tel}` : "Entraîneur certifié FORGE.GYM dédié à votre progression.")}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -983,15 +1731,58 @@ function StatKpi({ label, value, accent, subtext, icon }) {
 // ==========================================
 // DASHBOARD VIEW
 // ==========================================
-function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, ticketsAujourdhui, solde, tickets, tx, resetApp }) {
+function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, ticketsAujourdhui, solde, tickets, tx, resetApp, cardTiers, setTab }) {
   const activeCoaches = staff.filter(s => s.role === "Coach").length;
   const [periodType, setPeriodType] = useState("jour"); // "jour" or "semaine"
-  
-  // Custom SVG Bar Chart Calculation
-  const totalOutflow = depenses + salairesVerses;
-  const maxValue = Math.max(revenuTotal, totalOutflow, 100000);
-  const revHeight = (revenuTotal / maxValue) * 130;
-  const expHeight = (totalOutflow / maxValue) * 130;
+  const [revenuePeriod, setRevenuePeriod] = useState("today"); // "today" | "week" | "month" | "year" | "all"
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const isInPeriod = (dateStr) => {
+    if (!dateStr) return false;
+    const now = new Date();
+    const d = new Date(dateStr);
+    const t = today();
+    switch (revenuePeriod) {
+      case "today":
+        return dateStr === t;
+      case "week": {
+        const day = now.getDay() || 7;
+        const startOfWeek = new Date(now);
+        startOfWeek.setHours(0, 0, 0, 0);
+        if (day !== 1) {
+          startOfWeek.setDate(now.getDate() - (day - 1));
+        }
+        const comp = new Date(dateStr);
+        comp.setHours(0,0,0,0);
+        return comp >= startOfWeek;
+      }
+      case "month": {
+        const [y, m] = dateStr.split("-");
+        return Number(y) === now.getFullYear() && Number(m) === (now.getMonth() + 1);
+      }
+      case "year": {
+        const [y] = dateStr.split("-");
+        return Number(y) === now.getFullYear();
+      }
+      case "all":
+      default:
+        return true;
+    }
+  };
+
+  const filteredTickets = tickets.filter(t => isInPeriod(t.date));
+  const recettesTicketsPeriod = filteredTickets.reduce((s, t) => s + Number(t.montant || 0), 0);
+  const recettesTxPeriod = tx.filter(t => t.type === "recette" && isInPeriod(t.date)).reduce((s, t) => s + Number(t.montant || 0), 0);
+  const periodRevenuTotal = recettesTicketsPeriod + recettesTxPeriod;
+
+  const depensesPeriod = tx.filter(t => t.type === "depense" && isInPeriod(t.date)).reduce((s, t) => s + Number(t.montant || 0), 0);
+  const salairesPeriod = tx.filter(t => t.type === "salaire" && isInPeriod(t.date)).reduce((s, t) => s + Number(t.montant || 0), 0);
+  const periodTotalOutflow = depensesPeriod + salairesPeriod;
+
+  // Custom SVG Bar Chart Calculation (updates dynamically with the selected period)
+  const maxValue = Math.max(periodRevenuTotal, periodTotalOutflow, 100000);
+  const revHeight = (periodRevenuTotal / maxValue) * 130;
+  const expHeight = (periodTotalOutflow / maxValue) * 130;
 
   // --- CUMULATIVE REVENUES BY PERIOD CALCULATIONS ---
   // Combine all income sources: visitor tickets and miscellaneous revenues (like subscriptions)
@@ -1033,53 +1824,138 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
   // Find highest total to calculate relative progress bar
   const maxPeriodTotal = periodData.length > 0 ? Math.max(...periodData.map(p => p.total), 1) : 1;
 
+  // Search filtering on entries list
+  const filteredTicketsList = tickets.filter(t => 
+    t.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.heure.includes(searchTerm) ||
+    (t.date && t.date.includes(searchTerm)) ||
+    (t.montant > 0 ? "visiteur" : "membre").includes(searchTerm.toLowerCase())
+  );
+
+  const displayTickets = searchTerm 
+    ? filteredTicketsList.slice(-15).reverse() 
+    : tickets.slice(-10).reverse();
+
   return (
     <div>
+      {/* Top Header Row with Search & Button */}
       <div style={S.headerRow} className="no-print">
         <div>
-          <h1 style={S.pageTitle}>Tableau de Bord</h1>
+          <h1 style={S.pageTitle}>Tableau de bord</h1>
           <p style={{ fontSize: 13, color: "#64748B", marginTop: 4 }}>Vue d'ensemble sur l'établissement (Accès Administrateur)</p>
         </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <div className="mono" style={{ fontSize: 13, color: "#64748B", background: "#EEF2F6", padding: "6px 12px", borderRadius: 8 }}>{today()}</div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          {/* Search bar */}
+          <div style={{ position: "relative", width: 220 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                border: "1px solid #CBD5E1",
+                borderRadius: 10,
+                padding: "10px 12px 10px 34px",
+                fontSize: 13.5,
+                background: "#FFFFFF",
+                color: "#0F172A",
+              }}
+            />
+          </div>
+          {/* Action button */}
+          <button
+            onClick={() => setTab("accueil")}
+            className="btn-glow"
+            style={{
+              ...S.btnPrimary,
+              background: "#6366F1",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              borderRadius: 10,
+              padding: "10px 18px",
+              fontSize: 13.5
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Enregistrer une entrée
+          </button>
         </div>
       </div>
       
-      {/* KPI Cards Grid */}
-      <div style={S.kpiGrid} className="no-print">
-        <StatKpi
-          label="Membres Inscrits"
-          value={members.length}
-          accent="#6366F1"
-          subtext={`${members.filter(m => getMemberStatus(m).label === "Actif").length} abonnements actifs`}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>}
-        />
-        <StatKpi
-          label="Personnel Actif"
-          value={staff.length}
-          accent="#0EA5E9"
-          subtext={`${activeCoaches} coachs assignés`}
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>}
-        />
-        <StatKpi
-          label="Passages du Jour"
-          value={ticketsAujourdhui.length}
-          accent="#F59E0B"
-          subtext="Entrées enregistrées aujourd'hui"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>}
-        />
-        <StatKpi
-          label="Solde de Caisse"
-          value={fmt(solde) + " F"}
-          accent={solde >= 0 ? "#10B981" : "#EF4444"}
-          subtext="Balance comptable nette"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>}
-        />
+      {/* Grouped KPI Card Panels Grid (Matches look of screenshot) */}
+      <div style={S.grid2} className="no-print">
+        {/* Panel 1: Comptabilité & Caisse */}
+        <div style={{ ...S.cardPanel, marginBottom: 0 }}>
+          <div style={{ ...S.cardHead, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 className="disp" style={{ ...S.cardTitle, margin: 0 }}>Comptabilité & Caisse</h3>
+            <select 
+              className="form-control" 
+              style={{ width: "auto", marginBottom: 0, padding: "4px 8px", fontSize: "13px", borderRadius: 8, border: "1px solid #CBD5E1" }}
+              value={revenuePeriod}
+              onChange={(e) => setRevenuePeriod(e.target.value)}
+            >
+              <option value="today">Aujourd'hui</option>
+              <option value="week">Cette semaine</option>
+              <option value="month">Ce mois-ci</option>
+              <option value="year">Cette année</option>
+              <option value="all">Tout le temps</option>
+            </select>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+            {/* Green Card: Recettes */}
+            <div style={{ padding: "20px", backgroundColor: "#DEF7EC", borderRadius: "12px", textAlign: "center" }}>
+              <div className="mono" style={{ fontSize: "22px", fontWeight: "800", color: "#03543F" }}>{fmt(periodRevenuTotal)} F</div>
+              <div style={{ color: "#046C4E", fontSize: 12, marginTop: 6, fontWeight: 500 }}>
+                {revenuePeriod === 'today' ? 'Recette du jour' :
+                 revenuePeriod === 'week' ? 'Recette de la semaine' :
+                 revenuePeriod === 'month' ? 'Recette du mois' :
+                 revenuePeriod === 'year' ? 'Recette de l\'année' : 'Total encaissé'}
+              </div>
+            </div>
+            {/* Red Card: Total Dépenses */}
+            <div style={{ padding: "20px", backgroundColor: "#FDE8E8", borderRadius: "12px", textAlign: "center" }}>
+              <div className="mono" style={{ fontSize: "22px", fontWeight: "800", color: "#9B1C1C" }}>{fmt(periodTotalOutflow)} F</div>
+              <div style={{ color: "#9B1C1C", fontSize: 12, marginTop: 6, fontWeight: 500 }}>Total Impayés / Charges</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel 2: Statistiques */}
+        <div style={{ ...S.cardPanel, marginBottom: 0 }}>
+          <div style={S.cardHead}>
+            <h3 className="disp" style={{ ...S.cardTitle, margin: 0 }}>Statistiques</h3>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+            {/* Blue Card: Membres Actifs */}
+            <div style={{ padding: "20px", backgroundColor: "#EBF5FF", borderRadius: "12px", textAlign: "center" }}>
+              <div className="mono" style={{ fontSize: "24px", fontWeight: "800", color: "#1E40AF" }}>{members.filter(m => getMemberStatus(m).label === "Actif").length}</div>
+              <div style={{ color: "#1E40AF", fontSize: 12, marginTop: 6, fontWeight: 500 }}>Membres Actifs</div>
+            </div>
+            {/* Yellow Card: Passages */}
+            <div style={{ padding: "20px", backgroundColor: "#FEF9C3", borderRadius: "12px", textAlign: "center" }}>
+              <div className="mono" style={{ fontSize: "24px", fontWeight: "800", color: "#854D0E" }}>{tickets.filter(t => isInPeriod(t.date)).length}</div>
+              <div style={{ color: "#854D0E", fontSize: 12, marginTop: 6, fontWeight: 500 }}>
+                {revenuePeriod === 'today' ? 'Passages du jour' :
+                 revenuePeriod === 'week' ? 'Passages de la semaine' :
+                 revenuePeriod === 'month' ? 'Passages du mois' :
+                 revenuePeriod === 'year' ? 'Passages de l\'année' : 'Total Passages'}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div style={S.grid2} className="no-print">
+      {/* Charts & Cards Grid */}
+      <div style={{ ...S.grid2, marginTop: 24 }} className="no-print">
         {/* SVG Interactive Chart Card */}
-        <CardPanel title="Bilan Financier Global">
+        <CardPanel title="Bilan Financier de la Période">
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "10px 0" }}>
             <svg viewBox="0 0 400 200" style={{ width: "100%", maxHeight: 180, background: "transparent" }}>
               <defs>
@@ -1100,14 +1976,14 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
               {/* Revenue bar */}
               <rect x="90" y={150 - revHeight} width="55" height={revHeight} rx="6" fill="url(#revGrad)" />
               <text x="117.5" y={140 - revHeight} textAnchor="middle" fill="#059669" className="mono" style={{ fontSize: 11.5, fontWeight: 700 }}>
-                {fmt(revenuTotal)} F
+                {fmt(periodRevenuTotal)} F
               </text>
               <text x="117.5" y="172" textAnchor="middle" fill="#475569" style={{ fontSize: 12, fontWeight: 500 }}>Revenus</text>
               
               {/* Expense bar */}
               <rect x="250" y={150 - expHeight} width="55" height={expHeight} rx="6" fill="url(#expGrad)" />
               <text x="277.5" y={140 - expHeight} textAnchor="middle" fill="#B91C1C" className="mono" style={{ fontSize: 11.5, fontWeight: 700 }}>
-                {fmt(totalOutflow)} F
+                {fmt(periodTotalOutflow)} F
               </text>
               <text x="277.5" y="172" textAnchor="middle" fill="#475569" style={{ fontSize: 12, fontWeight: 500 }}>Dépenses</text>
             </svg>
@@ -1121,7 +1997,7 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
         {/* Loyalty cards tier distribution */}
         <CardPanel title="Répartition des Cartes">
           <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "10px 0" }}>
-            {CARD_TIERS.map(c => {
+            {cardTiers.map(c => {
               const count = members.filter(m => m.carte === c.key).length;
               const percent = members.length > 0 ? (count / members.length) * 100 : 0;
               return (
@@ -1201,29 +2077,34 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
         )}
       </CardPanel>
 
-      {/* Passage tracker lists */}
-      <CardPanel title="Dernières Entrées de la Journée" className="no-print" style={{ marginTop: 24 }}>
-        {ticketsAujourdhui.length === 0 ? (
-          <div style={S.empty}>Aucun ticket émis aujourd'hui.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {ticketsAujourdhui.slice(-5).reverse().map(t => (
-              <div key={t.id} style={S.listRow}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                  <span className="mono" style={{ color: "#64748B", background: "#F1F5F9", padding: "4px 8px", borderRadius: 6, fontSize: 12, border: "1px solid #E2E8F0" }}>{t.heure}</span>
-                  <span style={{ fontWeight: 600, color: "#0F172A" }}>{t.nom}</span>
+      {/* Bottom list section for recent entries */}
+      <div style={{ marginTop: 24 }}>
+        <CardPanel title={searchTerm ? "Résultats de la recherche" : "Dernières Entrées enregistrées"}>
+          {displayTickets.length === 0 ? (
+            <div style={S.empty}>Aucun passage trouvé.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {displayTickets.map(t => (
+                <div key={t.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid #F1F5F9" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                    <span className="mono" style={{ color: "#64748B", background: "#F1F5F9", padding: "4px 8px", borderRadius: 6, fontSize: 12, border: "1px solid #E2E8F0" }}>{t.heure}</span>
+                    <div>
+                      <span style={{ fontWeight: 600, color: "#0F172A" }}>{t.nom}</span>
+                      <span style={{ fontSize: 11, color: "#94A3B8", marginLeft: 10 }}>Date : {t.date}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ ...S.tag, background: t.montant > 0 ? "#E0F2FE" : "#F5F3FF", color: t.montant > 0 ? "#0284C7" : "#6366F1" }}>
+                      {t.montant > 0 ? "Visiteur" : "Membre"}
+                    </span>
+                    <span className="mono" style={{ fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</span>
+                  </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ ...S.tag, background: t.montant > 0 ? "#E0F2FE" : "#F5F3FF", color: t.montant > 0 ? "#0284C7" : "#6366F1" }}>
-                    {t.montant > 0 ? "Visiteur" : "Membre"}
-                  </span>
-                  <span className="mono" style={{ fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardPanel>
+              ))}
+            </div>
+          )}
+        </CardPanel>
+      </div>
     </div>
   );
 }
@@ -1231,10 +2112,37 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
 // ==========================================
 // MEMBRES & LOYALTY CARDS VIEW
 // ==========================================
-function Membres({ members, setMembers, setTx, triggerToast }) {
-  const [form, setForm] = useState({ nom: "", tel: "", carte: "Bronze", expiration: "" });
+function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, currentUser }) {
+  const isAdmin = currentUser && currentUser.role === "Administrateur";
+  const [activeReceipt, setActiveReceipt] = useState(null);
+  
+  const printMemberReceipt = (m) => {
+    setActiveReceipt(m);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const [form, setForm] = useState({ 
+    nom: "", 
+    tel: "", 
+    carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
+    montant: cardTiers[0]?.price.toString() || "10000",
+    expiration: "" 
+  });
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("Tous");
+
+  useEffect(() => {
+    if (cardTiers && cardTiers.length > 0) {
+      const activeTier = cardTiers.find(c => c.key === form.carte) || cardTiers[0];
+      setForm(prev => ({
+        ...prev,
+        carte: activeTier.key,
+        montant: prev.montant || activeTier.price.toString()
+      }));
+    }
+  }, [cardTiers]);
 
   const add = async () => {
     if (!form.nom.trim()) {
@@ -1242,7 +2150,8 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
       return;
     }
     
-    const selectedTier = CARD_TIERS.find(c => c.key === form.carte);
+    const selectedTier = cardTiers.find(c => c.key === form.carte) || cardTiers[0];
+    const pricePaid = form.montant ? Number(form.montant) : selectedTier.price;
     
     // Auto-calculate expiration date if blank
     let expDate = form.expiration;
@@ -1276,7 +2185,7 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
       id: uid(),
       type: "recette",
       description: `Adhésion ${form.carte} - ${form.nom}`,
-      montant: selectedTier.price,
+      montant: pricePaid,
       date: today()
     };
 
@@ -1288,10 +2197,21 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
     }
 
     triggerToast(`Membre inscrit avec succès ! Carte ${form.carte} générée.`);
-    setForm({ nom: "", tel: "", carte: "Bronze", expiration: "" });
+    setForm({ 
+      nom: "", 
+      tel: "", 
+      carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
+      montant: cardTiers[0]?.price.toString() || "10000",
+      expiration: "" 
+    });
+    printMemberReceipt(newMember);
   };
 
   const remove = async (id) => {
+    if (!isAdmin) {
+      triggerToast("Action non autorisée. Seul l'Administrateur peut supprimer un membre.");
+      return;
+    }
     if (confirm("Voulez-vous vraiment retirer ce membre ?")) {
       const { error } = await supabase.from("members").delete().eq("id", id);
       if (error) {
@@ -1313,25 +2233,40 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
   return (
     <div>
       <h1 style={S.pageTitle}>Gestion des Membres</h1>
-      <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }}>Émettez et filtrez les cartes de fidélité Bronze, Argent, et Or.</p>
+      <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }}>Enregistrez les membres, émettez des abonnements (mensuels, annuels) ou des packs de séances à la carte.</p>
       
       <CardPanel title="Nouvelle Inscription">
         <div style={S.formRow}>
-          <div style={{ flex: "1 1 200px" }}>
+          <div style={{ flex: "1 1 180px" }}>
             <label style={S.labelStyle}>Nom Complet</label>
             <input style={S.input} placeholder="Ex: Jean Yao" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} />
           </div>
-          <div style={{ flex: "1 1 150px" }}>
+          <div style={{ flex: "1 1 120px" }}>
             <label style={S.labelStyle}>Téléphone</label>
             <input style={S.input} placeholder="Ex: 07 44 55 66 77" value={form.tel} onChange={e => setForm({ ...form, tel: e.target.value })} />
           </div>
           <div style={{ flex: "1 1 150px" }}>
             <label style={S.labelStyle}>Niveau de Carte</label>
-            <select style={S.input} value={form.carte} onChange={e => setForm({ ...form, carte: e.target.value })}>
-              {CARD_TIERS.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
+            <select 
+              style={S.input} 
+              value={form.carte} 
+              onChange={e => {
+                const tier = cardTiers.find(c => c.key === e.target.value);
+                setForm({ 
+                  ...form, 
+                  carte: e.target.value, 
+                  montant: tier ? tier.price.toString() : "" 
+                });
+              }}
+            >
+              {cardTiers.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
             </select>
           </div>
-          <div style={{ flex: "1 1 150px" }}>
+          <div style={{ flex: "1 1 110px" }}>
+            <label style={S.labelStyle}>Montant payé (F)</label>
+            <input style={S.input} type="number" placeholder="Tarif appliqué" value={form.montant} onChange={e => setForm({ ...form, montant: e.target.value })} />
+          </div>
+          <div style={{ flex: "1 1 140px" }}>
             <label style={S.labelStyle}>Date d'Expiration (Auto si vide)</label>
             <input style={S.input} type="date" value={form.expiration} onChange={e => setForm({ ...form, expiration: e.target.value })} />
           </div>
@@ -1349,8 +2284,8 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <div style={{ display: "flex", gap: 6 }}>
-          {["Tous", "Bronze", "Argent", "Or"].map(tier => (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {["Tous", ...cardTiers.map(c => c.key)].map(tier => (
             <button
               key={tier}
               onClick={() => setFilterTier(tier)}
@@ -1359,7 +2294,7 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
                 ...(filterTier === tier ? S.btnFilterActive : {})
               }}
             >
-              {tier}
+              {tier.split(" (")[0]}
             </button>
           ))}
         </div>
@@ -1369,7 +2304,7 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
       <div style={S.memberGrid}>
         {filteredMembers.length === 0 && <div style={{ color: "#64748B", padding: 30, textAlign: "center", width: "100%", border: "1px dashed #CBD5E1", borderRadius: 12 }}>Aucun membre répertorié.</div>}
         {filteredMembers.map(m => {
-          const tier = CARD_TIERS.find(c => c.key === m.carte) || CARD_TIERS[0];
+          const tier = cardTiers.find(c => c.key === m.carte) || cardTiers[0];
           const status = getMemberStatus(m);
           
           return (
@@ -1415,17 +2350,73 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
                   </span>
                   <span style={{ fontSize: 12, color: "#64748B" }}>Inscrit: {m.inscription}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 700, color: tier.color, fontSize: 13.5 }}>Niveau {m.carte}</span>
-                  <button className="btn-secondary" style={S.btnDangerGhost} onClick={() => remove(m.id)}>
-                    Retirer le membre
-                  </button>
+                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 700, color: tier.color, fontSize: 13.5 }}>Niveau {m.carte.split(" (")[0]}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button 
+                      className="btn-secondary no-print" 
+                      style={{ padding: "5px 10px", fontSize: 12, background: "#FFFFFF", border: "1px solid #CBD5E1", color: "#334155" }} 
+                      onClick={() => printMemberReceipt(m)}
+                    >
+                      🖨️ Reçu
+                    </button>
+                    {isAdmin && (
+                      <button className="btn-secondary no-print" style={{ ...S.btnDangerGhost, padding: "5px 10px", fontSize: 12 }} onClick={() => remove(m.id)}>
+                        Retirer
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Hidden print template for subscription receipt */}
+      {activeReceipt && (
+        <div className="print-only" style={{ display: "none" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
+            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold" }}>REÇU D'INSCRIPTION</div>
+          </div>
+          
+          <div style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 14 }}>
+            <div>RÉF : R-{activeReceipt.id.substring(0, 8).toUpperCase()}</div>
+            <div>DATE INSCRIPTION : {activeReceipt.inscription}</div>
+            <div>DATE EXPIRATION : {activeReceipt.expiration}</div>
+            <div>ABONNEMENT : {activeReceipt.carte}</div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
+              <span>MEMBRE :</span>
+              <span>{activeReceipt.nom}</span>
+            </div>
+            {activeReceipt.tel && (
+              <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between" }}>
+                <span>TEL :</span>
+                <span>{activeReceipt.tel}</span>
+              </div>
+            )}
+            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
+              <span>MONTANT PAYÉ :</span>
+              <span>{(() => {
+                const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
+                if (memberTx) return fmt(memberTx.montant);
+                const tier = cardTiers.find(c => c.key === activeReceipt.carte);
+                return fmt(tier ? tier.price : 0);
+              })()} F CFA</span>
+            </div>
+          </div>
+          <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
+          <div style={{ textAlign: "center", fontSize: 10 }}>
+            MERCI POUR VOTRE FIDÉLITÉ !
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1433,8 +2424,53 @@ function Membres({ members, setMembers, setTx, triggerToast }) {
 // ==========================================
 // WEEKLY SCHEDULE VIEW
 // ==========================================
-function Planning({ schedule, setSchedule, staff, triggerToast }) {
-  const [form, setForm] = useState({ activite: "", coach: "", jour: "Lun", debut: "08:00", fin: "09:00" });
+function Planning({ schedule, setSchedule, staff, triggerToast, currentUser }) {
+  const isAdmin = currentUser && currentUser.role === "Administrateur";
+  const [selectedDay, setSelectedDay] = useState("Tous");
+  const [displayMode, setDisplayMode] = useState("table"); // "table" (Data Grid) by default, or "grid"
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "jour", direction: "ascending" });
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedDay]);
+
+  const PREDEFINED_ACTIVITIES = [
+    "Musculation / Force",
+    "Cardio / HIIT",
+    "Zumba / Fitness",
+    "Boxe Cardio",
+    "Yoga / Stretching",
+    "Pilates / Gym douce",
+    "Autre (Saisie libre)"
+  ];
+
+  const DAY_ORDER = { "Lun": 1, "Mar": 2, "Mer": 3, "Jeu": 4, "Ven": 5, "Sam": 6, "Dim": 7 };
+
+  const [form, setForm] = useState({ 
+    activite: "Musculation / Force", 
+    coach: "", 
+    jour: "Lun", 
+    debut: "08:00", 
+    fin: "09:00" 
+  });
+  const [selectedPreset, setSelectedPreset] = useState("Musculation / Force");
+  const [customActivite, setCustomActivite] = useState("");
+
+  const handlePresetChange = (preset) => {
+    setSelectedPreset(preset);
+    if (preset === "Autre (Saisie libre)") {
+      setForm(prev => ({ ...prev, activite: customActivite }));
+    } else {
+      setForm(prev => ({ ...prev, activite: preset }));
+    }
+  };
+
+  const handleCustomActiviteChange = (text) => {
+    setCustomActivite(text);
+    setForm(prev => ({ ...prev, activite: text }));
+  };
 
   const add = async () => {
     if (!form.activite.trim()) {
@@ -1456,10 +2492,24 @@ function Planning({ schedule, setSchedule, staff, triggerToast }) {
 
     setSchedule([...schedule, newCourse]);
     triggerToast("Cours planifié");
-    setForm({ activite: "", coach: "", jour: form.jour, debut: "08:00", fin: "09:00" });
+    
+    const nextDefaultPreset = PREDEFINED_ACTIVITIES[0];
+    setSelectedPreset(nextDefaultPreset);
+    setCustomActivite("");
+    setForm({ 
+      activite: nextDefaultPreset, 
+      coach: "", 
+      jour: form.jour, 
+      debut: "08:00", 
+      fin: "09:00" 
+    });
   };
 
   const remove = async (id) => {
+    if (!isAdmin) {
+      triggerToast("Action non autorisée. Seul l'Administrateur peut supprimer un cours.");
+      return;
+    }
     if (confirm("Supprimer ce cours ?")) {
       const { error } = await supabase.from("schedule").delete().eq("id", id);
       if (error) {
@@ -1472,90 +2522,839 @@ function Planning({ schedule, setSchedule, staff, triggerToast }) {
     }
   };
 
-  const coaches = staff.filter(s => s.role === "Coach");
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIndicator = (key) => {
+    if (sortConfig.key !== key) return <span style={{ color: "#94A3B8", marginLeft: 4, fontSize: 10 }}>↕</span>;
+    return sortConfig.direction === "ascending" ? 
+      <span style={{ color: "#6366F1", marginLeft: 4, fontSize: 10 }}>▲</span> : 
+      <span style={{ color: "#6366F1", marginLeft: 4, fontSize: 10 }}>▼</span>;
+  };
+
+  const coaches = staff.filter(s => s.role && s.role.toLowerCase().includes("coach"));
+
+  // Apply sorting and filtering to schedule
+  const processedSchedule = [...schedule]
+    .filter(c => {
+      const matchesDay = selectedDay === "Tous" || c.jour === selectedDay;
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        c.activite.toLowerCase().includes(query) || 
+        (c.coach && c.coach.toLowerCase().includes(query)) ||
+        c.jour.toLowerCase().includes(query) ||
+        c.debut.includes(query) ||
+        c.fin.includes(query);
+      return matchesDay && matchesSearch;
+    })
+    .sort((a, b) => {
+      let aVal = a[sortConfig.key] || "";
+      let bVal = b[sortConfig.key] || "";
+
+      if (sortConfig.key === "jour") {
+        aVal = DAY_ORDER[a.jour] || 99;
+        bVal = DAY_ORDER[b.jour] || 99;
+      }
+
+      if (aVal < bVal) return sortConfig.direction === "ascending" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "ascending" ? 1 : -1;
+      
+      // Secondary sort
+      if (sortConfig.key !== "debut") {
+        return (a.debut || "").localeCompare(b.debut || "");
+      }
+      return 0;
+    });
+
+  const itemsPerPage = 6;
+  const totalPages = Math.ceil(processedSchedule.length / itemsPerPage);
+  const paginatedSchedule = processedSchedule.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div>
       <h1 style={S.pageTitle}>Emploi du Temps</h1>
       <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }}>Planification des cours hebdomadaires et assignation des coachs.</p>
       
-      <CardPanel title="Planifier un nouveau cours">
-        <div style={S.formRow}>
-          <div style={{ flex: "1 1 160px" }}>
-            <label style={S.labelStyle}>Activité / Cours</label>
-            <input style={S.input} placeholder="Ex: Boxe Cardio, Zumba..." value={form.activite} onChange={e => setForm({ ...form, activite: e.target.value })} />
-          </div>
-          <div style={{ flex: "1 1 160px" }}>
-            <label style={S.labelStyle}>Coach Assigné</label>
-            <select style={S.input} value={form.coach} onChange={e => setForm({ ...form, coach: e.target.value })}>
-              <option value="">Sélectionner un coach</option>
-              {coaches.map(c => <option key={c.id} value={c.nom}>{c.nom}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: "1 1 100px" }}>
-            <label style={S.labelStyle}>Jour</label>
-            <select style={S.input} value={form.jour} onChange={e => setForm({ ...form, jour: e.target.value })}>
-              {JOURS.map(j => <option key={j} value={j}>{j}</option>)}
-            </select>
-          </div>
-          <div style={{ flex: "1 1 80px" }}>
-            <label style={S.labelStyle}>Début</label>
-            <input style={S.input} type="time" value={form.debut} onChange={e => setForm({ ...form, debut: e.target.value })} />
-          </div>
-          <div style={{ flex: "1 1 80px" }}>
-            <label style={S.labelStyle}>Fin</label>
-            <input style={S.input} type="time" value={form.fin} onChange={e => setForm({ ...form, fin: e.target.value })} />
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <button className="btn-glow" style={{ ...S.btnPrimary, height: 38 }} onClick={add}>Planifier</button>
-          </div>
-        </div>
-      </CardPanel>
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start", width: "100%" }}>
+        
+        {/* Left column: Planifier un nouveau cours */}
+        <div style={{ flex: "1 1 320px", maxWidth: 400 }}>
+          <CardPanel title="Planifier un nouveau cours">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={S.labelStyle}>Activité / Cours</label>
+                <select 
+                  style={S.input} 
+                  value={selectedPreset} 
+                  onChange={e => handlePresetChange(e.target.value)}
+                >
+                  {PREDEFINED_ACTIVITIES.map(a => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+                {selectedPreset === "Autre (Saisie libre)" && (
+                  <input 
+                    style={{ ...S.input, marginTop: 4 }} 
+                    placeholder="Nom du cours personnalisé..." 
+                    value={customActivite} 
+                    onChange={e => handleCustomActiviteChange(e.target.value)} 
+                  />
+                )}
+              </div>
 
-      <CardPanel title="Planning Hebdomadaire">
-        <div style={S.weeklyGrid}>
-          {JOURS.map(j => {
-            const dayCourses = schedule.filter(s => s.jour === j).sort((a, b) => a.debut.localeCompare(b.debut));
-            return (
-              <div key={j} style={S.weeklyCol}>
-                <div style={S.weeklyColHeader}>{j}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {dayCourses.length === 0 ? (
-                    <div style={{ color: "#94A3B8", fontSize: 11, textAlign: "center", fontStyle: "italic", padding: "16px 0" }}>Aucun cours</div>
-                  ) : (
-                    dayCourses.map(c => {
-                      let actBg = "linear-gradient(135deg, #3B82F6, #1D4ED8)";
-                      if (c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng")) {
-                        actBg = "linear-gradient(135deg, #10B981, #059669)";
-                      } else if (c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit")) {
-                        actBg = "linear-gradient(135deg, #EF4444, #B91C1C)";
-                      } else if (c.activite.toLowerCase().includes("yoga") || c.activite.toLowerCase().includes("stret")) {
-                        actBg = "linear-gradient(135deg, #8B5CF6, #6D28D9)";
-                      }
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={S.labelStyle}>Coach Assigné</label>
+                <select style={S.input} value={form.coach} onChange={e => setForm({ ...form, coach: e.target.value })}>
+                  <option value="">Sélectionner un coach</option>
+                  {coaches.map(c => <option key={c.id} value={c.nom}>{c.nom}</option>)}
+                </select>
+              </div>
 
-                      return (
-                        <div key={c.id} style={{ ...S.courseCard, background: actBg }}>
-                          <button style={S.courseDelete} onClick={() => remove(c.id)}>×</button>
-                          <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: "#FFF" }}>
-                            {c.debut} - {c.fin}
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 700, margin: "4px 0 6px 0", color: "#FFF", lineHeight: 1.25 }}>
-                            {c.activite}
-                          </div>
-                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 5 }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            {c.coach || "Aucun coach"}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <label style={S.labelStyle}>Jour</label>
+                <select style={S.input} value={form.jour} onChange={e => setForm({ ...form, jour: e.target.value })}>
+                  {JOURS.map(j => <option key={j} value={j}>{j}</option>)}
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={S.labelStyle}>Début</label>
+                  <input style={S.input} type="time" value={form.debut} onChange={e => setForm({ ...form, debut: e.target.value })} />
+                </div>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={S.labelStyle}>Fin</label>
+                  <input style={S.input} type="time" value={form.fin} onChange={e => setForm({ ...form, fin: e.target.value })} />
                 </div>
               </div>
-            );
-          })}
+
+              <div style={{ marginTop: 8 }}>
+                <button 
+                  className="btn-glow" 
+                  style={{
+                    background: "#E27722",
+                    color: "#FFF",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "12px 20px",
+                    fontWeight: "bold",
+                    fontSize: 14,
+                    cursor: "pointer",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 10px rgba(226, 119, 34, 0.2)",
+                    transition: "all 0.2s"
+                  }} 
+                  onClick={add}
+                >
+                  Ajouter
+                </button>
+              </div>
+
+            </div>
+          </CardPanel>
         </div>
-      </CardPanel>
+
+        {/* Right column: Planning Hebdomadaire */}
+        <div style={{ flex: "2 1 600px", minWidth: 320 }}>
+          <CardPanel title="Planning Hebdomadaire">
+            {/* Grid Controls (Search + View Toggles) */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
+              {/* Search bar */}
+              <div style={{ flex: "1 1 200px", maxWidth: 300 }}>
+                <input 
+                  style={{ ...S.input, margin: 0, paddingLeft: 12 }} 
+                  placeholder="🔍 Rechercher un cours, un coach, un jour..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* Toggle buttons */}
+              <div style={{ display: "flex", background: "#F1F5F9", padding: 4, borderRadius: 10, border: "1px solid #E2E8F0" }}>
+                <button
+                  onClick={() => setDisplayMode("table")}
+                  style={{
+                    padding: "8px 16px",
+                    border: "none",
+                    borderRadius: 8,
+                    background: displayMode === "table" ? "#FFFFFF" : "transparent",
+                    color: displayMode === "table" ? "#4F46E5" : "#64748B",
+                    fontWeight: displayMode === "table" ? 700 : 500,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    boxShadow: displayMode === "table" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  📊 Tableau (Data Grid)
+                </button>
+                <button
+                  onClick={() => setDisplayMode("grid")}
+                  style={{
+                    padding: "8px 16px",
+                    border: "none",
+                    borderRadius: 8,
+                    background: displayMode === "grid" ? "#FFFFFF" : "transparent",
+                    color: displayMode === "grid" ? "#4F46E5" : "#64748B",
+                    fontWeight: displayMode === "grid" ? 700 : 500,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    boxShadow: displayMode === "grid" ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  📅 Calendrier
+                </button>
+              </div>
+            </div>
+
+            {/* Day selection tabs */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "flex-start", borderBottom: "1px solid #E2E8F0", paddingBottom: 16 }}>
+              {["Tous", ...JOURS].map(d => (
+                <button
+                  key={d}
+                  onClick={() => setSelectedDay(d)}
+                  style={{
+                    ...S.btnFilter,
+                    padding: "8px 16px",
+                    fontSize: 13,
+                    borderRadius: 8,
+                    ...(selectedDay === d ? S.btnFilterActive : {})
+                  }}
+                >
+                  {d === "Tous" ? "Toute la semaine" : d}
+                </button>
+              ))}
+            </div>
+
+            {displayMode === "table" ? (
+              /* Data Grid View */
+              paginatedSchedule.length === 0 ? (
+                <div style={{ color: "#64748B", padding: "40px 20px", textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 12, fontSize: 14, background: "#F8FAFC" }}>
+                  Aucun cours correspondant aux critères de recherche.
+                </div>
+              ) : (
+                <>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={S.table}>
+                      <thead>
+                        <tr>
+                          <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("activite")}>
+                            Activité / Cours {renderSortIndicator("activite")}
+                          </th>
+                          <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("coach")}>
+                            Coach {renderSortIndicator("coach")}
+                          </th>
+                          <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("jour")}>
+                            Jour {renderSortIndicator("jour")}
+                          </th>
+                          <th style={{ ...S.th, cursor: "pointer", userSelect: "none" }} onClick={() => handleSort("debut")}>
+                            Horaires {renderSortIndicator("debut")}
+                          </th>
+                          <th style={{ ...S.th, width: 60 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedSchedule.map(c => (
+                          <tr key={c.id} style={S.tr}>
+                            <td style={{ ...S.td, fontWeight: 700, color: "#0F172A" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  display: "inline-block",
+                                  background: c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng") ? "#10B981" : 
+                                             c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit") ? "#EF4444" : 
+                                             c.activite.toLowerCase().includes("yoga") || c.activite.toLowerCase().includes("stret") ? "#8B5CF6" : "#3B82F6"
+                                }} />
+                                {c.activite}
+                              </div>
+                            </td>
+                            <td style={S.td}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                <span style={{ fontWeight: 500 }}>{c.coach || "Aucun coach"}</span>
+                              </div>
+                            </td>
+                            <td style={S.td}>
+                              <span style={{
+                                ...S.tag,
+                                background: c.jour === "Lun" ? "#EFF6FF" : 
+                                            c.jour === "Mar" ? "#ECFDF5" : 
+                                            c.jour === "Mer" ? "#FDF2F8" : 
+                                            c.jour === "Jeu" ? "#FEF3C7" : 
+                                            c.jour === "Ven" ? "#F5F3FF" : 
+                                            c.jour === "Sam" ? "#FFF1F2" : "#F8FAFC",
+                                color: c.jour === "Lun" ? "#1E40AF" : 
+                                       c.jour === "Mar" ? "#065F46" : 
+                                       c.jour === "Mer" ? "#9D174D" : 
+                                       c.jour === "Jeu" ? "#92400E" : 
+                                       c.jour === "Ven" ? "#5B21B6" : 
+                                       c.jour === "Sam" ? "#9F1239" : "#64748B"
+                              }}>
+                                {c.jour === "Lun" ? "Lundi" : 
+                                 c.jour === "Mar" ? "Mardi" : 
+                                 c.jour === "Mer" ? "Mercredi" : 
+                                 c.jour === "Jeu" ? "Jeudi" : 
+                                 c.jour === "Ven" ? "Vendredi" : 
+                                 c.jour === "Sam" ? "Samedi" : "Dimanche"}
+                              </span>
+                            </td>
+                            <td className="mono" style={{ ...S.td, fontWeight: 600, color: "#475569" }}>
+                              {c.debut} - {c.fin}
+                            </td>
+                            <td style={S.td}>
+                              {isAdmin && (
+                                <button 
+                                  style={{
+                                    background: "#FEE2E2",
+                                    border: "none",
+                                    color: "#EF4444",
+                                    borderRadius: "6px",
+                                    padding: "6px 8px",
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.2s"
+                                  }}
+                                  onClick={() => remove(c.id)}
+                                  title="Supprimer ce cours"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Pagination Controls */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, borderTop: "1px solid #E2E8F0", paddingTop: 16 }}>
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                        color: currentPage === 1 ? "#94A3B8" : "#E27722",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4
+                      }}
+                    >
+                      ‹ Précédent
+                    </button>
+                    <span style={{ fontSize: 13, color: "#64748B", fontWeight: 500 }}>
+                      Page {currentPage} / {totalPages || 1}
+                    </span>
+                    <button
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: (currentPage === totalPages || totalPages === 0) ? "not-allowed" : "pointer",
+                        color: (currentPage === totalPages || totalPages === 0) ? "#94A3B8" : "#E27722",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4
+                      }}
+                    >
+                      Suivant ›
+                    </button>
+                  </div>
+                </>
+              )
+            ) : (
+              /* Calendar Grid View */
+              selectedDay === "Tous" ? (
+                <div style={S.weeklyGrid}>
+                  {JOURS.map(j => {
+                    const dayCourses = processedSchedule.filter(s => s.jour === j);
+                    return (
+                      <div key={j} style={S.weeklyCol}>
+                        <div style={S.weeklyColHeader}>{j}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {dayCourses.length === 0 ? (
+                            <div style={{ color: "#94A3B8", fontSize: 11, textAlign: "center", fontStyle: "italic", padding: "16px 0" }}>Aucun cours</div>
+                          ) : (
+                            dayCourses.map(c => {
+                              let actBg = "linear-gradient(135deg, #3B82F6, #1D4ED8)";
+                              if (c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng")) {
+                                actBg = "linear-gradient(135deg, #10B981, #059669)";
+                              } else if (c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit")) {
+                                actBg = "linear-gradient(135deg, #EF4444, #B91C1C)";
+                              } else if (c.activite.toLowerCase().includes("yoga") || c.activite.toLowerCase().includes("stret")) {
+                                actBg = "linear-gradient(135deg, #8B5CF6, #6D28D9)";
+                              }
+
+                              return (
+                                <div key={c.id} style={{ ...S.courseCard, background: actBg, padding: "12px 14px" }}>
+                                  {isAdmin && (
+                                    <button 
+                                      style={{
+                                        position: "absolute",
+                                        top: 8,
+                                        right: 8,
+                                        background: "rgba(255,255,255,0.2)",
+                                        border: "none",
+                                        color: "#FFF",
+                                        borderRadius: "6px",
+                                        width: 20,
+                                        height: 20,
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                      }}
+                                      onClick={() => remove(c.id)}
+                                    >
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                                    </button>
+                                  )}
+                                  <div className="mono" style={{ fontSize: 10, fontWeight: 700, color: "#FFF" }}>
+                                    {c.debut} - {c.fin}
+                                  </div>
+                                  <div style={{ fontSize: 13, fontWeight: 700, margin: "4px 0 6px 0", color: "#FFF", lineHeight: 1.25 }}>
+                                    {c.activite}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 5 }}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                    <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{c.coach || "Aucun coach"}</span>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 650, margin: "0 auto", padding: "10px 0" }}>
+                  {(() => {
+                    const dayCourses = processedSchedule.filter(s => s.jour === selectedDay);
+                    if (dayCourses.length === 0) {
+                      return (
+                        <div style={{ color: "#64748B", padding: "40px 20px", textAlign: "center", border: "1px dashed #CBD5E1", borderRadius: 12, fontSize: 14, background: "#F8FAFC" }}>
+                          Aucun cours de planifié pour le <strong>{selectedDay === "Lun" ? "Lundi" : selectedDay === "Mar" ? "Mardi" : selectedDay === "Mer" ? "Mercredi" : selectedDay === "Jeu" ? "Jeudi" : selectedDay === "Ven" ? "Vendredi" : selectedDay === "Sam" ? "Samedi" : "Dimanche"}</strong>.
+                        </div>
+                      );
+                    }
+                    return dayCourses.map(c => {
+                      const isMuscu = c.activite.toLowerCase().includes("muscu") || c.activite.toLowerCase().includes("streng");
+                      const isCardio = c.activite.toLowerCase().includes("cardio") || c.activite.toLowerCase().includes("hiit");
+                      const borderCol = isMuscu ? "#10B981" : isCardio ? "#EF4444" : "#8B5CF6";
+                      
+                      return (
+                        <div 
+                          key={c.id} 
+                          style={{
+                            background: "#FFFFFF",
+                            borderRadius: 12,
+                            padding: "16px 20px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            boxShadow: "0 4px 15px rgba(0,0,0,0.03)",
+                            border: "1px solid #E2E8F0",
+                            borderLeft: `5px solid ${borderCol}`
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                            <div className="mono" style={{ 
+                              background: "#F1F5F9", 
+                              padding: "8px 12px", 
+                              borderRadius: 8, 
+                              fontWeight: 700, 
+                              color: "#334155", 
+                              fontSize: 13.5
+                            }}>
+                              {c.debut} - {c.fin}
+                            </div>
+                            <div>
+                              <h4 style={{ color: "#0F172A", fontSize: 16, fontWeight: 700, margin: 0 }}>{c.activite}</h4>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5, color: "#64748B", fontSize: 12.5 }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                <span>Coach : <strong>{c.coach || "Aucun coach"}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {isAdmin && (
+                            <button 
+                              style={{
+                                background: "#FEE2E2",
+                                border: "none",
+                                color: "#EF4444",
+                                borderRadius: "8px",
+                                padding: "8px 10px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.2s"
+                              }}
+                              onClick={() => remove(c.id)}
+                              title="Supprimer ce cours"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )
+            )}
+          </CardPanel>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+// ==========================================
+// BOUTIQUE / POS (POINT OF SALE) VIEW
+// ==========================================
+function Boutique({ setTx, triggerToast }) {
+  const [cart, setCart] = useState([]);
+  const [activeSaleReceipt, setActiveSaleReceipt] = useState(null);
+  const [customItem, setCustomItem] = useState({ name: "", price: "" });
+  const [showCustomModal, setShowCustomModal] = useState(false);
+
+  const PRODUCTS_DEFAULT = [
+    { id: "p1", name: "Bouteille d'eau (500 ml)", price: 500, emoji: "💧", category: "Rafraîchissement" },
+    { id: "p2", name: "Boisson Énergisante", price: 1500, emoji: "⚡", category: "Rafraîchissement" },
+    { id: "p3", name: "Shake de Protéines", price: 2000, emoji: "🥛", category: "Rafraîchissement" },
+    { id: "p4", name: "Jus de Fruits Naturel", price: 1000, emoji: "🧃", category: "Rafraîchissement" },
+    { id: "p5", name: "Serviette de sport", price: 3000, emoji: "🧼", category: "Accessoire" },
+    { id: "p6", name: "Gants de musculation", price: 5000, emoji: "🥊", category: "Accessoire" },
+    { id: "p7", name: "Shaker FORGE", price: 4000, emoji: "🥤", category: "Accessoire" },
+    { id: "p8", name: "Cadenas de vestiaire", price: 1500, emoji: "🔒", category: "Accessoire" },
+    { id: "p9", name: "T-shirt FORGE", price: 7000, emoji: "👕", category: "Accessoire" },
+  ];
+
+  const addToCart = (product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+      }
+      return [...prev, { ...product, qty: 1 }];
+    });
+    triggerToast(`${product.name} ajouté au panier`);
+  };
+
+  const addCustomItem = (e) => {
+    e.preventDefault();
+    if (!customItem.name.trim() || !customItem.price) {
+      triggerToast("Tous les champs sont requis");
+      return;
+    }
+    const priceNum = Number(customItem.price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      triggerToast("Le prix doit être positif");
+      return;
+    }
+
+    const newItem = {
+      id: "custom-" + uid().substring(0, 5),
+      name: customItem.name,
+      price: priceNum,
+      emoji: "🏷️",
+      category: "Personnalisé"
+    };
+
+    addToCart(newItem);
+    setCustomItem({ name: "", price: "" });
+    setShowCustomModal(false);
+  };
+
+  const updateQty = (id, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = item.qty + delta;
+        return newQty > 0 ? { ...item, qty: newQty } : null;
+      }
+      return item;
+    }).filter(Boolean));
+  };
+
+  const checkout = async () => {
+    if (cart.length === 0) {
+      triggerToast("Le panier est vide");
+      return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const saleId = "B-" + uid().substring(0, 6).toUpperCase();
+    const itemsDescription = cart.map(item => `${item.name} x${item.qty}`).join(", ");
+    
+    const newTx = {
+      id: uid(),
+      type: "recette",
+      description: `Vente Boutique [${saleId}] : ${itemsDescription}`,
+      montant: total,
+      date: today()
+    };
+
+    const { error: txError } = await supabase.from("tx").insert([newTx]);
+    if (txError) {
+      console.error("Failed to post shop sale tx to Supabase:", txError);
+      triggerToast("Erreur lors de l'enregistrement de la transaction");
+      return;
+    }
+
+    setTx(prev => [...prev, newTx]);
+    triggerToast(`Vente enregistrée ! Total : ${fmt(total)} F CFA`);
+
+    const receiptData = {
+      id: saleId,
+      date: today(),
+      time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      items: [...cart],
+      total: total
+    };
+    
+    setCart([]);
+    setActiveSaleReceipt(receiptData);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  const totalCart = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+  return (
+    <div>
+      <h1 style={S.pageTitle} className="no-print">Boutique & Rafraîchissements</h1>
+      <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }} className="no-print">
+        Gérez les ventes d'accessoires et de boissons aux membres. Validez le panier pour émettre le reçu thermique.
+      </p>
+
+      <div style={S.grid2} className="no-print">
+        {/* Products Catalogue */}
+        <CardPanel title="Catalogue Produits" action={<button className="btn-secondary" style={{ ...S.btnGhost, padding: "4px 8px", fontSize: 12 }} onClick={() => setShowCustomModal(true)}>➕ Produit Libre</button>}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
+            {PRODUCTS_DEFAULT.map(p => (
+              <div 
+                key={p.id} 
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: 12,
+                  padding: 12,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, box-shadow 0.2s"
+                }}
+                className="card-glow"
+                onClick={() => addToCart(p)}
+              >
+                <div style={{ fontSize: 28, marginBottom: 6 }}>{p.emoji}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "#0F172A", height: 34, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.2 }}>
+                  {p.name}
+                </div>
+                <div style={{ fontSize: 11, color: "#64748B", marginTop: 4, textTransform: "uppercase", fontWeight: 600 }}>{p.category}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#6366F1", marginTop: 6 }}>{fmt(p.price)} F</div>
+              </div>
+            ))}
+
+            {/* Special + Produit Libre card */}
+            <div 
+              style={{
+                background: "linear-gradient(135deg, #EEF2F6, #E2E8F0)",
+                border: "2px dashed #CBD5E1",
+                borderRadius: 12,
+                padding: 12,
+                textAlign: "center",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 120,
+                transition: "transform 0.2s, box-shadow 0.2s"
+              }}
+              className="card-glow"
+              onClick={() => setShowCustomModal(true)}
+            >
+              <div style={{ fontSize: 32, marginBottom: 6 }}>➕</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>
+                Produit Libre
+              </div>
+              <div style={{ fontSize: 11, color: "#64748B", marginTop: 4 }}>Saisie libre</div>
+            </div>
+          </div>
+        </CardPanel>
+
+        {/* Shopping Cart */}
+        <CardPanel title={`Panier (${cart.reduce((s, i) => s + i.qty, 0)} articles)`}>
+          {cart.length === 0 ? (
+            <div style={S.empty}>Le panier est vide. Cliquez sur un produit pour l'ajouter.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+                {cart.map(item => (
+                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 8, borderBottom: "1px solid #F1F5F9" }}>
+                    <div style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                        {item.emoji} {item.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>{fmt(item.price)} F &bull; Total: {fmt(item.price * item.qty)} F</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <button 
+                        style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #CBD5E1", background: "#FFF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }} 
+                        onClick={() => updateQty(item.id, -1)}
+                      >
+                        -
+                      </button>
+                      <span className="mono" style={{ fontSize: 13, fontWeight: 700, minWidth: 16, textAlign: "center" }}>{item.qty}</span>
+                      <button 
+                        style={{ width: 22, height: 22, borderRadius: "50%", border: "1px solid #CBD5E1", background: "#FFF", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }} 
+                        onClick={() => updateQty(item.id, 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 20, borderTop: "2px solid #F1F5F9", paddingTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: "#334155" }}>Total à payer :</span>
+                  <span className="mono" style={{ fontSize: 20, fontWeight: 800, color: "#0F172A" }}>{fmt(totalCart)} F CFA</span>
+                </div>
+                <button 
+                  className="btn-glow" 
+                  style={{ ...S.btnPrimary, width: "100%", height: 42, fontSize: 14 }} 
+                  onClick={checkout}
+                >
+                  🛒 Enregistrer & Imprimer Reçu
+                </button>
+              </div>
+            </div>
+          )}
+        </CardPanel>
+      </div>
+
+      {/* Predefined Custom Product Modal */}
+      {showCustomModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "90%", maxWidth: 400 }}>
+            <h3 style={{ color: "#0F172A", fontSize: 18, marginBottom: 16 }}>Ajouter un Produit Libre</h3>
+            <form onSubmit={addCustomItem} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={S.labelStyle}>Désignation / Nom</label>
+                <input 
+                  style={S.input} 
+                  placeholder="Ex: Claquettes de douche" 
+                  value={customItem.name} 
+                  onChange={e => setCustomItem({ ...customItem, name: e.target.value })} 
+                  required 
+                />
+              </div>
+              <div>
+                <label style={S.labelStyle}>Prix Unitaire (F CFA)</label>
+                <input 
+                  style={S.input} 
+                  type="number" 
+                  placeholder="Ex: 2500" 
+                  value={customItem.price} 
+                  onChange={e => setCustomItem({ ...customItem, price: e.target.value })} 
+                  required 
+                />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 10, justifyContent: "flex-end" }}>
+                <button type="button" className="btn-secondary" style={S.btnGhost} onClick={() => setShowCustomModal(false)}>Annuler</button>
+                <button type="submit" className="btn-glow" style={S.btnPrimary}>Ajouter au Panier</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Thermal receipt for Shop sale */}
+      {activeSaleReceipt && (
+        <div className="print-only" style={{ display: "none" }}>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
+            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
+            <div style={{ fontSize: 14, fontWeight: "bold" }}>TICKET BOUTIQUE</div>
+          </div>
+
+          <div style={{ fontSize: 11, lineHeight: 1.5, marginBottom: 10 }}>
+            <div>TICKET : {activeSaleReceipt.id}</div>
+            <div>DATE   : {activeSaleReceipt.date}</div>
+            <div>HEURE  : {activeSaleReceipt.time}</div>
+          </div>
+          
+          <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+          
+          <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #000" }}>
+                <th style={{ textAlign: "left", paddingBottom: 4 }}>Art.</th>
+                <th style={{ textAlign: "center", paddingBottom: 4, width: 40 }}>Qté</th>
+                <th style={{ textAlign: "right", paddingBottom: 4 }}>Prix</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activeSaleReceipt.items.map((item, idx) => (
+                <tr key={idx}>
+                  <td style={{ paddingTop: 4, paddingBottom: 4 }}>{item.name}</td>
+                  <td style={{ textAlign: "center", paddingTop: 4, paddingBottom: 4 }}>{item.qty}</td>
+                  <td style={{ textAlign: "right", paddingTop: 4, paddingBottom: 4 }}>{fmt(item.price * item.qty)} F</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+          
+          <div style={{ fontSize: 13, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
+            <span>NET A PAYER :</span>
+            <span>{fmt(activeSaleReceipt.total)} F CFA</span>
+          </div>
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
+          <div style={{ textAlign: "center", fontSize: 9 }}>
+            MERCI POUR VOTRE VISITE ! A BIENTÔT.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1563,22 +3362,36 @@ function Planning({ schedule, setSchedule, staff, triggerToast }) {
 // ==========================================
 // ACCUEIL / TICKETS (SECRETAIRE)
 // ==========================================
-function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
+function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUser, cardTiers = [] }) {
+  const ticketTier = cardTiers.find(c => c.key.includes("Ticket Unique")) || { price: 1000 };
+  const ticketPrice = Number(ticketTier.price) || 1000;
+
   const [name, setName] = useState("");
-  const [isMember, setIsMember] = useState(false);
-  const [montant, setMontant] = useState(1500); // Walk-in default price
+  const [montant, setMontant] = useState(ticketPrice); // Walk-in default price
   const [lastTicket, setLastTicket] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
 
+  useEffect(() => {
+    setMontant(ticketPrice);
+  }, [ticketPrice]);
+
+  const isAdmin = currentUser && currentUser.role === "Administrateur";
+
+  const matchedMember = members.find(m => m.nom.toLowerCase() === name.trim().toLowerCase());
+  const isActiveMember = matchedMember && matchedMember.expiration >= today();
+
   const handleMemberSelect = (nom) => {
     setName(nom);
-    const exists = members.some(m => m.nom.toLowerCase() === nom.toLowerCase());
-    if (exists) {
-      setIsMember(true);
-      setMontant(0); // Member check-in is free
+    const m = members.find(member => member.nom.toLowerCase() === nom.trim().toLowerCase());
+    if (m) {
+      const active = m.expiration >= today();
+      if (active) {
+        setMontant(0);
+      } else {
+        setMontant(ticketPrice);
+      }
     } else {
-      setIsMember(false);
-      setMontant(1500);
+      setMontant(ticketPrice);
     }
   };
 
@@ -1588,15 +3401,15 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
       return;
     }
 
-    const price = isMember ? 0 : Number(montant);
+    const price = isActiveMember ? 0 : Number(montant);
     const newId = `T-${Math.random().toString(36).substring(3, 8).toUpperCase()}`;
     const t = {
       id: newId,
-      nom: name,
+      nom: name.trim(),
       date: today(),
       heure: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
       montant: price,
-      isMember,
+      isMember: !!isActiveMember,
     };
 
     setIsPrinting(true);
@@ -1613,7 +3426,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
       const newTx = {
         id: uid(),
         type: "recette",
-        description: `Ticket Entrée - ${name}`,
+        description: `Ticket Entrée - ${name.trim()}`,
         montant: price,
         date: today()
       };
@@ -1633,8 +3446,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
       triggerToast(`Ticket émis avec succès (${newId})`);
       setIsPrinting(false);
       setName("");
-      setIsMember(false);
-      setMontant(1500);
+      setMontant(ticketPrice);
     }, 1000);
   };
 
@@ -1667,23 +3479,30 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
               </datalist>
             </div>
             
-            <div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, cursor: "pointer", color: "#0F172A" }}>
-                <input
-                  type="checkbox"
-                  checked={isMember}
-                  onChange={e => {
-                    setIsMember(e.target.checked);
-                    if (e.target.checked) setMontant(0);
-                    else setMontant(1500);
-                  }}
-                  style={{ width: 16, height: 16, accentColor: "#6366F1" }}
-                />
-                Client enregistré en tant que membre
-              </label>
-            </div>
+            {name.trim() !== "" && (
+              <div style={{ marginTop: 4, marginBottom: 4 }}>
+                {matchedMember ? (
+                  isActiveMember ? (
+                    <div style={{ background: "#E0F2FE", color: "#0369A1", border: "1px solid #BAE6FD", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                      ✅ Membre Actif ({matchedMember.carte})<br/>
+                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiration : {matchedMember.expiration} &bull; Accès gratuit (0 F)</span>
+                    </div>
+                  ) : (
+                    <div style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                      ⚠️ Abonnement Expiré ! ({matchedMember.carte})<br/>
+                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiré le : {matchedMember.expiration} &bull; Séance payante (1 500 F)</span>
+                    </div>
+                  )
+                ) : (
+                  <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                    👤 Visiteur Externe<br/>
+                    <span style={{ fontSize: 11, fontWeight: "normal" }}>Tarif visiteur standard applicable (1 500 F)</span>
+                  </div>
+                )}
+              </div>
+            )}
             
-            {!isMember && (
+            {!isActiveMember && (
               <div>
                 <label style={S.labelStyle}>Frais d'Entrée Unique (F CFA)</label>
                 <input
@@ -1692,7 +3511,13 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
                   placeholder="F CFA"
                   value={montant}
                   onChange={e => setMontant(e.target.value)}
+                  disabled={!isAdmin}
                 />
+                {!isAdmin && (
+                  <span style={{ fontSize: 11, color: "#64748B", marginTop: 4, display: "block" }}>
+                    * Seul l'Administrateur peut modifier le tarif visiteur.
+                  </span>
+                )}
               </div>
             )}
 
@@ -1776,21 +3601,21 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
                   <th style={S.th}>Heure</th>
                   <th style={S.th}>Nom du client</th>
                   <th style={S.th}>Catégorie</th>
-                  <th style={S.th} style={{ textAlign: "right" }}>Frais payés</th>
+                  <th style={{ ...S.th, textAlign: "right" }}>Frais payés</th>
                 </tr>
               </thead>
               <tbody>
                 {todayTickets.slice().reverse().map(t => (
                   <tr key={t.id} style={S.tr}>
-                    <td style={S.td} className="mono" style={{ color: "#334155" }}>{t.id}</td>
-                    <td style={S.td} className="mono" style={{ color: "#334155" }}>{t.heure}</td>
-                    <td style={S.td} style={{ fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
+                    <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.id}</td>
+                    <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.heure}</td>
+                    <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
                     <td style={S.td}>
                       <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
                         {t.isMember ? "Membre" : "Visiteur"}
                       </span>
                     </td>
-                    <td style={S.td} className="mono" style={{ textAlign: "right", fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</td>
+                    <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</td>
                   </tr>
                 ))}
               </tbody>
@@ -1838,14 +3663,78 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast }) {
 // ==========================================
 // FINANCES (COMPTABLE)
 // ==========================================
-function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVerses, solde, triggerToast }) {
-  const [form, setForm] = useState({ type: "recette", description: "", montant: "" });
+function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVerses, solde, triggerToast, currentUser }) {
+  const isAdmin = currentUser && currentUser.role === "Administrateur";
+  
+  const PREDEFINED_DESCRIPTIONS = {
+    recette: [
+      "Vente de boissons / suppléments",
+      "Frais d'inscription",
+      "Dons / Sponsoring",
+      "Location d'espace / d'équipement",
+      "Autre (Saisie libre)"
+    ],
+    depense: [
+      "Facture d'électricité CIE",
+      "Facture d'eau SODECI",
+      "Loyer mensuel du local",
+      "Achat boissons / produits",
+      "Frais d'entretien / ménage",
+      "Achat matériel / équipement de sport",
+      "Frais de communication / marketing",
+      "Autre (Saisie libre)"
+    ],
+    salaire: [
+      "Paiement de salaire mensuel",
+      "Avance sur salaire",
+      "Prime de performance / bonus",
+      "Autre (Saisie libre)"
+    ]
+  };
+
+  const [form, setForm] = useState({ 
+    type: "recette", 
+    description: "Vente de boissons / suppléments", 
+    montant: "" 
+  });
+  const [selectedPreset, setSelectedPreset] = useState("Vente de boissons / suppléments");
+  const [customDescription, setCustomDescription] = useState("");
   const [filterType, setFilterType] = useState("Tous");
   const [search, setSearch] = useState("");
+
+  const handleTypeChange = (newType) => {
+    const defaultPreset = PREDEFINED_DESCRIPTIONS[newType][0];
+    setSelectedPreset(defaultPreset);
+    setCustomDescription("");
+    setForm(prev => ({
+      ...prev,
+      type: newType,
+      description: defaultPreset === "Autre (Saisie libre)" ? "" : defaultPreset
+    }));
+  };
+
+  const handlePresetChange = (preset) => {
+    setSelectedPreset(preset);
+    if (preset === "Autre (Saisie libre)") {
+      setForm(prev => ({ ...prev, description: customDescription }));
+    } else {
+      setForm(prev => ({ ...prev, description: preset }));
+    }
+  };
+
+  const handleCustomDescriptionChange = (text) => {
+    setCustomDescription(text);
+    setForm(prev => ({ ...prev, description: text }));
+  };
 
   const add = async () => {
     if (!form.description.trim() || !form.montant) {
       triggerToast("Tous les champs sont requis");
+      return;
+    }
+
+    if (form.type === "salaire" && !isAdmin) {
+      triggerToast("Seul l'Administrateur est autorisé à verser les salaires.");
       return;
     }
     
@@ -1866,7 +3755,15 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
     
     setTx([...tx, newTxObj]);
     triggerToast("Opération comptable enregistrée");
-    setForm({ type: form.type, description: "", montant: "" });
+    
+    const nextDefaultPreset = PREDEFINED_DESCRIPTIONS[form.type][0];
+    setSelectedPreset(nextDefaultPreset);
+    setCustomDescription("");
+    setForm({ 
+      type: form.type, 
+      description: nextDefaultPreset === "Autre (Saisie libre)" ? "" : nextDefaultPreset, 
+      montant: "" 
+    });
   };
 
   const remove = async (id) => {
@@ -1892,6 +3789,10 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
   };
 
   const payAllSalaries = async () => {
+    if (!isAdmin) {
+      triggerToast("Seul l'Administrateur est autorisé à verser les salaires.");
+      return;
+    }
     const unpaid = getUnpaidStaff();
     if (unpaid.length === 0) {
       triggerToast("Tous les salaires de ce mois sont déjà réglés !");
@@ -1956,15 +3857,31 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
               <label style={S.labelStyle}>Type d'écriture</label>
-              <select style={S.input} value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+              <select style={S.input} value={form.type} onChange={e => handleTypeChange(e.target.value)}>
                 <option value="recette">Recette (+)</option>
                 <option value="depense">Dépense (-)</option>
-                <option value="salaire">Salaire (-)</option>
+                {isAdmin && <option value="salaire">Salaire (-)</option>}
               </select>
             </div>
             <div>
               <label style={S.labelStyle}>Libellé explicatif</label>
-              <input style={S.input} placeholder="Ex: Facture d'eau SODECI, Achat matériel..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              <select 
+                style={{ ...S.input, marginBottom: selectedPreset === "Autre (Saisie libre)" ? 10 : 0 }} 
+                value={selectedPreset} 
+                onChange={e => handlePresetChange(e.target.value)}
+              >
+                {(PREDEFINED_DESCRIPTIONS[form.type] || []).map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              {selectedPreset === "Autre (Saisie libre)" && (
+                <input 
+                  style={S.input} 
+                  placeholder="Saisir un libellé personnalisé..." 
+                  value={customDescription} 
+                  onChange={e => handleCustomDescriptionChange(e.target.value)} 
+                />
+              )}
             </div>
             <div>
               <label style={S.labelStyle}>Montant (F CFA)</label>
@@ -1975,7 +3892,10 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
         </CardPanel>
 
         {/* Global Salary Manager Card */}
-        <CardPanel title="RH & Paie Mensuelle" action={<button className="btn-glow" style={S.btnPrimary} onClick={payAllSalaries}>Payer tous les salaires</button>}>
+        <CardPanel 
+          title="RH & Paie Mensuelle" 
+          action={isAdmin ? <button className="btn-glow" style={S.btnPrimary} onClick={payAllSalaries}>Payer tous les salaires</button> : null}
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ fontSize: 13, color: "#64748B", marginBottom: 4 }}>
               RH en attente de salaire ce mois ({currentMonth}) : 
@@ -2041,14 +3961,14 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                   <th style={S.th}>Date</th>
                   <th style={S.th}>Écriture</th>
                   <th style={S.th}>Libellé / Détails</th>
-                  <th style={S.th} style={{ textAlign: "right" }}>Montant</th>
-                  <th style={S.th} style={{ width: 50 }}></th>
+                  <th style={{ ...S.th, textAlign: "right" }}>Montant</th>
+                  <th style={{ ...S.th, width: 50 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTx.slice().reverse().map(t => (
                   <tr key={t.id} style={S.tr}>
-                    <td style={S.td} className="mono" style={{ color: "#475569" }}>{t.date}</td>
+                    <td className="mono" style={{ ...S.td, color: "#475569" }}>{t.date}</td>
                     <td style={S.td}>
                       <span style={{
                         ...S.tag,
@@ -2058,12 +3978,14 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                         {t.type}
                       </span>
                     </td>
-                    <td style={S.td} style={{ fontWeight: 600, color: "#0F172A" }}>{t.description}</td>
-                    <td style={S.td} className="mono" style={{ textAlign: "right", fontWeight: 700, color: t.type === "recette" ? "#059669" : "#EF4444" }}>
+                    <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.description}</td>
+                    <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: t.type === "recette" ? "#059669" : "#EF4444" }}>
                       {t.type === "recette" ? "+" : "-"}{fmt(t.montant)} F
                     </td>
                     <td style={S.td}>
-                      <button style={S.btnDangerIcon} onClick={() => remove(t.id)}>×</button>
+                      {isAdmin && (
+                        <button style={S.btnDangerIcon} onClick={() => remove(t.id)}>×</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -2079,9 +4001,70 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
 // ==========================================
 // PERSONNEL (STAFF) & ACCOUNTS (ADMIN ONLY)
 // ==========================================
-function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, triggerToast }) {
+function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, triggerToast, cardTiers, setCardTiers }) {
   const isAdmin = currentUser && currentUser.role === "Administrateur";
-  const [subTab, setSubTab] = useState("staff"); // "staff" or "users"
+  const [subTab, setSubTab] = useState("staff"); // "staff", "users" or "tarifs"
+  
+  // Card Tiers editing form state
+  const [editingTierKey, setEditingTierKey] = useState(null);
+  const [tierForm, setTierForm] = useState({ price: "", duration: "", description: "" });
+
+  const startEditTier = (tier) => {
+    setEditingTierKey(tier.key);
+    setTierForm({
+      price: tier.price.toString(),
+      duration: tier.duration.toString(),
+      description: tier.description
+    });
+  };
+
+  const saveCardTier = async () => {
+    if (!tierForm.price || !tierForm.duration || !tierForm.description.trim()) {
+      triggerToast("Tous les champs sont obligatoires");
+      return;
+    }
+
+    const priceNum = Number(tierForm.price);
+    const durationNum = Number(tierForm.duration);
+
+    if (isNaN(priceNum) || priceNum <= 0) {
+      triggerToast("Le prix doit être un nombre positif");
+      return;
+    }
+
+    if (isNaN(durationNum) || durationNum < 0) {
+      triggerToast("La durée doit être un nombre de mois positif ou nul (0)");
+      return;
+    }
+
+    // Update in Supabase
+    const { error } = await supabase
+      .from("card_tiers")
+      .update({
+        price: priceNum,
+        duration: durationNum,
+        description: tierForm.description
+      })
+      .eq("key", editingTierKey);
+
+    if (error) {
+      console.error("Error updating card tier on Supabase:", error);
+      triggerToast("Erreur lors de la modification sur Supabase");
+      return;
+    }
+
+    // Update in local state
+    setCardTiers(prev => prev.map(t => t.key === editingTierKey ? {
+      ...t,
+      price: priceNum,
+      duration: durationNum,
+      description: tierForm.description
+    } : t));
+
+    triggerToast(`Tarif de la carte ${editingTierKey} mis à jour !`);
+    setEditingTierKey(null);
+    setTierForm({ price: "", duration: "", description: "" });
+  };
   
   // Modal State for adding/modifying staff member
   const [showModal, setShowModal] = useState(false);
@@ -2089,6 +4072,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
   
   // Staff form fields
   const [form, setForm] = useState({ nom: "", role: "Coach", tel: "", salaire: "" });
+  const [customRoleActive, setCustomRoleActive] = useState(false);
   const [giveAccess, setGiveAccess] = useState(false);
   const [accessUsername, setAccessUsername] = useState("");
   const [accessPassword, setAccessPassword] = useState("");
@@ -2100,6 +4084,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
   // --- STAFF ACTIONS ---
   const startAddStaff = () => {
     setForm({ nom: "", role: "Coach", tel: "", salaire: "" });
+    setCustomRoleActive(false);
     setGiveAccess(false);
     setAccessUsername("");
     setAccessPassword("");
@@ -2109,7 +4094,9 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
 
   const startEditStaff = (s) => {
     const userAccount = users.find(u => u.id === s.id);
+    const isCustom = s.role && !ROLES.includes(s.role);
     setForm({ nom: s.nom, role: s.role, tel: s.tel || "", salaire: s.salaire });
+    setCustomRoleActive(isCustom);
     setEditingStaffId(s.id);
 
     if (userAccount) {
@@ -2212,6 +4199,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
 
     // Reset Form & Close Modal
     setForm({ nom: "", role: "Coach", tel: "", salaire: "" });
+    setCustomRoleActive(false);
     setGiveAccess(false);
     setAccessUsername("");
     setAccessPassword("");
@@ -2369,6 +4357,20 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
             >
               🔒 Comptes Utilisateurs & Niveaux ({users.length})
             </button>
+            <button
+              onClick={() => setSubTab("tarifs")}
+              style={{
+                background: subTab === "tarifs" ? "#EEF2F6" : "transparent",
+                border: subTab === "tarifs" ? "1px solid #6366F1" : "1px solid transparent",
+                color: subTab === "tarifs" ? "#6366F1" : "#475569",
+                padding: "8px 16px",
+                borderRadius: 8,
+                fontSize: 13.5,
+                fontWeight: 600
+              }}
+            >
+              💳 Tarifs des Cartes ({cardTiers.length})
+            </button>
           </div>
 
           {subTab === "staff" && (
@@ -2402,9 +4404,46 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                   <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
                     <div style={{ flex: "1 1 200px" }}>
                       <label style={S.labelStyle}>Poste / Rôle</label>
-                      <select style={S.input} value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-                        {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
+                      {!customRoleActive ? (
+                        <select
+                          style={S.input}
+                          value={form.role}
+                          onChange={e => {
+                            if (e.target.value === "Autre") {
+                              setCustomRoleActive(true);
+                              setForm({ ...form, role: "" });
+                            } else {
+                              setForm({ ...form, role: e.target.value });
+                            }
+                          }}
+                        >
+                          {ROLES.map(r => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                          <option value="Autre">✍️ Autre (Saisir...)</option>
+                        </select>
+                      ) : (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <input
+                            style={{ ...S.input, flex: 1 }}
+                            placeholder="Saisir le poste..."
+                            value={form.role}
+                            onChange={e => setForm({ ...form, role: e.target.value })}
+                          />
+                          <button
+                            type="button"
+                            style={{ ...S.btnCancel, padding: "0 10px", height: 38 }}
+                            onClick={() => {
+                              setCustomRoleActive(false);
+                              setForm({ ...form, role: "Coach" });
+                            }}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div style={{ flex: "1 1 200px" }}>
                       <label style={S.labelStyle}>Téléphone</label>
@@ -2495,21 +4534,23 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                       </div>
 
                       <div style={{ display: "flex", gap: 8 }}>
-                        {/* Only comptable or admin pays wages */}
-                        <button
-                          className="btn-secondary"
-                          style={{
-                            ...S.btnPay,
-                            background: isPaid ? "#F1F5F9" : "#ECFDF5",
-                            color: isPaid ? "#94A3B8" : "#059669",
-                            cursor: isPaid ? "not-allowed" : "pointer",
-                            border: isPaid ? "1px solid #E2E8F0" : "1px solid #A7F3D0"
-                          }}
-                          onClick={() => payOne(s)}
-                          disabled={isPaid}
-                        >
-                          Payer le salaire
-                        </button>
+                        {/* Only super admin pays wages */}
+                        {isAdmin && (
+                          <button
+                            className="btn-secondary"
+                            style={{
+                              ...S.btnPay,
+                              background: isPaid ? "#F1F5F9" : "#ECFDF5",
+                              color: isPaid ? "#94A3B8" : "#059669",
+                              cursor: isPaid ? "not-allowed" : "pointer",
+                              border: isPaid ? "1px solid #E2E8F0" : "1px solid #A7F3D0"
+                            }}
+                            onClick={() => payOne(s)}
+                            disabled={isPaid}
+                          >
+                            Payer le salaire
+                          </button>
+                        )}
                         
                         {/* Admin can edit/delete employees */}
                         {isAdmin && (
@@ -2590,15 +4631,15 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                     <th style={S.th}>Identifiant</th>
                     <th style={S.th}>Mot de passe</th>
                     <th style={S.th}>Niveau / Droits</th>
-                    <th style={S.th} style={{ textAlign: "right", width: 180 }}>Actions</th>
+                    <th style={{ ...S.th, textAlign: "right", width: 180 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map(u => (
                     <tr key={u.id} style={S.tr}>
-                      <td style={S.td} style={{ fontWeight: 600, color: "#0F172A" }}>{u.label}</td>
-                      <td style={S.td} className="mono" style={{ color: "#334155" }}>{u.username}</td>
-                      <td style={S.td} className="mono" style={{ color: "#334155" }}>{u.password}</td>
+                      <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{u.label}</td>
+                      <td className="mono" style={{ ...S.td, color: "#334155" }}>{u.username}</td>
+                      <td className="mono" style={{ ...S.td, color: "#334155" }}>{u.password}</td>
                       <td style={S.td}>
                         <span style={{
                           ...S.tag,
@@ -2608,7 +4649,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                           {u.role}
                         </span>
                       </td>
-                      <td style={S.td} style={{ textAlign: "right" }}>
+                      <td style={{ ...S.td, textAlign: "right" }}>
                         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                           <button
                             className="btn-secondary"
@@ -2635,6 +4676,107 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
           </CardPanel>
         </>
       )}
+
+      {/* --- CARD TIERS PRICES SECTION VIEW (ADMIN ONLY) --- */}
+      {isAdmin && subTab === "tarifs" && (
+        <>
+          {/* Edit Card Tier Form */}
+          {editingTierKey && (
+            <CardPanel title={`📝 Modifier les tarifs de la carte : ${editingTierKey}`}>
+              <div style={S.formRow}>
+                <div style={{ flex: "1 1 150px" }}>
+                  <label style={S.labelStyle}>Prix de l'Abonnement (F CFA)</label>
+                  <input
+                    style={S.input}
+                    type="number"
+                    placeholder="Prix"
+                    value={tierForm.price}
+                    onChange={e => setTierForm({ ...tierForm, price: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: "1 1 120px" }}>
+                  <label style={S.labelStyle}>Durée (mois)</label>
+                  <input
+                    style={S.input}
+                    type="number"
+                    placeholder="Durée en mois"
+                    value={tierForm.duration}
+                    onChange={e => setTierForm({ ...tierForm, duration: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: "1 1 300px" }}>
+                  <label style={S.labelStyle}>Description / Détails de l'offre</label>
+                  <input
+                    style={S.input}
+                    placeholder="Description des prestations incluses..."
+                    value={tierForm.description}
+                    onChange={e => setTierForm({ ...tierForm, description: e.target.value })}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+                  <button className="btn-glow" style={{ ...S.btnPrimary, height: 38 }} onClick={saveCardTier}>
+                    Enregistrer
+                  </button>
+                  <button
+                    style={S.btnCancel}
+                    onClick={() => {
+                      setEditingTierKey(null);
+                      setTierForm({ price: "", duration: "", description: "" });
+                    }}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </CardPanel>
+          )}
+
+          {/* Card Tiers List Table */}
+          <CardPanel title="Tarifs en vigueur pour les abonnements">
+            <div style={{ overflowX: "auto" }}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Type de Carte</th>
+                    <th style={S.th}>Prix Actuel</th>
+                    <th style={S.th}>Durée (mois)</th>
+                    <th style={S.th}>Description des services</th>
+                    <th style={{ ...S.th, textAlign: "right", width: 150 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cardTiers.map(c => (
+                    <tr key={c.key} style={S.tr}>
+                      <td style={{ ...S.td, fontWeight: 600, color: c.color }}>{c.key}</td>
+                      <td className="mono" style={{ ...S.td, fontWeight: 700, color: "#0F172A" }}>
+                        {fmt(c.price)} F
+                      </td>
+                      <td className="mono" style={{ ...S.td, color: "#334155" }}>{c.duration}</td>
+                      <td style={{ ...S.td, fontSize: 13, color: "#475569" }}>{c.description}</td>
+                      <td style={{ ...S.td, textAlign: "right" }}>
+                        <button
+                          className="btn-secondary"
+                          style={{
+                            background: "#FFFFFF",
+                            border: "1px solid #CBD5E1",
+                            color: "#334155",
+                            padding: "4px 10px",
+                            fontSize: 12,
+                            borderRadius: 6
+                          }}
+                          onClick={() => startEditTier(c)}
+                        >
+                          Modifier le prix
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardPanel>
+        </>
+      )}
     </div>
   );
 }
@@ -2652,19 +4794,20 @@ const S = {
   },
   sidebar: {
     width: 260,
-    background: "#0F172A", // Deep Navy-900 (SaaS typical sidebars)
+    background: "#FFFFFF", // Light theme sidebar
     borderRight: "1px solid #E2E8F0",
     display: "flex",
     flexDirection: "column",
-    padding: "28px 20px",
+    padding: "28px 0 28px 20px",
     flexShrink: 0,
   },
   brand: {
     marginBottom: 20,
+    paddingRight: 20,
   },
   brandTitle: {
     fontSize: 26,
-    color: "#FFF",
+    color: "#0F172A",
     fontWeight: 800,
   },
   brandSub: {
@@ -2679,11 +4822,12 @@ const S = {
     display: "flex",
     alignItems: "center",
     gap: 12,
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.06)",
+    background: "#F8FAFC",
+    border: "1px solid #E2E8F0",
     borderRadius: 12,
     padding: "10px 14px",
     marginBottom: 12,
+    marginRight: 20,
   },
   profileAvatar: {
     width: 34,
@@ -2704,12 +4848,13 @@ const S = {
     flex: 1,
   },
   sideFooter: {
-    borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+    borderTop: "1px solid #E2E8F0",
     paddingTop: 20,
+    paddingRight: 20,
   },
   soldeLabel: {
     fontSize: 10,
-    color: "#94A3B8",
+    color: "#64748B",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 6,
