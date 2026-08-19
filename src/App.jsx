@@ -882,7 +882,7 @@ function GuideModal({ onClose }) {
               style={{ ...S.btnPrimary, background: "#10B981", color: "#FFF", padding: "8px 20px" }}
               onClick={onClose}
             >
-              Prêt à forger ! ➔
+              C'est parti ! ➔
             </button>
           )}
         </div>
@@ -903,9 +903,9 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
     if (role === "Administrateur") {
       setLoginForm({ username: "badrafaly@gmail.com", password: "B@dr@f@ly" });
     } else if (role === "Secretaire") {
-      setLoginForm({ username: "secretaire@forgegym.com", password: "password123" });
+      setLoginForm({ username: "secretaire@clubsportsante.ci", password: "password123" });
     } else if (role === "Comptable") {
-      setLoginForm({ username: "comptable@forgegym.com", password: "password123" });
+      setLoginForm({ username: "comptable@clubsportsante.ci", password: "password123" });
     } else {
       setLoginForm({ username: "", password: "" });
     }
@@ -1181,8 +1181,8 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
           <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 12, padding: "12px 14px", border: "1px solid #F1F5F9", fontSize: 11.5, color: "#64748B", display: "flex", flexDirection: "column", gap: 4 }}>
             <strong style={{ color: "#334155" }}>💡 Identifiants de test (Auto-remplis) :</strong>
             {selectedRole === "Administrateur" && <span>Identifiant : <code>badrafaly@gmail.com</code> / Mdp : <code>B@dr@f@ly</code></span>}
-            {selectedRole === "Secretaire" && <span>Identifiant : <code>secretaire@forgegym.com</code> / Mdp : <code>password123</code></span>}
-            {selectedRole === "Comptable" && <span>Identifiant : <code>comptable@forgegym.com</code> / Mdp : <code>password123</code></span>}
+            {selectedRole === "Secretaire" && <span>Identifiant : <code>secretaire@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
+            {selectedRole === "Comptable" && <span>Identifiant : <code>comptable@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
           </div>
         </div>
       )}
@@ -1294,8 +1294,8 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
         <div style={S.heroContent}>
           <div style={S.heroBadge}>CLUB DE RÉFÉRENCE — DIVO</div>
           <h1 style={S.heroTitle}>
-            FORGEZ VOTRE CORPS<br />
-            <span style={{ color: "#6366F1" }}>DOMINEZ VOTRE ESPRIT</span>
+            CLUB SPORT SANTE<br />
+            <span style={{ color: "#6366F1" }}>VOTRE SANTÉ, NOTRE PASSION</span>
           </h1>
           <p style={S.heroSubtitle}>
             Entraînez-vous dans le club le plus exclusif de la ville. Équipements haut de gamme de dernière génération, coachs certifiés à l'international et suivi nutritionnel d'élite.
@@ -1668,7 +1668,7 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
                   <h3 style={{ color: "#0F172A", fontSize: 18, margin: "12px 0 4px 0" }}>{s.nom}</h3>
                   <p style={{ color: "#6366F1", fontSize: 13, fontWeight: 600 }}>{s.role}</p>
                   <p style={{ color: "#64748B", fontSize: 12, marginTop: 8 }}>
-                    {s.desc || (s.tel ? `Contact : ${s.tel}` : "Entraîneur certifié FORGE.GYM dédié à votre progression.")}
+                    {s.desc || (s.tel ? `Contact : ${s.tel}` : "Entraîneur certifié CLUB SPORT SANTE dédié à votre progression.")}
                   </p>
                 </div>
               );
@@ -2319,13 +2319,20 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     <div className="disp" style={{ fontSize: 18, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTE</div>
                     <div style={{ fontSize: 9, color: "rgba(15,23,42,0.6)", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>LOYALTY MEMBER</div>
                   </div>
-                  {/* EMV Gold Chip Mockup */}
-                  <div style={S.emvChip} />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    {/* EMV Gold Chip Mockup */}
+                    <div style={S.emvChip} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: "#0F172A", background: "rgba(255,255,255,0.75)", padding: "1px 6px", borderRadius: 4, border: "1px solid rgba(0,0,0,0.06)" }}>
+                      {fmt(tier.price)} F
+                    </span>
+                  </div>
                 </div>
                 
                 <div style={{ position: "relative", zIndex: 2 }}>
                   <div style={{ fontSize: 17, fontWeight: 700, color: "#0F172A" }}>{m.nom}</div>
-                  <div style={{ fontSize: 11, color: "rgba(15,23,42,0.8)", marginTop: 2 }}>{m.tel || "SANS CONTACT"}</div>
+                  <div style={{ fontSize: 11, color: "rgba(15,23,42,0.85)", marginTop: 2 }}>
+                    {m.tel ? `${m.tel} • ` : ""}<strong style={{ color: tier.color }}>{m.carte.split(" (")[0]} ({fmt(tier.price)} F CFA)</strong>
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative", zIndex: 2 }}>
@@ -2333,13 +2340,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     <div style={{ fontSize: 9, color: "rgba(15,23,42,0.55)", letterSpacing: 0.5 }}>EXPIRATION</div>
                     <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700 }}>{m.expiration}</div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 9, color: "rgba(15,23,42,0.55)", letterSpacing: 0.5, textAlign: "center" }}>MONTANT</div>
-                    <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700, textAlign: "center" }}>
+                  <div style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.1)", padding: "3px 8px", borderRadius: 6, textAlign: "center" }}>
+                    <div style={{ fontSize: 8, color: "rgba(15,23,42,0.6)", letterSpacing: 0.5, fontWeight: 600 }}>COTISATION</div>
+                    <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 800 }}>
                       {fmt(m.montant || (() => {
                         const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(m.nom));
                         return memberTx ? memberTx.montant : tier.price;
-                      })())} F
+                      })())} F CFA
                     </div>
                   </div>
                   {/* Simulated barcode */}
