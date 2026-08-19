@@ -784,7 +784,7 @@ function GuideModal({ onClose }) {
           <ol style={S.guideList}>
             <li>Allez sur l'onglet <strong style={{ color: "#6366F1" }}>Accueil / Tickets</strong>.</li>
             <li>Saisissez le nom dans le champ. S'il s'agit d'un membre existant, cochez <strong>\"Client enregistré en tant que membre\"</strong> (tarif : 0 F).</li>
-            <li>Si c'est un ticket visiteur d'une séance (ex: 1 500 F), laissez la case décochée et saisissez le montant.</li>
+            <li>Si c'est un ticket visiteur d'une séance (ex: 1 000 F), laissez la case décochée et saisissez le montant.</li>
             <li>Cliquez sur <strong>Émettre le Ticket d'Accès</strong>.</li>
             <li>L'imprimante thermique virtuelle s'anime et génère un ticket de caisse professionnel avec QR Code. Cliquez sur <strong>Imprimer</strong> pour l'imprimer réellement.</li>
           </ol>
@@ -3490,13 +3490,13 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   ) : (
                     <div style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
                       ⚠️ Abonnement Expiré ! ({matchedMember.carte})<br/>
-                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiré le : {matchedMember.expiration} &bull; Séance payante (1 500 F)</span>
+                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiré le : {matchedMember.expiration} &bull; Séance payante ({fmt(ticketPrice)} F)</span>
                     </div>
                   )
                 ) : (
                   <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
                     👤 Visiteur Externe<br/>
-                    <span style={{ fontSize: 11, fontWeight: "normal" }}>Tarif visiteur standard applicable (1 500 F)</span>
+                    <span style={{ fontSize: 11, fontWeight: "normal" }}>Tarif visiteur standard applicable ({fmt(ticketPrice)} F)</span>
                   </div>
                 )}
               </div>
