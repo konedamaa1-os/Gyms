@@ -180,7 +180,7 @@ export default function GymApp() {
     { key: "accueil", label: "Accueil / Tickets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path><line x1="12" y1="5" x2="12" y2="19"></line></svg> },
     { key: "boutique", label: "Boutique / POS", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> },
     { key: "planning", label: "Emploi du temps", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> },
-    { key: "finances", label: "Finances & Ledger", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> },
+    { key: "finances", label: "Finances", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> },
     { key: "personnel", label: "Personnel", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> },
   ];
 
@@ -553,7 +553,7 @@ export default function GymApp() {
           {/* Mobile Top Header */}
           <div className="mobile-header no-print">
             <div className="disp" style={{ color: "#FFF", fontSize: 20, fontWeight: 800 }}>
-              FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+              CLUB SPORT SANTE
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -582,7 +582,7 @@ export default function GymApp() {
                   <path d="M17.5 8v8" strokeWidth="3" />
                   <path d="M19.5 9v6" strokeWidth="4" />
                 </svg>
-                FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+                CLUB SPORT SANTE
               </div>
               <div style={S.brandSub}>GESTION DE SALLE</div>
             </div>
@@ -750,7 +750,7 @@ function GuideModal({ onClose }) {
       title: "1. Présentation Générale",
       content: (
         <div>
-          <p style={S.guideText}>Bienvenue sur <strong>FORGE.GYM</strong>, la plateforme SaaS d'élite pour la gestion de votre salle de sport à Divo.</p>
+          <p style={S.guideText}>Bienvenue sur <strong>CLUB SPORT SANTE</strong>, la plateforme SaaS d'élite pour la gestion de votre salle de sport à Divo.</p>
           <p style={S.guideText}>L'application s'articule autour de 3 rôles métiers majeurs :</p>
           <ul style={S.guideList}>
             <li>🔑 <strong>Administrateur</strong> (accès complet, gestion des salariés et des comptes utilisateurs)</li>
@@ -797,7 +797,7 @@ function GuideModal({ onClose }) {
         <div>
           <p style={S.guideText}><strong>Rôle requis :</strong> Comptable ou Administrateur.</p>
           <ol style={S.guideList}>
-            <li>Allez sur l'onglet <strong style={{ color: "#6366F1" }}>Finances & Ledger</strong>.</li>
+            <li>Allez sur l'onglet <strong style={{ color: "#6366F1" }}>Finances</strong>.</li>
             <li>Visualisez le bilan global et l'état des caisses en temps réel.</li>
             <li>Vous pouvez ajouter manuellement des écritures de recettes (+) ou dépenses (-).</li>
             <li>Le tableau répertorie l'historique complet des flux.</li>
@@ -1025,7 +1025,7 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
           </svg>
         </div>
         <div className="disp" style={{ fontSize: 20, fontWeight: 800, color: "#0F172A", letterSpacing: 0.5 }}>
-          FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+          CLUB SPORT SANTE
         </div>
       </div>
 
@@ -1034,7 +1034,7 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", zIndex: 2 }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <h2 style={{ fontSize: 28, fontWeight: 800, color: "#0F172A", margin: 0 }}>
-              Bienvenue sur le portail FORGE GYM
+              Bienvenue sur le portail CLUB SPORT SANTE
             </h2>
             <p style={{ fontSize: 15, color: "#64748B", marginTop: 8 }}>
               Choisis ton profil pour accéder à ton espace de gestion
@@ -1189,7 +1189,7 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 
       {/* Footer */}
       <div style={{ textAlign: "center", color: "#94A3B8", fontSize: 12, zIndex: 2, marginTop: 20 }}>
-        © 2026 FORGE.GYM. Tous droits réservés. <span style={{ margin: "0 8px" }}>•</span> Mentions légales <span style={{ margin: "0 8px" }}>•</span> Politique de confidentialité
+        © 2026 CLUB SPORT SANTE. Tous droits réservés. <span style={{ margin: "0 8px" }}>•</span> Mentions légales <span style={{ margin: "0 8px" }}>•</span> Politique de confidentialité
       </div>
     </div>
   );
@@ -1275,7 +1275,7 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
       {/* Navigation Header */}
       <header style={S.landingHeader}>
         <div className="disp" style={{ fontSize: 24, color: "#0F172A", display: "flex", alignItems: "center" }}>
-          FORGE<span style={{ color: "#6366F1" }}>.</span>GYM
+          CLUB SPORT SANTE
         </div>
         <nav style={{ display: "flex", gap: 24, alignItems: "center" }}>
           <span style={S.landingNavLink} onClick={() => scrollToId("hero")}>Accueil</span>
@@ -1681,16 +1681,16 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
       <footer style={S.landingFooter}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
           <div>
-            <div className="disp" style={{ fontSize: 20, color: "#0F172A" }}>FORGE.GYM</div>
+            <div className="disp" style={{ fontSize: 20, color: "#0F172A" }}>CLUB SPORT SANTE</div>
             <p style={{ color: "#64748B", fontSize: 12, marginTop: 4 }}>Le temple de la force et de la santé</p>
           </div>
           <div style={{ textAlign: "right", fontSize: 12, color: "#64748B" }}>
             <div>Divo, Côte d'Ivoire</div>
-            <div style={{ marginTop: 4 }}>Contact: info@forgegym.ci | Tel: +225 07 00 00 00 00</div>
+            <div style={{ marginTop: 4 }}>Contact: info@clubsportsante.ci | Tel: +225 07 00 00 00 00</div>
           </div>
         </div>
         <div style={{ borderTop: "1px solid #E2E8F0", marginTop: 24, paddingTop: 18, textAlign: "center", fontSize: 11, color: "#94A3B8" }}>
-          &copy; {new Date().getFullYear()} FORGE.GYM. Tous droits réservés.
+          &copy; {new Date().getFullYear()} CLUB SPORT SANTE. Tous droits réservés.
         </div>
       </footer>
     </div>
@@ -2316,7 +2316,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", position: "relative", zIndex: 2 }}>
                   <div>
-                    <div className="disp" style={{ fontSize: 19, color: "#0F172A", letterSpacing: 0.5 }}>FORGE.GYM</div>
+                    <div className="disp" style={{ fontSize: 18, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTE</div>
                     <div style={{ fontSize: 9, color: "rgba(15,23,42,0.6)", textTransform: "uppercase", letterSpacing: 1.5, marginTop: 2 }}>LOYALTY MEMBER</div>
                   </div>
                   {/* EMV Gold Chip Mockup */}
@@ -2386,7 +2386,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {activeReceipt && (
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
             <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
             <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
@@ -3066,9 +3066,9 @@ function Boutique({ setTx, triggerToast }) {
     { id: "p4", name: "Jus de Fruits Naturel", price: 1000, emoji: "🧃", category: "Rafraîchissement" },
     { id: "p5", name: "Serviette de sport", price: 3000, emoji: "🧼", category: "Accessoire" },
     { id: "p6", name: "Gants de musculation", price: 5000, emoji: "🥊", category: "Accessoire" },
-    { id: "p7", name: "Shaker FORGE", price: 4000, emoji: "🥤", category: "Accessoire" },
+    { id: "p7", name: "Shaker Club", price: 4000, emoji: "🥤", category: "Accessoire" },
     { id: "p8", name: "Cadenas de vestiaire", price: 1500, emoji: "🔒", category: "Accessoire" },
-    { id: "p9", name: "T-shirt FORGE", price: 7000, emoji: "👕", category: "Accessoire" },
+    { id: "p9", name: "T-shirt Club", price: 7000, emoji: "👕", category: "Accessoire" },
   ];
 
   const addToCart = (product) => {
@@ -3317,7 +3317,7 @@ function Boutique({ setTx, triggerToast }) {
       {activeSaleReceipt && (
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
             <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
             <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
@@ -3561,7 +3561,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
             {lastTicket && !isPrinting && (
               <div style={S.ticketPaper} className="animate-ticket printable-receipt">
                 <div style={{ textAlign: "center", marginBottom: 12 }}>
-                  <div className="disp" style={{ fontSize: 18, color: "#000", fontWeight: 800 }}>FORGE.GYM</div>
+                  <div className="disp" style={{ fontSize: 18, color: "#000", fontWeight: 800 }}>CLUB SPORT SANTE</div>
                   <div style={{ fontSize: 10, color: "#444" }}>Divo, Côte d'Ivoire</div>
                   <div style={{ fontSize: 10, color: "#444" }}>Tel: +225 07 00 00 00 00</div>
                   <div style={{ borderBottom: "1px dashed #444", margin: "10px 0" }} />
@@ -3642,7 +3642,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       {lastTicket && (
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
             <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
             <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
@@ -4194,7 +4194,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
       {activeWithdrawalReceipt && (
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>FORGE.GYM</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
             <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
             <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
@@ -4246,7 +4246,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
           
           <div style={{ borderBottom: "1px dashed #000", margin: "15px 0 10px 0" }} />
           <div style={{ textAlign: "center", fontSize: 9, color: "#333", marginTop: 10 }}>
-            Forge.Gym &copy; {new Date().getFullYear()} - Document comptable officiel
+            CLUB SPORT SANTE &copy; {new Date().getFullYear()} - Document comptable officiel
           </div>
         </div>
       )}
