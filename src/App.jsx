@@ -3363,10 +3363,16 @@ function Boutique({ setTx, triggerToast }) {
 // ACCUEIL / TICKETS (SECRETAIRE)
 // ==========================================
 function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUser, cardTiers = [] }) {
-  const ticketPrice = 1000; // Frais d'entrée unique par défaut 1000 F CFA
+  const ticketTier = cardTiers?.find(t => 
+    t.duration === 0 ||
+    t.key?.toLowerCase().includes("ticket unique") || 
+    t.key?.toLowerCase().includes("ticket") ||
+    (t.key?.toLowerCase().includes("séance") && !t.key?.toLowerCase().includes("carte"))
+  );
+  const ticketPrice = ticketTier ? Number(ticketTier.price) : 1000;
 
   const [name, setName] = useState("");
-  const [montant, setMontant] = useState(ticketPrice); // Walk-in default price
+  const [montant, setMontant] = useState(ticketPrice || 1000); // Walk-in default price: 1000 F CFA
   const [lastTicket, setLastTicket] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
 
