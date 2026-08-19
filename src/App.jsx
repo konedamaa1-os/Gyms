@@ -20,7 +20,7 @@ const getWeekRange = (dateStr) => {
 
 const CARD_TIERS_DEFAULT = [
   { key: "Bronze (Mensuel)", color: "#C25E28", light: "rgba(224, 144, 102, 0.15)", bg: "linear-gradient(135deg, #FFF9F5 0%, #F3D9C9 50%, #C25E28 100%)", price: 10000, duration: 1, description: "Accès standard musculation & cardio pour 1 mois." },
-  { key: "Argent (Trimestriel)", color: "#475569", light: "rgba(71, 85, 105, 0.15)", bg: "linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #64748B 100%)", price: 40000, duration: 3, description: "Accès complet, cours collectifs & 1 séance coach / mois pendant 3 mois." },
+  { key: "Argent (Trimestriel)", color: "#475569", light: "rgba(71, 85, 105, 0.15)", bg: "linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #64748B 100%)", price: 15000, duration: 3, description: "Accès complet, cours collectifs & 1 séance coach / mois pendant 3 mois." },
   { key: "Or (Annuel)", color: "#D97706", light: "rgba(217, 119, 6, 0.15)", bg: "linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 50%, #D97706 100%)", price: 150000, duration: 12, description: "Accès VIP illimité, suivi diététique & coach privé pendant 12 mois." },
   { key: "Séances à la carte (10 entrées)", color: "#8B5CF6", light: "rgba(139, 92, 246, 0.15)", bg: "linear-gradient(135deg, #F5F3FF 0%, #DDD6FE 50%, #8B5CF6 100%)", price: 12000, duration: 3, description: "Pack flexible de 10 entrées individuelles, valable 3 mois." },
   { key: "Ticket Unique (Séance Unique)", color: "#EF4444", light: "rgba(239, 68, 68, 0.15)", bg: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #EF4444 100%)", price: 1000, duration: 0, description: "Accès d'une journée complète sans engagement aux installations du club." },
