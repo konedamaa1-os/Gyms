@@ -3424,13 +3424,15 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
 
     const price = isActiveMember ? 0 : Number(montant);
     const newId = `T-${Math.random().toString(36).substring(3, 8).toUpperCase()}`;
+    const now = new Date();
     const t = {
       id: newId,
       nom: name.trim(),
       date: today(),
-      heure: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
       montant: price,
       isMember: !!isActiveMember,
+      timestamp: Date.now()
     };
 
     setIsPrinting(true);
@@ -3447,7 +3449,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       const newTx = {
         id: uid(),
         type: "recette",
-        description: `Ticket Entrée - ${name.trim()}`,
+        description: `Ticket Entrée - ${name.trim()} (${newId})`,
         montant: price,
         date: today()
       };
@@ -3473,6 +3475,79 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
 
   const handlePrintAction = () => {
     window.print();
+  };
+
+  // Rule: Secretary cannot modify amount or cancel after 10 minutes from creation
+  const isTicketModifiable = (t) => {
+    if (isAdmin) return true;
+    if (t.timestamp) {
+      return (Date.now() - t.timestamp) <= 10 * 60 * 1000;
+    }
+    if (t.heure && t.date === today()) {
+      const parts = t.heure.split(":");
+      if (parts.length >= 2) {
+        const ticketDate = new Date();
+        ticketDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0);
+        return (Date.now() - ticketDate.getTime()) <= 10 * 60 * 1000;
+      }
+    }
+    return false;
+  };
+
+  const handleEditTicketAmount = async (t) => {
+    if (!isTicketModifiable(t)) {
+      triggerToast("🔒 Délai de 10 minutes écoulé. Seul l'Administrateur peut modifier ce montant.");
+      return;
+    }
+    const newMontantStr = prompt(`Modifier le montant du ticket ${t.id} (${t.nom}) - Délai max 10 min :`, t.montant);
+    if (newMontantStr === null) return;
+    const newMontant = Number(newMontantStr);
+    if (isNaN(newMontant) || newMontant < 0) {
+      triggerToast("Montant invalide");
+      return;
+    }
+    
+    // Update ticket on Supabase
+    const { error: tErr } = await supabase.from("tickets").update({ montant: newMontant }).eq("id", t.id);
+    if (tErr) {
+      triggerToast("Erreur lors de la modification sur Supabase");
+      console.error(tErr);
+      return;
+    }
+
+    // Update corresponding tx in ledger
+    const relatedTx = (tx || []).find(x => x.description.includes(t.id) || (x.type === "recette" && x.description.includes(t.nom) && x.date === t.date));
+    if (relatedTx) {
+      await supabase.from("tx").update({ montant: newMontant }).eq("id", relatedTx.id);
+      setTx(prev => prev.map(x => x.id === relatedTx.id ? { ...x, montant: newMontant } : x));
+    }
+
+    setTickets(prev => prev.map(x => x.id === t.id ? { ...x, montant: newMontant } : x));
+    triggerToast(`Montant du ticket ${t.id} modifié à ${fmt(newMontant)} F`);
+  };
+
+  const handleCancelTicket = async (t) => {
+    if (!isTicketModifiable(t)) {
+      triggerToast("🔒 Délai de 10 minutes écoulé. Seul l'Administrateur peut annuler ce ticket.");
+      return;
+    }
+    if (confirm(`Voulez-vous vraiment annuler le ticket ${t.id} (${t.nom}) ?`)) {
+      const { error: tErr } = await supabase.from("tickets").delete().eq("id", t.id);
+      if (tErr) {
+        triggerToast("Erreur lors de l'annulation du ticket sur Supabase");
+        return;
+      }
+
+      // Delete corresponding transaction in ledger
+      const relatedTx = (tx || []).find(x => x.description.includes(t.id) || (x.type === "recette" && x.description.includes(t.nom) && x.date === t.date));
+      if (relatedTx) {
+        await supabase.from("tx").delete().eq("id", relatedTx.id);
+        setTx(prev => prev.filter(x => x.id !== relatedTx.id));
+      }
+
+      setTickets(prev => prev.filter(x => x.id !== t.id));
+      triggerToast(`Ticket ${t.id} annulé avec succès`);
+    }
   };
 
   const todayTickets = tickets.filter(t => t.date === today());
@@ -3536,7 +3611,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 />
                 {!isAdmin && (
                   <span style={{ fontSize: 11, color: "#64748B", marginTop: 4, display: "block" }}>
-                    * Seul l'Administrateur peut modifier le tarif visiteur.
+                    * Tarif visiteur par défaut : {fmt(ticketPrice)} F CFA (Modifiable sous 10 min après émission).
                   </span>
                 )}
               </div>
@@ -3560,8 +3635,8 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
             
             {isPrinting && (
               <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div style={S.spinner} />
-                <span className="mono" style={{ fontSize: 12, color: "#64748B" }}>Édition du ticket...</span>
+                <div style={{ width: 28, height: 28, border: "3px solid #6366F1", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <div style={{ fontSize: 12, color: "#64748B" }}>Impression thermique en cours...</div>
               </div>
             )}
 
@@ -3623,22 +3698,58 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   <th style={S.th}>Nom du client</th>
                   <th style={S.th}>Catégorie</th>
                   <th style={{ ...S.th, textAlign: "right" }}>Frais payés</th>
+                  <th style={{ ...S.th, textAlign: "center", width: 140 }}>Actions (10 min)</th>
                 </tr>
               </thead>
               <tbody>
-                {todayTickets.slice().reverse().map(t => (
-                  <tr key={t.id} style={S.tr}>
-                    <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.id}</td>
-                    <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.heure}</td>
-                    <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
-                    <td style={S.td}>
-                      <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
-                        {t.isMember ? "Membre" : "Visiteur"}
-                      </span>
-                    </td>
-                    <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</td>
-                  </tr>
-                ))}
+                {todayTickets.slice().reverse().map(t => {
+                  const modifiable = isTicketModifiable(t);
+                  return (
+                    <tr key={t.id} style={S.tr}>
+                      <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.id}</td>
+                      <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.heure}</td>
+                      <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
+                      <td style={S.td}>
+                        <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
+                          {t.isMember ? "Membre" : "Visiteur"}
+                        </span>
+                      </td>
+                      <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</td>
+                      <td style={{ ...S.td, textAlign: "center" }}>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center" }}>
+                          {modifiable ? (
+                            <>
+                              <button
+                                className="btn-secondary"
+                                style={{ padding: "4px 8px", fontSize: 11, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", borderRadius: 4 }}
+                                onClick={() => handleEditTicketAmount(t)}
+                                title="Modifier le montant (Autorisé sous 10 min)"
+                              >
+                                ✏️ Modifier
+                              </button>
+                              <button
+                                className="btn-secondary"
+                                style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4 }}
+                                onClick={() => handleCancelTicket(t)}
+                                title="Annuler le ticket (Autorisé sous 10 min)"
+                              >
+                                ❌
+                              </button>
+                            </>
+                          ) : (
+                            <span 
+                              style={{ fontSize: 11, color: "#94A3B8", background: "#F1F5F9", padding: "3px 8px", borderRadius: 4, cursor: "not-allowed", border: "1px solid #E2E8F0" }}
+                              onClick={() => triggerToast("🔒 Délai de modification de 10 minutes écoulé. Seul l'Administrateur peut modifier ou annuler cette saisie.")}
+                              title="Verrouillé après 10 minutes"
+                            >
+                              🔒 Verrouillé
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -3909,11 +4020,53 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
     }
   };
 
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
+
+  const applyPeriodPreset = (preset) => {
+    const d = new Date();
+    if (preset === "today") {
+      const t = today();
+      setStartDate(t);
+      setEndDate(t);
+    } else if (preset === "week") {
+      const day = d.getDay() || 7;
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - (day - 1));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      setStartDate(monday.toISOString().slice(0, 10));
+      setEndDate(sunday.toISOString().slice(0, 10));
+    } else if (preset === "month") {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const lastDay = new Date(year, d.getMonth() + 1, 0).getDate();
+      setStartDate(`${year}-${month}-01`);
+      setEndDate(`${year}-${month}-${String(lastDay).padStart(2, '0')}`);
+    } else {
+      setStartDate("");
+      setEndDate("");
+    }
+  };
+
   const filteredTx = tx.filter(t => {
     const matchSearch = t.description.toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "Tous" || t.type === filterType;
-    return matchSearch && matchType;
+    const matchStart = !startDate || t.date >= startDate;
+    const matchEnd = !endDate || t.date <= endDate;
+    return matchSearch && matchType && matchStart && matchEnd;
+  }).sort((a, b) => {
+    if (sortBy === "date-desc") return (b.date || "").localeCompare(a.date || "") || (b.id || "").localeCompare(a.id || "");
+    if (sortBy === "date-asc") return (a.date || "").localeCompare(b.date || "") || (a.id || "").localeCompare(b.id || "");
+    if (sortBy === "montant-desc") return Number(b.montant) - Number(a.montant);
+    if (sortBy === "montant-asc") return Number(a.montant) - Number(b.montant);
+    return 0;
   });
+
+  const periodRecettes = filteredTx.filter(t => t.type === "recette").reduce((s, t) => s + Number(t.montant), 0);
+  const periodDepenses = filteredTx.filter(t => t.type === "depense" || t.type === "salaire").reduce((s, t) => s + Number(t.montant), 0);
+  const periodSolde = periodRecettes - periodDepenses;
 
   return (
     <div>
@@ -4080,10 +4233,105 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
 
       {/* Ledger Table */}
       <CardPanel title="Grand Livre Comptable">
+        {/* Period & Date Filters Bar */}
+        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div style={{ flex: "1 1 140px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>📅 Période du (Début)</label>
+              <input
+                style={{ ...S.input, height: 36, fontSize: 13 }}
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: "1 1 140px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>📅 Au (Fin)</label>
+              <input
+                style={{ ...S.input, height: 36, fontSize: 13 }}
+                type="date"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>🔄 Trier par</label>
+              <select
+                style={{ ...S.input, height: 36, fontSize: 13 }}
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="date-desc">Date (Plus récent d'abord)</option>
+                <option value="date-asc">Date (Plus ancien d'abord)</option>
+                <option value="montant-desc">Montant (Décroissant)</option>
+                <option value="montant-asc">Montant (Croissant)</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingBottom: 2 }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                onClick={() => applyPeriodPreset("today")}
+              >
+                Aujourd'hui
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                onClick={() => applyPeriodPreset("week")}
+              >
+                Cette Semaine
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                onClick={() => applyPeriodPreset("month")}
+              >
+                Ce Mois
+              </button>
+              {(startDate || endDate) && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FEE2E2", color: "#B91C1C", borderColor: "#FCA5A5" }}
+                  onClick={() => applyPeriodPreset("all")}
+                >
+                  ✕ Réinitialiser
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Period Summary Ribbon */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
+            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>📈 Recettes Période</div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#059669", marginTop: 2 }}>+{fmt(periodRecettes)} F</div>
+            </div>
+            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>📉 Dépenses & Salaires</div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#EF4444", marginTop: 2 }}>-{fmt(periodDepenses)} F</div>
+            </div>
+            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>💼 Solde Net Période</div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: periodSolde >= 0 ? "#4F46E5" : "#EF4444", marginTop: 2 }}>
+                {periodSolde >= 0 ? "+" : ""}{fmt(periodSolde)} F
+              </div>
+            </div>
+            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>🔢 Écritures filtrées</div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", marginTop: 2 }}>{filteredTx.length} ligne(s)</div>
+            </div>
+          </div>
+        </div>
+
         <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
           <input
             style={{ ...S.input, flex: 1, minWidth: 220 }}
-            placeholder="Filtrer les écritures..."
+            placeholder="Rechercher par mot-clé dans les écritures..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -4105,7 +4353,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
         </div>
 
         {filteredTx.length === 0 ? (
-          <div style={S.empty}>Aucune transaction enregistrée.</div>
+          <div style={S.empty}>Aucune transaction pour cette période et ces critères.</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={S.table}>
@@ -4119,7 +4367,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                 </tr>
               </thead>
               <tbody>
-                {filteredTx.slice().reverse().map(t => (
+                {filteredTx.map(t => (
                   <tr key={t.id} style={S.tr}>
                     <td className="mono" style={{ ...S.td, color: "#475569" }}>{t.date}</td>
                     <td style={S.td}>
