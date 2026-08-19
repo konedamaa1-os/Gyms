@@ -2333,6 +2333,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     <div style={{ fontSize: 9, color: "rgba(15,23,42,0.55)", letterSpacing: 0.5 }}>EXPIRATION</div>
                     <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700 }}>{m.expiration}</div>
                   </div>
+                  <div>
+                    <div style={{ fontSize: 9, color: "rgba(15,23,42,0.55)", letterSpacing: 0.5, textAlign: "center" }}>MONTANT</div>
+                    <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700, textAlign: "center" }}>
+                      {fmt(m.montant || (() => {
+                        const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(m.nom));
+                        return memberTx ? memberTx.montant : tier.price;
+                      })())} F
+                    </div>
+                  </div>
                   {/* Simulated barcode */}
                   <div style={S.cardBarcode}>
                     {[1, 2.5, 1, 3, 1.5, 2, 4, 1, 2, 1, 3].map((w, idx) => (
