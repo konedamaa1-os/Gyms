@@ -391,10 +391,10 @@ export default function GymApp() {
           animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Printable thermal receipt styling */
+        /* Printable thermal receipt & A4 sheet styling */
         @media print {
           @page {
-            margin: 0 !important;
+            margin: 4mm !important;
             size: auto;
           }
           
@@ -426,28 +426,38 @@ export default function GymApp() {
             visibility: hidden !important;
           }
           
-          /* Show ONLY the single isolated receipt container at the very top */
+          /* Show ONLY the single isolated receipt or A4 sheet container at the top */
           .print-only, .print-only * {
             visibility: visible !important;
             color: #000000 !important;
           }
           
           .print-only {
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             right: 0 !important;
             margin: 0 auto !important;
-            width: 76mm !important;
-            max-width: 76mm !important;
-            padding: 4mm 4mm !important;
             display: block !important;
             background: #FFFFFF !important;
             color: #000000 !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-            border: 1px dashed #000000 !important;
             box-sizing: border-box !important;
             z-index: 9999999 !important;
+          }
+          
+          .print-thermal {
+            width: 76mm !important;
+            max-width: 76mm !important;
+            padding: 4mm 4mm !important;
+            border: 1px dashed #000000 !important;
+          }
+          
+          .print-a4 {
+            width: 100% !important;
+            max-width: 195mm !important;
+            padding: 6mm 10mm !important;
+            border: 2px solid #000000 !important;
           }
           
           .print-only .mono {
@@ -2141,10 +2151,39 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeFiche, setActiveFiche] = useState(null);
+  const [showFicheModal, setShowFicheModal] = useState(false);
+  const [isBlankFiche, setIsBlankFiche] = useState(false);
   
   const printMemberReceipt = (m) => {
+    setActiveFiche(null);
+    setShowFicheModal(false);
     setActiveReceipt(m);
     setShowReceiptModal(true);
+  };
+
+  const openMemberFiche = (m) => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(m);
+    setIsBlankFiche(false);
+    setShowFicheModal(true);
+  };
+
+  const openBlankFiche = () => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche({
+      id: "VIERGE",
+      nom: "",
+      tel: "",
+      carte: cardTiers[0]?.key || "Bronze (Mensuel)",
+      inscription: today(),
+      expiration: "",
+      montant: ""
+    });
+    setIsBlankFiche(true);
+    setShowFicheModal(true);
   };
 
   const [form, setForm] = useState({ 
@@ -2262,33 +2301,55 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 12 }} className="no-print">
         <div>
           <h1 style={{ ...S.pageTitle, margin: 0 }}>Gestion des Membres</h1>
-          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, abonnements mensuels/annuels et cartes d'accès.</p>
+          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, abonnements mensuels/annuels, fiches de renseignement et cartes d'accès.</p>
         </div>
-        <button
-          type="button"
-          className="btn-glow"
-          onClick={() => {
-            setForm({ 
-              nom: "", 
-              tel: "", 
-              carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
-              montant: cardTiers[0]?.price.toString() || "10000",
-              expiration: "" 
-            });
-            setShowAddModal(true);
-          }}
-          style={{
-            ...S.btnPrimary,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "9px 18px",
-            fontSize: 13.5,
-            fontWeight: 700
-          }}
-        >
-          <span>➕</span> Inscrire un Membre
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={openBlankFiche}
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              color: "#334155",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 15px",
+              fontSize: 13,
+              fontWeight: 700,
+              borderRadius: 8,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+            }}
+          >
+            <span>📄</span> Fiche Vierge (A4)
+          </button>
+          <button
+            type="button"
+            className="btn-glow"
+            onClick={() => {
+              setForm({ 
+                nom: "", 
+                tel: "", 
+                carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
+                montant: cardTiers[0]?.price.toString() || "10000",
+                expiration: "" 
+              });
+              setShowAddModal(true);
+            }}
+            style={{
+              ...S.btnPrimary,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 18px",
+              fontSize: 13.5,
+              fontWeight: 700
+            }}
+          >
+            <span>➕</span> Inscrire un Membre
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Section */}
@@ -2383,16 +2444,25 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 </div>
                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 700, color: tier.color, fontSize: 13.5 }}>Niveau {m.carte.split(" (")[0]}</span>
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button 
                       className="btn-secondary no-print" 
-                      style={{ padding: "5px 10px", fontSize: 12, background: "#FFFFFF", border: "1px solid #CBD5E1", color: "#334155" }} 
+                      style={{ padding: "5px 9px", fontSize: 11.5, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", fontWeight: 700, borderRadius: 6 }} 
+                      onClick={() => openMemberFiche(m)}
+                      title="Afficher et imprimer la fiche de renseignement de ce membre"
+                    >
+                      📋 Fiche
+                    </button>
+                    <button 
+                      className="btn-secondary no-print" 
+                      style={{ padding: "5px 9px", fontSize: 11.5, background: "#FFFFFF", border: "1px solid #CBD5E1", color: "#334155", fontWeight: 700, borderRadius: 6 }} 
                       onClick={() => printMemberReceipt(m)}
+                      title="Imprimer le reçu d'adhésion"
                     >
                       🖨️ Reçu
                     </button>
                     {isAdmin && (
-                      <button className="btn-secondary no-print" style={{ ...S.btnDangerGhost, padding: "5px 10px", fontSize: 12 }} onClick={() => remove(m.id)}>
+                      <button className="btn-secondary no-print" style={{ ...S.btnDangerGhost, padding: "5px 8px", fontSize: 11.5 }} onClick={() => remove(m.id)}>
                         Retirer
                       </button>
                     )}
@@ -2614,9 +2684,171 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         </div>
       )}
 
+      {/* On-screen Modal for Fiche de Renseignement (A4 preview) */}
+      {showFicheModal && activeFiche && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "95%", maxWidth: 840, borderRadius: 16, padding: "22px 26px", maxHeight: "94vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 24 }}>📋</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>
+                    {isBlankFiche ? "Fiche de Renseignement & Contrat d'Adhésion (Vierge)" : `Fiche de Renseignement : ${activeFiche.nom}`}
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: "#64748B" }}>Document officiel CLUB SPORT SANTE &bull; Format d'impression A4</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 24, cursor: "pointer" }} onClick={() => setShowFicheModal(false)}>&times;</button>
+            </div>
+
+            {/* Fiche Paper (A4 Preview) */}
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "20px 24px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Header Box */}
+              <div style={{ borderBottom: "2px solid #0F172A", paddingBottom: 10, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, color: "#0F172A" }}>CLUB SPORT SANTE</div>
+                  <div style={{ fontSize: 10, color: "#475569", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Centre de Remise en Forme, Musculation & Bien-Être</div>
+                  <div style={{ fontSize: 10.5, color: "#334155", marginTop: 2 }}>Divo, Côte d'Ivoire &bull; <strong>Tél : 07 07 78 23 29</strong> &bull; contact@clubsportsante.ci</div>
+                </div>
+                <div style={{ textAlign: "right", border: "1px solid #CBD5E1", padding: "6px 12px", borderRadius: 6, background: "#F8FAFC" }}>
+                  <div style={{ fontSize: 9.5, color: "#64748B", fontWeight: 700 }}>DOSSIER D'ADHÉSION N°</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 900, color: "#0F172A" }}>
+                    {isBlankFiche ? "........................" : `CSS-${activeFiche.id.substring(0, 8).toUpperCase()}`}
+                  </div>
+                  <div style={{ fontSize: 9.5, color: "#64748B", marginTop: 2 }}>
+                    Date : <strong>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title Banner */}
+              <div style={{ background: "#0F172A", color: "#FFFFFF", textAlign: "center", padding: "6px 0", fontWeight: 900, fontSize: 13, letterSpacing: 1, textTransform: "uppercase", borderRadius: 4, marginBottom: 14 }}>
+                FICHE DE RENSEIGNEMENT & CONTRAT D'ADHÉSION
+              </div>
+
+              {/* Section 1: Identification */}
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
+                  1. Identification de l'Adhérent(e)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 6 }}>
+                  <div>
+                    <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <strong>Sexe :</strong> {isBlankFiche ? "[   ] M   [   ] F" : "[ X ] Adhérent(e)"}
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6 }}>
+                  <div>
+                    <strong>Date de Naissance :</strong> {isBlankFiche ? "....../....../.........." : "...................."}
+                  </div>
+                  <div>
+                    <strong>Profession :</strong> {isBlankFiche ? "...................................................." : "..................................."}
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6 }}>
+                  <div>
+                    <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
+                  </div>
+                  <div>
+                    <strong>WhatsApp :</strong> {isBlankFiche ? "........................................" : (activeFiche.tel || "....................")}
+                  </div>
+                </div>
+                <div>
+                  <strong>Adresse / Quartier de résidence :</strong> {isBlankFiche ? "..................................................................................................................." : "Divo, Côte d'Ivoire"}
+                </div>
+                <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px dashed #E2E8F0", fontSize: 11 }}>
+                  <strong>🚨 Contact d'Urgence (Personne à prévenir) :</strong> Nom : ............................................ &bull; Tél : ............................................ &bull; Lien : ..........................
+                </div>
+              </div>
+
+              {/* Section 2: Formule & Validité */}
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
+                  2. Formule Souscrite & Règlement
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10, marginBottom: 6 }}>
+                  <div>
+                    <strong>Formule choisie :</strong> <span style={{ fontWeight: 800, color: "#4F46E5" }}>{isBlankFiche ? "[ ] Bronze   [ ] Argent   [ ] Or   [ ] Diamant" : activeFiche.carte}</span>
+                  </div>
+                  <div>
+                    <strong>Montant Cotisation :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "................................. F CFA" : `${(() => {
+                      const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeFiche.nom));
+                      if (memberTx) return fmt(memberTx.montant);
+                      const tier = cardTiers.find(c => c.key === activeFiche.carte);
+                      return fmt(tier ? tier.price : 0);
+                    })()} F CFA`}</span>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <strong>Date de début :</strong> <span>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</span>
+                  </div>
+                  <div>
+                    <strong>Date d'expiration :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.expiration)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Questionnaire Médical */}
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
+                  3. Questionnaire d'Aptitude Physique & Objectifs
+                </div>
+                <div style={{ fontSize: 11, marginBottom: 6 }}>
+                  <strong>Vos objectifs :</strong> [  ] Remise en forme &bull; [  ] Perte de poids &bull; [  ] Prise de muscle &bull; [  ] Cardio & Santé &bull; [  ] Force athlétique
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 10.5 }}>
+                  <div>• Antécédents cardiaques ou respiratoires : <strong>[  ] OUI   [  ] NON</strong></div>
+                  <div>• Douleurs articulaires / musculaires : <strong>[  ] OUI   [  ] NON</strong></div>
+                  <div>• Suivez-vous un traitement médical ? <strong>[  ] OUI   [  ] NON</strong></div>
+                  <div>• Fumeur / Habitudes spécifiques : <strong>[  ] OUI   [  ] NON</strong></div>
+                </div>
+              </div>
+
+              {/* Section 4: Engagement & Signatures */}
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
+                  4. Déclaration sur l'Honneur & Règlement Intérieur
+                </div>
+                <div style={{ fontSize: 9.5, lineHeight: 1.4, color: "#334155", textAlign: "justify", marginBottom: 12 }}>
+                  * Je soussigné(e), déclare sur l'honneur être apte à la pratique du sport et certifie l'exactitude des renseignements fournis ci-dessus. Je reconnais avoir pris connaissance du règlement intérieur de CLUB SPORT SANTE (tenue de sport appropriée, serviette obligatoire, rangement du matériel après usage) et m'engage à le respecter scrupuleusement. *
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, paddingTop: 4 }}>
+                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 75 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Signature de l'Adhérent(e) :</div>
+                    <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+                  </div>
+                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 75 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Pour CLUB SPORT SANTE :</div>
+                    <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14 }}>
+              <button type="button" style={S.btnCancel} onClick={() => setShowFicheModal(false)}>
+                Fermer
+              </button>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, display: "flex", alignItems: "center", gap: 6, padding: "0 20px", height: 40 }}
+                onClick={() => window.print()}
+              >
+                <span>🖨️</span> Imprimer la Fiche (Format A4)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hidden print template for subscription receipt */}
       {activeReceipt && (
-        <div className="print-only" style={{ display: "none" }}>
+        <div className="print-only print-thermal" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 6 }}>
             <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.8, borderRadius: 3 }}>
               ★ REÇU D'ADHÉSION ★
@@ -2688,6 +2920,135 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           
           <div style={{ textAlign: "center", fontSize: 9.5, fontWeight: 800, marginTop: 4 }}>
             MERCI DE VOTRE CONFIANCE & BON ENTRAÎNEMENT !
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print template for Fiche de Renseignement (A4) */}
+      {activeFiche && (
+        <div className="print-only print-a4" style={{ display: "none" }}>
+          {/* Header Box */}
+          <div style={{ borderBottom: "2px solid #000", paddingBottom: 8, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1, color: "#000" }}>CLUB SPORT SANTE</div>
+              <div style={{ fontSize: 9.5, color: "#333", fontWeight: 700, textTransform: "uppercase" }}>Centre de Remise en Forme, Musculation & Bien-Être</div>
+              <div style={{ fontSize: 10, color: "#000", marginTop: 2 }}>Divo, Côte d'Ivoire &bull; <strong>Tél : 07 07 78 23 29</strong> &bull; contact@clubsportsante.ci</div>
+            </div>
+            <div style={{ textAlign: "right", border: "1px solid #000", padding: "5px 10px", borderRadius: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700 }}>DOSSIER D'ADHÉSION N°</div>
+              <div style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 900 }}>
+                {isBlankFiche ? "........................" : `CSS-${activeFiche.id.substring(0, 8).toUpperCase()}`}
+              </div>
+              <div style={{ fontSize: 9, marginTop: 2 }}>
+                Date : <strong>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Title Banner */}
+          <div style={{ background: "#000", color: "#FFF", textAlign: "center", padding: "5px 0", fontWeight: 900, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", borderRadius: 3, marginBottom: 10 }}>
+            FICHE DE RENSEIGNEMENT & CONTRAT D'ADHÉSION
+          </div>
+
+          {/* Section 1: Identification */}
+          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 11 }}>
+            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 6 }}>
+              1. Identification de l'Adhérent(e)
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginBottom: 5 }}>
+              <div>
+                <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
+              </div>
+              <div>
+                <strong>Sexe :</strong> {isBlankFiche ? "[   ] M   [   ] F" : "[ X ] Adhérent(e)"}
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
+              <div>
+                <strong>Date de Naissance :</strong> {isBlankFiche ? "....../....../.........." : "...................."}
+              </div>
+              <div>
+                <strong>Profession :</strong> {isBlankFiche ? "...................................................." : "..................................."}
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
+              <div>
+                <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
+              </div>
+              <div>
+                <strong>WhatsApp :</strong> {isBlankFiche ? "........................................" : (activeFiche.tel || "....................")}
+              </div>
+            </div>
+            <div>
+              <strong>Adresse / Quartier de résidence :</strong> {isBlankFiche ? "..................................................................................................................." : "Divo, Côte d'Ivoire"}
+            </div>
+            <div style={{ marginTop: 5, paddingTop: 4, borderTop: "1px dashed #666", fontSize: 10 }}>
+              <strong>🚨 Contact d'Urgence :</strong> Nom : ............................................ &bull; Tél : ............................................ &bull; Lien : ..........................
+            </div>
+          </div>
+
+          {/* Section 2: Formule & Validité */}
+          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 11 }}>
+            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 6 }}>
+              2. Formule Souscrite & Règlement
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 8, marginBottom: 5 }}>
+              <div>
+                <strong>Formule choisie :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "[ ] Bronze   [ ] Argent   [ ] Or   [ ] Diamant" : activeFiche.carte}</span>
+              </div>
+              <div>
+                <strong>Montant Cotisation :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "................................. F CFA" : `${(() => {
+                  const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeFiche.nom));
+                  if (memberTx) return fmt(memberTx.montant);
+                  const tier = cardTiers.find(c => c.key === activeFiche.carte);
+                  return fmt(tier ? tier.price : 0);
+                })()} F CFA`}</span>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div>
+                <strong>Date de début :</strong> <span>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</span>
+              </div>
+              <div>
+                <strong>Date d'expiration :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.expiration)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Questionnaire Médical */}
+          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 10.5 }}>
+            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 5 }}>
+              3. Questionnaire d'Aptitude Physique & Objectifs
+            </div>
+            <div style={{ marginBottom: 4 }}>
+              <strong>Vos objectifs :</strong> [  ] Remise en forme &bull; [  ] Perte de poids &bull; [  ] Prise de muscle &bull; [  ] Cardio & Santé &bull; [  ] Force athlétique
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10 }}>
+              <div>• Antécédents cardiaques ou respiratoires : <strong>[  ] OUI   [  ] NON</strong></div>
+              <div>• Douleurs articulaires / musculaires : <strong>[  ] OUI   [  ] NON</strong></div>
+              <div>• Suivez-vous un traitement médical ? <strong>[  ] OUI   [  ] NON</strong></div>
+              <div>• Fumeur / Habitudes spécifiques : <strong>[  ] OUI   [  ] NON</strong></div>
+            </div>
+          </div>
+
+          {/* Section 4: Engagement & Signatures */}
+          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", fontSize: 10.5 }}>
+            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 5 }}>
+              4. Déclaration sur l'Honneur & Règlement Intérieur
+            </div>
+            <div style={{ fontSize: 9, lineHeight: 1.3, textAlign: "justify", marginBottom: 10 }}>
+              * Je soussigné(e), déclare sur l'honneur être apte à la pratique du sport et certifie l'exactitude des renseignements fournis ci-dessus. Je reconnais avoir pris connaissance du règlement intérieur de CLUB SPORT SANTE (tenue de sport appropriée, serviette obligatoire, rangement du matériel après usage) et m'engage à le respecter scrupuleusement. *
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 10px", height: 75 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 800 }}>Signature de l'Adhérent(e) :</div>
+                <div style={{ fontSize: 8, color: "#444", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+              </div>
+              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 10px", height: 75 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 800 }}>Pour CLUB SPORT SANTE :</div>
+                <div style={{ fontSize: 8, color: "#444", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -3780,7 +4141,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       
       {/* Hidden print template */}
       {lastTicket && (
-        <div className="print-only" style={{ display: "none" }}>
+        <div className="print-only print-thermal" style={{ display: "none" }}>
           {lastTicket.isDgGuest ? (
             /* VIP PASS FOR DG GUEST THERMAL RECEIPT */
             <div style={{ textAlign: "center", color: "#000" }}>
