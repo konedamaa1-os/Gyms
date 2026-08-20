@@ -2133,12 +2133,11 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
 function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, currentUser }) {
   const isAdmin = currentUser && currentUser.role === "Administrateur";
   const [activeReceipt, setActiveReceipt] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   
   const printMemberReceipt = (m) => {
     setActiveReceipt(m);
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    setShowReceiptModal(true);
   };
 
   const [form, setForm] = useState({ 
@@ -2406,6 +2405,116 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           );
         })}
       </div>
+
+      {/* On-screen Modal for Member Receipt */}
+      {showReceiptModal && activeReceipt && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "92%", maxWidth: 440, borderRadius: 14, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 22 }}>🧾</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, color: "#0F172A" }}>Reçu Individuel Adhérent</h3>
+                  <div style={{ fontSize: 11.5, color: "#64748B" }}>{activeReceipt.nom} &bull; {activeReceipt.carte}</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer" }} onClick={() => setShowReceiptModal(false)}>&times;</button>
+            </div>
+
+            {/* Visual Receipt Paper Preview on Screen */}
+            <div style={{ ...S.ticketPaper, borderRadius: 8, margin: "0 auto 16px auto", border: "1px dashed #CBD5E1", background: "#FFFFFF", padding: "16px 18px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              <div style={{ textAlign: "center", marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, background: "#0F172A", color: "#FFF", padding: "4px 0", letterSpacing: 0.8, borderRadius: 3 }}>
+                  ★ REÇU D'ADHÉSION ★
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
+              </div>
+              
+              <div style={{ fontSize: 11.5, lineHeight: 1.6, marginBottom: 10, color: "#000" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>N° REÇU :</span>
+                  <strong style={{ fontFamily: "monospace", fontSize: 12 }}>R-{activeReceipt.id.substring(0, 8).toUpperCase()}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>DATE PAIEMENT :</span>
+                  <span>{formatDateFr(activeReceipt.inscription || today())}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>VALIDITÉ JUSQU'AU :</span>
+                  <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{formatDateFr(activeReceipt.expiration)}</strong>
+                </div>
+                
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+                
+                <div style={{ fontSize: 12.5, fontWeight: 900 }}>
+                  MEMBRE : {activeReceipt.nom.toUpperCase()}
+                </div>
+                {activeReceipt.tel && (
+                  <div style={{ fontSize: 10.5 }}>CONTACT : {activeReceipt.tel}</div>
+                )}
+                <div style={{ fontSize: 11, marginTop: 2 }}>
+                  FORMULE : <strong>{activeReceipt.carte}</strong>
+                </div>
+
+                <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "3px 0" }}>
+                  <span>COTISATION PAYÉE :</span>
+                  <span style={{ fontSize: 14 }}>{(() => {
+                    const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
+                    if (memberTx) return fmt(memberTx.montant);
+                    const tier = cardTiers.find(c => c.key === activeReceipt.carte);
+                    return fmt(tier ? tier.price : 0);
+                  })()} F CFA</span>
+                </div>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#000", marginTop: 2 }}>
+                  <span>STATUT DU PAIEMENT :</span>
+                  <strong>[RÉGLÉ EN TOTALITÉ]</strong>
+                </div>
+              </div>
+
+              <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+              <div style={{ fontSize: 9, textAlign: "center", lineHeight: 1.4, color: "#222", margin: "6px 0" }}>
+                * Présentation de la carte obligatoire à chaque passage *<br />
+                * Abonnement strictement personnel et non remboursable *
+              </div>
+
+              <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9.5 }}>
+                <div>Caissier(e) : {currentUser?.label || currentUser?.username || "Secrétariat"}</div>
+                <div>Cachet / Signature :</div>
+              </div>
+              <div style={{ height: 18 }}></div>
+              
+              <div style={{ textAlign: "center", fontSize: 9, fontWeight: 800, marginTop: 4 }}>
+                MERCI DE VOTRE CONFIANCE & BON ENTRAÎNEMENT !
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button 
+                type="button" 
+                style={S.btnCancel} 
+                onClick={() => setShowReceiptModal(false)}
+              >
+                Fermer
+              </button>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, display: "flex", alignItems: "center", gap: 6, padding: "0 18px", height: 40 }}
+                onClick={() => {
+                  window.print();
+                }}
+              >
+                <span>🖨️</span> Imprimer ce Reçu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden print template for subscription receipt */}
       {activeReceipt && (
