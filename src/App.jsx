@@ -394,7 +394,7 @@ export default function GymApp() {
         /* Printable thermal receipt styling */
         @media print {
           @page {
-            margin: 4mm;
+            margin: 0 !important;
             size: auto;
           }
           
@@ -408,7 +408,10 @@ export default function GymApp() {
             padding: 0 !important;
             background: #FFFFFF !important;
             color: #000000 !important;
-            font-size: 11pt !important;
+            font-size: 10.5pt !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
@@ -418,20 +421,22 @@ export default function GymApp() {
             display: none !important;
           }
           
-          /* Show only the receipt container */
+          /* Show only the single receipt container */
           .print-only {
             display: block !important;
             visibility: visible !important;
-            width: 78mm !important;
-            max-width: 78mm !important;
-            margin: 0 auto !important;
-            padding: 6mm 5mm !important;
+            width: 76mm !important;
+            max-width: 76mm !important;
+            margin: 2mm auto !important;
+            padding: 4mm 4mm !important;
             background: #FFFFFF !important;
             color: #000000 !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
             border: 1px dashed #000000 !important;
             box-sizing: border-box !important;
+            page-break-after: avoid !important;
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           
           .print-only * {
@@ -3500,33 +3505,57 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                                 </button>
                               )}
                             </>
-                          ) : modifiable ? (
+                          ) : (
                             <>
                               <button
                                 className="btn-secondary"
-                                style={{ padding: "4px 8px", fontSize: 11, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", borderRadius: 4 }}
-                                onClick={() => handleEditTicketAmount(t)}
-                                title="Modifier le montant (Autorisé sous 10 min)"
+                                style={{ padding: "4px 8px", fontSize: 11, background: "#F1F5F9", border: "1px solid #CBD5E1", color: "#0F172A", borderRadius: 4, fontWeight: 700 }}
+                                onClick={() => {
+                                  setLastTicket(t);
+                                  setTimeout(() => window.print(), 150);
+                                }}
+                                title="Imprimer le reçu individuel de ce ticket"
                               >
-                                ✏️ Modifier
+                                🖨️ Reçu
                               </button>
-                              <button
-                                className="btn-secondary"
-                                style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4, fontWeight: 700 }}
-                                onClick={() => handleCancelTicket(t)}
-                                title="Supprimer cette entrée"
-                              >
-                                🗑️ Supprimer
-                              </button>
+                              {modifiable ? (
+                                <>
+                                  <button
+                                    className="btn-secondary"
+                                    style={{ padding: "4px 8px", fontSize: 11, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", borderRadius: 4 }}
+                                    onClick={() => handleEditTicketAmount(t)}
+                                    title="Modifier le montant (Autorisé sous 10 min)"
+                                  >
+                                    ✏️ Modifier
+                                  </button>
+                                  <button
+                                    className="btn-secondary"
+                                    style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4, fontWeight: 700 }}
+                                    onClick={() => handleCancelTicket(t)}
+                                    title="Supprimer cette entrée"
+                                  >
+                                    🗑️ Supprimer
+                                  </button>
+                                </>
+                              ) : isDirectorOrAdmin ? (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4, fontWeight: 700 }}
+                                  onClick={() => handleCancelTicket(t)}
+                                  title="Supprimer cette entrée (Autorisation Direction)"
+                                >
+                                  🗑️ Supprimer
+                                </button>
+                              ) : (
+                                <span 
+                                  style={{ fontSize: 10.5, color: "#94A3B8", background: "#F8FAFC", padding: "3px 6px", borderRadius: 4, cursor: "not-allowed", border: "1px solid #E2E8F0" }}
+                                  onClick={() => triggerToast("🔒 Délai de modification de 10 minutes écoulé. Seul le Directeur Général ou l'Administrateur peut modifier ou annuler.")}
+                                  title="Verrouillé après 10 minutes"
+                                >
+                                  🔒 10min
+                                </span>
+                              )}
                             </>
-                          ) : (
-                            <span 
-                              style={{ fontSize: 11, color: "#94A3B8", background: "#F1F5F9", padding: "3px 8px", borderRadius: 4, cursor: "not-allowed", border: "1px solid #E2E8F0" }}
-                              onClick={() => triggerToast("🔒 Délai de modification de 10 minutes écoulé. Seul le Directeur Général ou l'Administrateur peut modifier ou annuler cette saisie.")}
-                              title="Verrouillé après 10 minutes"
-                            >
-                              🔒 Verrouillé
-                            </span>
                           )}
                         </div>
                       </td>
