@@ -375,52 +375,54 @@ export default function GymApp() {
 
         /* Printable thermal receipt styling */
         @media print {
-          html, body {
-            height: 100% !important;
-            overflow: visible !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #FFFFFF !important;
+          @page {
+            margin: 4mm;
+            size: auto;
           }
           
-          /* Hide all screen elements */
-          body * {
-            visibility: hidden;
-          }
-          
-          /* Force all containers to collapse to 0 height */
-          #root, #root * {
-            height: 0 !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
+          *, *:before, *:after {
             box-shadow: none !important;
+            text-shadow: none !important;
           }
           
-          /* Make only the print-only receipt visible */
-          .print-only, .print-only * {
-            visibility: visible !important;
-            height: auto !important;
-          }
-          
-          .print-only {
-            display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 78mm !important;
-            max-width: 78mm !important;
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
             background: #FFFFFF !important;
             color: #000000 !important;
-            font-family: 'Courier New', Courier, 'JetBrains Mono', monospace !important;
-            padding: 6mm 4mm !important;
-            box-sizing: border-box !important;
+            font-size: 11pt !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           
-          @page {
-            margin: 0 !important;
-            size: auto;
+          /* Hide all screen interface elements */
+          .no-print, .no-print *, .app-sidebar, .mobile-header, .guide-btn, button, nav, .tab-btn {
+            display: none !important;
+          }
+          
+          /* Show only the receipt container */
+          .print-only {
+            display: block !important;
+            visibility: visible !important;
+            width: 78mm !important;
+            max-width: 78mm !important;
+            margin: 0 auto !important;
+            padding: 6mm 5mm !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            border: 1px dashed #000000 !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+          }
+          
+          .print-only * {
+            visibility: visible !important;
+            color: #000000 !important;
+          }
+          
+          .print-only .mono {
+            font-family: "Courier New", Courier, monospace !important;
           }
         }
 
@@ -2405,44 +2407,45 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {activeReceipt && (
         <div className="print-only" style={{ display: "none" }}>
           <div style={{ textAlign: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>🏋️ CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 9, marginTop: 2, letterSpacing: 0.5 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
-            <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél : +225 07 00 00 00 00</div>
+            <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8, color: "#000" }}>🏋️ CLUB SPORT SANTE</div>
+            <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 2, color: "#333" }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
+            <div style={{ fontSize: 9, color: "#555" }}>Divo, Côte d'Ivoire &bull; Tél : +225 07 00 00 00 00</div>
             <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
-            <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 1, textTransform: "uppercase" }}>
+            <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "4px 0", letterSpacing: 0.8, borderRadius: 3 }}>
               ★ REÇU D'ADHÉSION ★
             </div>
             <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
           </div>
           
-          <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 10 }}>
+          <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 10, color: "#000" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>N° REÇU :</span>
-              <strong style={{ fontFamily: "monospace" }}>R-{activeReceipt.id.substring(0, 8).toUpperCase()}</strong>
+              <strong style={{ fontFamily: "monospace", fontSize: 12 }}>R-{activeReceipt.id.substring(0, 8).toUpperCase()}</strong>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>DATE DU PAIEMENT :</span>
+              <span>DATE PAIEMENT :</span>
               <span>{activeReceipt.inscription || today()}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>VALIDITÉ JUSQU'AU :</span>
-              <strong style={{ fontFamily: "monospace" }}>{activeReceipt.expiration}</strong>
+              <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{activeReceipt.expiration}</strong>
             </div>
+            
             <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
             
-            <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 2 }}>
+            <div style={{ fontSize: 12, fontWeight: 900 }}>
               MEMBRE : {activeReceipt.nom.toUpperCase()}
             </div>
             {activeReceipt.tel && (
-              <div style={{ fontSize: 10 }}>CONTACT : {activeReceipt.tel}</div>
+              <div style={{ fontSize: 10.5 }}>CONTACT : {activeReceipt.tel}</div>
             )}
-            <div style={{ fontSize: 10, marginTop: 2 }}>
+            <div style={{ fontSize: 11, marginTop: 2 }}>
               FORMULE : <strong>{activeReceipt.carte}</strong>
             </div>
 
             <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
             
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "4px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "3px 0" }}>
               <span>COTISATION PAYÉE :</span>
               <span style={{ fontSize: 14 }}>{(() => {
                 const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
@@ -2452,28 +2455,28 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               })()} F CFA</span>
             </div>
             
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: "#333" }}>
-              <span>STATUT :</span>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#000", marginTop: 2 }}>
+              <span>STATUT DU PAIEMENT :</span>
               <strong>[RÉGLÉ EN TOTALITÉ]</strong>
             </div>
           </div>
 
           <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
           
-          <div style={{ fontSize: 8.5, textAlign: "center", lineHeight: 1.4, color: "#222", margin: "6px 0" }}>
+          <div style={{ fontSize: 9, textAlign: "center", lineHeight: 1.4, color: "#222", margin: "6px 0" }}>
             * Présentation de la carte obligatoire à chaque passage *<br />
             * Abonnement strictement personnel et non remboursable *
           </div>
 
           <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
           
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 8.5 }}>
-            <div>Caissier : {currentUser?.label || currentUser?.username || "Secrétariat"}</div>
-            <div>Cachet & Signature :</div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9.5 }}>
+            <div>Caissier(e) : {currentUser?.label || currentUser?.username || "Secrétariat"}</div>
+            <div>Cachet / Signature :</div>
           </div>
-          <div style={{ height: 28 }}></div>
+          <div style={{ height: 26 }}></div>
           
-          <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700, marginTop: 4 }}>
+          <div style={{ textAlign: "center", fontSize: 9.5, fontWeight: 800, marginTop: 4 }}>
             MERCI DE VOTRE CONFIANCE & BON ENTRAÎNEMENT !
           </div>
         </div>
@@ -3686,40 +3689,41 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
         <div className="print-only" style={{ display: "none" }}>
           {lastTicket.isDgGuest ? (
             /* VIP PASS FOR DG GUEST THERMAL RECEIPT */
-            <div style={{ textAlign: "center" }}>
-              <div style={{ marginBottom: 6 }}>
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
-                <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE — DIVO</div>
-                <div style={{ fontSize: 8.5, color: "#333" }}>Tél : +225 07 00 00 00 00</div>
-                <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
-                <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 0.5 }}>
+            <div style={{ textAlign: "center", color: "#000" }}>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE — DIVO</div>
+                <div style={{ fontSize: 9, color: "#444" }}>Tél : +225 07 00 00 00 00</div>
+                <div style={{ borderBottom: "2px solid #000", margin: "8px 0 5px 0" }} />
+                <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "4px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   👑 PASS VIP INVITÉ DU DG 👑
                 </div>
-                <div style={{ fontSize: 8, fontWeight: 800, marginTop: 3 }}>
+                <div style={{ fontSize: 8.5, fontWeight: 800, marginTop: 4, letterSpacing: 0.5 }}>
                   AUTORISATION EXCLUSIVE DIRECTION GÉNÉRALE
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
-              <div style={{ fontSize: 10, lineHeight: 1.5, marginBottom: 8, textAlign: "left" }}>
+              <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>N° DU PASS :</span>
-                  <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
+                  <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{lastTicket.id}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>DATE ÉMISSION :</span>
                   <span>{lastTicket.date} ({lastTicket.heure})</span>
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
                 
-                <div style={{ fontSize: 11.5, fontWeight: 900 }}>
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+                
+                <div style={{ fontSize: 12, fontWeight: 900 }}>
                   INVITÉ(E) DU DG : {lastTicket.nom.toUpperCase()}
                 </div>
                 {lastTicket.tel && (
-                  <div style={{ fontSize: 9.5 }}>CONTACT : {lastTicket.tel}</div>
+                  <div style={{ fontSize: 10.5 }}>CONTACT : {lastTicket.tel}</div>
                 )}
                 
-                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
                   <span>PÉRIODE D'ACCÈS :</span>
                   <span>{lastTicket.dgPeriod || `Du ${lastTicket.startDate} au ${lastTicket.endDate}`}</span>
@@ -3728,48 +3732,48 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   <span>DROITS ACCORDÉS :</span>
                   <strong>ACCÈS TOTAL ILLIMITÉ</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2, fontSize: 12, fontWeight: 900 }}>
                   <span>FRAIS D'ENTRÉE :</span>
-                  <strong>0 F CFA (OFFERT PAR LE DG)</strong>
+                  <span>0 F CFA (OFFERT PAR LE DG)</span>
                 </div>
                 
-                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
-                <div style={{ fontSize: 8.5, fontStyle: "italic", color: "#333" }}>
-                  Motif : {lastTicket.dgNote || "Invité personnel de Monsieur le Directeur Général"}
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+                <div style={{ fontSize: 9.5, fontStyle: "italic", color: "#222" }}>
+                  Motif : "{lastTicket.dgNote || "Invité personnel de Monsieur le Directeur Général"}"
                 </div>
               </div>
 
-              <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+              <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
               
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 8.5, textAlign: "left" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9.5, textAlign: "left" }}>
                 <div>Émis au Guichet</div>
                 <div style={{ textAlign: "right" }}>Le Directeur Général / DG<br /><strong>(Autorisation Accordée)</strong></div>
               </div>
               <div style={{ height: 26 }}></div>
 
               <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-              <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 800 }}>
+              <div style={{ textAlign: "center", fontSize: 9, fontWeight: 800 }}>
                 LE DIRECTEUR GÉNÉRAL VOUS SOUHAITE UN EXCELLENT ENTRAÎNEMENT !
               </div>
             </div>
           ) : (
             /* STANDARD TICKET THERMAL RECEIPT */
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "center", color: "#000" }}>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
-                <div style={{ fontSize: 9, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
-                <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
-                <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
-                <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "2px 0", letterSpacing: 0.5 }}>
+                <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
+                <div style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
+                <div style={{ fontSize: 9, color: "#444" }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
+                <div style={{ borderBottom: "2px solid #000", margin: "8px 0 5px 0" }} />
+                <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
-              <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>TICKET N° :</span>
-                  <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
+                  <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{lastTicket.id}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>DATE :</span>
@@ -3783,9 +3787,10 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   <span>TYPE ACCÈS :</span>
                   <strong>{lastTicket.isMember ? "MEMBRE ADHÉRENT" : "VISITEUR PASS"}</strong>
                 </div>
+                
                 <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
                 
-                <div style={{ fontSize: 11.5, fontWeight: 900, display: "flex", justifyContent: "space-between" }}>
+                <div style={{ fontSize: 12, fontWeight: 900, display: "flex", justifyContent: "space-between" }}>
                   <span>CLIENT :</span>
                   <span>{lastTicket.nom.toUpperCase()}</span>
                 </div>
@@ -3796,15 +3801,19 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
               </div>
 
               <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-              
-              <div style={{ textAlign: "center", fontSize: 8.5, lineHeight: 1.3, color: "#222", margin: "4px 0" }}>
-                * Billet valable pour 1 séance le jour d'émission *<br />
-                * Tenue de sport & serviette obligatoires *
+              <div style={{ textAlign: "center", fontSize: 9, lineHeight: 1.4, color: "#222", margin: "4px 0" }}>
+                * Ticket valable uniquement pour la séance du jour *<br />
+                * Conservez ce reçu pour tout contrôle en salle *
               </div>
 
               <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-              <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700 }}>
-                MERCI DE VOTRE VISITE ! A BIENTÔT.
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, marginTop: 6, textAlign: "left" }}>
+                <div>Caissier : {currentUser?.label || currentUser?.username || "Secrétariat"}</div>
+                <div>Cachet & Signature :</div>
+              </div>
+              <div style={{ height: 24 }}></div>
+              <div style={{ textAlign: "center", fontSize: 9.5, fontWeight: 800 }}>
+                MERCI DE VOTRE VISITE & BON ENTRAÎNEMENT !
               </div>
             </div>
           )}
