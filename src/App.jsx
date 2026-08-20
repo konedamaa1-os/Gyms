@@ -371,7 +371,7 @@ export default function GymApp() {
         @media print {
           html, body {
             height: 100% !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             margin: 0 !important;
             padding: 0 !important;
             background: #FFFFFF !important;
@@ -400,19 +400,21 @@ export default function GymApp() {
           
           .print-only {
             display: block !important;
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 80mm !important;
-            background: white !important;
-            color: black !important;
-            font-family: 'JetBrains Mono', monospace !important;
-            padding: 8px !important;
+            width: 78mm !important;
+            max-width: 78mm !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            font-family: 'Courier New', Courier, 'JetBrains Mono', monospace !important;
+            padding: 6mm 4mm !important;
             box-sizing: border-box !important;
           }
           
           @page {
             margin: 0 !important;
+            size: auto;
           }
         }
 
@@ -2384,44 +2386,77 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {/* Hidden print template for subscription receipt */}
       {activeReceipt && (
         <div className="print-only" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
-            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold" }}>REÇU D'INSCRIPTION</div>
+          <div style={{ textAlign: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>🏋️ CLUB SPORT SANTE</div>
+            <div style={{ fontSize: 9, marginTop: 2, letterSpacing: 0.5 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
+            <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél : +225 07 00 00 00 00</div>
+            <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
+            <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 1, textTransform: "uppercase" }}>
+              ★ REÇU D'ADHÉSION ★
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
           </div>
           
-          <div style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 14 }}>
-            <div>RÉF : R-{activeReceipt.id.substring(0, 8).toUpperCase()}</div>
-            <div>DATE INSCRIPTION : {activeReceipt.inscription}</div>
-            <div>DATE EXPIRATION : {activeReceipt.expiration}</div>
-            <div>ABONNEMENT : {activeReceipt.carte}</div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
-              <span>MEMBRE :</span>
-              <span>{activeReceipt.nom}</span>
+          <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>N° REÇU :</span>
+              <strong style={{ fontFamily: "monospace" }}>R-{activeReceipt.id.substring(0, 8).toUpperCase()}</strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>DATE DU PAIEMENT :</span>
+              <span>{activeReceipt.inscription || today()}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>VALIDITÉ JUSQU'AU :</span>
+              <strong style={{ fontFamily: "monospace" }}>{activeReceipt.expiration}</strong>
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+            
+            <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 2 }}>
+              MEMBRE : {activeReceipt.nom.toUpperCase()}
             </div>
             {activeReceipt.tel && (
-              <div style={{ fontSize: 12, display: "flex", justifyContent: "space-between" }}>
-                <span>TEL :</span>
-                <span>{activeReceipt.tel}</span>
-              </div>
+              <div style={{ fontSize: 10 }}>CONTACT : {activeReceipt.tel}</div>
             )}
-            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
-              <span>MONTANT PAYÉ :</span>
-              <span>{(() => {
+            <div style={{ fontSize: 10, marginTop: 2 }}>
+              FORMULE : <strong>{activeReceipt.carte}</strong>
+            </div>
+
+            <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "4px 0" }}>
+              <span>COTISATION PAYÉE :</span>
+              <span style={{ fontSize: 14 }}>{(() => {
                 const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
                 if (memberTx) return fmt(memberTx.montant);
                 const tier = cardTiers.find(c => c.key === activeReceipt.carte);
                 return fmt(tier ? tier.price : 0);
               })()} F CFA</span>
             </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, color: "#333" }}>
+              <span>STATUT :</span>
+              <strong>[RÉGLÉ EN TOTALITÉ]</strong>
+            </div>
           </div>
-          <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
-          <div style={{ textAlign: "center", fontSize: 10 }}>
-            MERCI POUR VOTRE FIDÉLITÉ !
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+          
+          <div style={{ fontSize: 8.5, textAlign: "center", lineHeight: 1.4, color: "#222", margin: "6px 0" }}>
+            * Présentation de la carte obligatoire à chaque passage *<br />
+            * Abonnement strictement personnel et non remboursable *
+          </div>
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
+          
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 8.5 }}>
+            <div>Caissier : {currentUser?.label || currentUser?.username || "Secrétariat"}</div>
+            <div>Cachet & Signature :</div>
+          </div>
+          <div style={{ height: 28 }}></div>
+          
+          <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700, marginTop: 4 }}>
+            MERCI DE VOTRE CONFIANCE & BON ENTRAÎNEMENT !
           </div>
         </div>
       )}
@@ -3315,41 +3350,53 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
             )}
 
             {lastTicket && !isPrinting && (
-              <div style={S.ticketPaper} className="animate-ticket printable-receipt">
-                <div style={{ textAlign: "center", marginBottom: 12 }}>
-                  <div className="disp" style={{ fontSize: 18, color: "#000", fontWeight: 800 }}>CLUB SPORT SANTE</div>
-                  <div style={{ fontSize: 10, color: "#444" }}>Divo, Côte d'Ivoire</div>
-                  <div style={{ fontSize: 10, color: "#444" }}>Tel: +225 07 00 00 00 00</div>
-                  <div style={{ borderBottom: "1px dashed #444", margin: "10px 0" }} />
-                  <div className="disp" style={{ fontSize: 12, color: "#000", fontWeight: 700 }}>ACCÈS SEANCE</div>
+              <div style={{ ...S.ticketPaper, borderRadius: 8 }} className="animate-ticket printable-receipt">
+                <div style={{ textAlign: "center", marginBottom: 10 }}>
+                  <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
+                  <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>COMPLEXE SPORTIF — DIVO</div>
+                  <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
+                  <div style={{ borderBottom: "2px solid #0F172A", margin: "8px 0 6px 0" }} />
+                  <div style={{ fontSize: 11, color: "#000", fontWeight: 800, background: "#E2E8F0", padding: "2px 0", borderRadius: 4 }}>
+                    {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
+                  </div>
+                  <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0 8px 0" }} />
                 </div>
                 
-                <div className="mono" style={{ fontSize: 11, color: "#000", lineHeight: 1.6, marginBottom: 14 }}>
-                  <div>RÉF : {lastTicket.id}</div>
-                  <div>DATE : {lastTicket.date}</div>
-                  <div>HEURE : {lastTicket.heure}</div>
-                  <div>TYPE : {lastTicket.isMember ? "MEMBRE ADHERENT" : "VISITEUR PASS"}</div>
-                  <div style={{ borderBottom: "1px dashed #444", margin: "8px 0" }} />
-                  <div style={{ fontSize: 12, fontWeight: 700, display: "flex", justifyContent: "space-between" }}>
+                <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>CODE :</span>
+                    <strong>{lastTicket.id}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>DATE :</span>
+                    <span>{lastTicket.date}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>HEURE :</span>
+                    <span>{lastTicket.heure}</span>
+                  </div>
+                  <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
+                  <div style={{ fontSize: 12, fontWeight: 800, display: "flex", justifyContent: "space-between", color: "#0F172A" }}>
                     <span>CLIENT :</span>
                     <span>{lastTicket.nom}</span>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, display: "flex", justifyContent: "space-between" , marginTop: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
                     <span>MONTANT :</span>
-                    <span>{fmt(lastTicket.montant)} F</span>
+                    <span>{fmt(lastTicket.montant)} F CFA</span>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, borderTop: "1px dashed #CBD5E1", paddingTop: 8 }}>
                   {/* Custom QR Code */}
-                  <svg width="60" height="60" viewBox="0 0 21 21" style={{ background: "#fff", padding: 2 }}>
+                  <svg width="56" height="56" viewBox="0 0 21 21" style={{ background: "#fff", padding: 2 }}>
                     <path d="M0 0h7v7H0zm1 1v5h5V1zm1 1h3v3H2z" fill="#000" />
                     <path d="M14 0h7v7h-7zm1 1v5h5V1zm1 1h3v3h-2z" fill="#000" />
                     <path d="M0 14h7v7H0zm1 1v5h5v-5zm1 1h3v3H2z" fill="#000" />
                     <path d="M9 1h1v2H9zm2 0h1v1h-1zm1 2h1v3h-1zm-3 2h2v1H9zm4-4h1v1h-1zm3 8h2v1h-2zm-5 1h1v2h-1zm3 1h2v1h-2zm-5 3h1v1H9zm3 2h1v1h-1zm2-3h1v2h-1zm1 2h2v1h-2zm1-3h1v1h-1zm-6 2h1v1h-1z" fill="#000" />
                   </svg>
-                  <div className="mono" style={{ fontSize: 8, color: "#222", textAlign: "center", marginTop: 4 }}>
-                    BONNE SÉANCE D'ENTRAÎNEMENT !
+                  <div className="mono" style={{ fontSize: 8, color: "#475569", textAlign: "center" }}>
+                    * Tenue & serviette obligatoires *<br />
+                    BONNE SÉANCE !
                   </div>
                 </div>
               </div>
@@ -3433,32 +3480,56 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       {/* Hidden print template */}
       {lastTicket && (
         <div className="print-only" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
-            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold" }}>TICKET ENTRÉE</div>
+          <div style={{ textAlign: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
+            <div style={{ fontSize: 9, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
+            <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
+            <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
+            <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "2px 0", letterSpacing: 0.5 }}>
+              {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
           </div>
           
-          <div style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 14 }}>
-            <div>RÉF : {lastTicket.id}</div>
-            <div>DATE : {lastTicket.date}</div>
-            <div>HEURE : {lastTicket.heure}</div>
-            <div>TYPE : {lastTicket.isMember ? "MEMBRE ACCÈS" : "VISITEUR PASS"}</div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "8px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
-              <span>CLIENT :</span>
-              <span>{lastTicket.nom}</span>
+          <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>TICKET N° :</span>
+              <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
             </div>
-            <div style={{ fontSize: 14, fontWeight: "bold", display: "flex", justifyContent: "space-between" }}>
-              <span>MONTANT :</span>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>DATE :</span>
+              <span>{lastTicket.date}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>HEURE :</span>
+              <span>{lastTicket.heure}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>TYPE ACCÈS :</span>
+              <strong>{lastTicket.isMember ? "MEMBRE ADHÉRENT" : "VISITEUR PASS"}</strong>
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+            
+            <div style={{ fontSize: 11.5, fontWeight: 900, display: "flex", justifyContent: "space-between" }}>
+              <span>CLIENT :</span>
+              <span>{lastTicket.nom.toUpperCase()}</span>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+              <span>MONTANT ENCAISSÉ :</span>
               <span>{fmt(lastTicket.montant)} F CFA</span>
             </div>
           </div>
-          <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
-          <div style={{ textAlign: "center", fontSize: 10 }}>
-            BONNE SEANCE ! CONSERVEZ CE RECU.
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+          
+          <div style={{ textAlign: "center", fontSize: 8.5, lineHeight: 1.3, color: "#222", margin: "4px 0" }}>
+            * Billet valable pour 1 séance le jour d'émission *<br />
+            * Tenue de sport & serviette obligatoires *
+          </div>
+
+          <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+          <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700 }}>
+            MERCI DE VOTRE VISITE ! A BIENTÔT.
           </div>
         </div>
       )}
