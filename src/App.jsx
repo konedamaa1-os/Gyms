@@ -5579,6 +5579,41 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
 // STYLING ARCHITECTURE (PREMIUM BRIGHT SLATE THEME)
 // ==========================================
 const S = {
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+    padding: 16,
+  },
+  modalContent: {
+    background: "#FFFFFF",
+    borderRadius: 16,
+    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.2)",
+    maxWidth: 500,
+    width: "100%",
+    maxHeight: "90vh",
+    overflowY: "auto",
+    position: "relative",
+    zIndex: 10000,
+  },
+  btnCancel: {
+    background: "#F1F5F9",
+    border: "1px solid #CBD5E1",
+    color: "#475569",
+    borderRadius: 8,
+    padding: "8px 16px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
   app: {
     display: "flex",
     minHeight: "100vh",
