@@ -902,17 +902,7 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    if (role === "Directeur Général") {
-      setLoginForm({ username: "dg@clubsportsante.ci", password: "patron2026" });
-    } else if (role === "Administrateur") {
-      setLoginForm({ username: "badrafaly@gmail.com", password: "B@dr@f@ly" });
-    } else if (role === "Secretaire") {
-      setLoginForm({ username: "secretaire@clubsportsante.ci", password: "password123" });
-    } else if (role === "Comptable") {
-      setLoginForm({ username: "comptable@clubsportsante.ci", password: "password123" });
-    } else {
-      setLoginForm({ username: "", password: "" });
-    }
+    setLoginForm({ username: "", password: "" });
   };
 
   const rolesConfig = [
@@ -1189,15 +1179,6 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
               </button>
             </div>
           </form>
-
-          {/* Test Credentials Helper */}
-          <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 12, padding: "12px 14px", border: "1px solid #F1F5F9", fontSize: 11.5, color: "#64748B", display: "flex", flexDirection: "column", gap: 4 }}>
-            <strong style={{ color: "#334155" }}>💡 Identifiants de test (Auto-remplis) :</strong>
-            {selectedRole === "Directeur Général" && <span>Identifiant : <code>dg@clubsportsante.ci</code> / Mdp : <code>patron2026</code></span>}
-            {selectedRole === "Administrateur" && <span>Identifiant : <code>badrafaly@gmail.com</code> / Mdp : <code>B@dr@f@ly</code></span>}
-            {selectedRole === "Secretaire" && <span>Identifiant : <code>secretaire@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
-            {selectedRole === "Comptable" && <span>Identifiant : <code>comptable@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
-          </div>
         </div>
       )}
 
