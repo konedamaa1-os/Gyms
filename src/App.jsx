@@ -2238,12 +2238,73 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const [activeQuestionnaireDoc, setActiveQuestionnaireDoc] = useState(null);
   const [showQuestionnaireDocModal, setShowQuestionnaireDocModal] = useState(false);
   const [isBlankQuestionnaireDoc, setIsBlankQuestionnaireDoc] = useState(false);
+  
+  // Combined Fiche + Questionnaire on single A4 sheet
+  const [activeCombinedDoc, setActiveCombinedDoc] = useState(null);
+  const [showCombinedDocModal, setShowCombinedDocModal] = useState(false);
+  const [isBlankCombinedDoc, setIsBlankCombinedDoc] = useState(false);
+
+  const openMemberCombinedDoc = (m) => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc(null);
+    setShowQuestionnaireDocModal(false);
+    setActiveCombinedDoc(m);
+    setIsBlankCombinedDoc(false);
+    setShowCombinedDocModal(true);
+  };
+
+  const openBlankCombinedDoc = () => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc(null);
+    setShowQuestionnaireDocModal(false);
+    setActiveCombinedDoc({
+      id: "VIERGE",
+      nom: "",
+      prenoms: "",
+      sexe: "",
+      dateNaissance: "",
+      lieuNaissance: "",
+      profession: "",
+      fonction: "",
+      adresse: "",
+      domicile: "",
+      service: "",
+      email: "",
+      tel: "",
+      sportsPratiques: "",
+      urgenceNom: "",
+      urgenceDomicile: "",
+      urgenceAdresse: "",
+      urgenceTel: "",
+      carte: "Bronze (Mensuel)",
+      montant: "10000",
+      inscription: today(),
+      expiration: "",
+      q1: "NON",
+      q2: "NON",
+      q3: "NON",
+      q4: "NON",
+      q5: "NON",
+      q6: "NON",
+      q7: "NON"
+    });
+    setIsBlankCombinedDoc(true);
+    setShowCombinedDocModal(true);
+  };
 
   const openMemberQuestionnaireDoc = (m) => {
     setActiveReceipt(null);
     setShowReceiptModal(false);
     setActiveFiche(null);
     setShowFicheModal(false);
+    setActiveCombinedDoc(null);
+    setShowCombinedDocModal(false);
     setActiveQuestionnaireDoc(m);
     setIsBlankQuestionnaireDoc(false);
     setShowQuestionnaireDocModal(true);
@@ -2254,6 +2315,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     setShowReceiptModal(false);
     setActiveFiche(null);
     setShowFicheModal(false);
+    setActiveCombinedDoc(null);
+    setShowCombinedDocModal(false);
     setActiveQuestionnaireDoc({
       nom: "",
       prenoms: "",
@@ -2491,23 +2554,24 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
-            className="btn-secondary"
-            onClick={openBlankQuestionnaireDoc}
+            className="btn-glow"
+            onClick={openBlankCombinedDoc}
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #CBD5E1",
-              color: "#334155",
+              background: "linear-gradient(135deg, #4F46E5, #06B6D4)",
+              color: "#FFFFFF",
+              border: "none",
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 14px",
+              padding: "9px 15px",
               fontSize: 13,
-              fontWeight: 700,
+              fontWeight: 800,
               borderRadius: 8,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
+              cursor: "pointer"
             }}
           >
-            <span>🩺</span> Questionnaire Vierge (A4)
+            <span>📑</span> Fiche + Questionnaire Vierge (Sur la Même Page A4)
           </button>
           <button
             type="button"
@@ -2520,14 +2584,34 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 14px",
-              fontSize: 13,
+              padding: "9px 12px",
+              fontSize: 12.5,
               fontWeight: 700,
               borderRadius: 8,
               boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
             }}
           >
-            <span>📄</span> Fiche Vierge (A4)
+            <span>📄</span> Fiche Vierge
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={openBlankQuestionnaireDoc}
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              color: "#334155",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 12px",
+              fontSize: 12.5,
+              fontWeight: 700,
+              borderRadius: 8,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+            }}
+          >
+            <span>🩺</span> Questionnaire Vierge
           </button>
           <button
             type="button"
@@ -2538,8 +2622,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 18px",
-              fontSize: 13.5,
+              padding: "9px 16px",
+              fontSize: 13,
               fontWeight: 700
             }}
           >
@@ -2643,17 +2727,25 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button 
                       className="btn-secondary no-print" 
+                      style={{ padding: "5px 8px", fontSize: 11.5, background: "#EDE9FE", border: "1px solid #DDD6FE", color: "#6D28D9", fontWeight: 800, borderRadius: 6 }} 
+                      onClick={() => openMemberCombinedDoc(m)}
+                      title="Imprimer la Fiche et le Questionnaire réunis sur la même page A4 pour ce membre"
+                    >
+                      📑 Dossier Réuni (A4)
+                    </button>
+                    <button 
+                      className="btn-secondary no-print" 
                       style={{ padding: "5px 8px", fontSize: 11.5, background: "#FEF3C7", border: "1px solid #FDE68A", color: "#B45309", fontWeight: 700, borderRadius: 6 }} 
                       onClick={() => openMemberQuestionnaireDoc(m)}
                       title="Imprimer le Questionnaire Médical Officiel A4 de ce membre"
                     >
-                      🩺 Questionnaire A4
+                      🩺 Questionnaire
                     </button>
                     <button 
                       className="btn-secondary no-print" 
                       style={{ padding: "5px 8px", fontSize: 11.5, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", fontWeight: 700, borderRadius: 6 }} 
                       onClick={() => openMemberFiche(m)}
-                      title="Afficher et imprimer la fiche de renseignement de ce membre"
+                      title="Afficher et imprimer la fiche d'inscription de ce membre"
                     >
                       📋 Fiche
                     </button>
@@ -3513,6 +3605,217 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "8px 12px", height: 90 }}>
               <div style={{ fontSize: 10.5, fontWeight: 800 }}>Signature :</div>
               <div style={{ fontSize: 8.5, color: "#333", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* On-screen Modal for COMBINED Fiche & Questionnaire (1 Page A4 preview) */}
+      {showCombinedDocModal && activeCombinedDoc && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "95%", maxWidth: 860, borderRadius: 16, padding: "22px 26px", maxHeight: "94vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 24 }}>📑</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>
+                    {isBlankCombinedDoc ? "Dossier Vierge : Fiche d'Inscription & Questionnaire (Sur la Même Page A4)" : `Dossier Complet Réuni : ${activeCombinedDoc.nom} ${activeCombinedDoc.prenoms || ""}`}
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: "#64748B" }}>Document réunifié CLUB SPORT SANTE &bull; Format 1 Page A4</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 24, cursor: "pointer" }} onClick={() => setShowCombinedDocModal(false)}>&times;</button>
+            </div>
+
+            {/* Paper Preview */}
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "24px 30px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 11, lineHeight: 1.45, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Header Box */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, borderBottom: "2px solid #0F172A", paddingBottom: 6 }}>
+                <div>
+                  <div style={{ fontStyle: "italic", fontSize: 14, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                  <div style={{ fontSize: 10, color: "#1E293B", marginTop: 1, lineHeight: 1.35 }}>
+                    Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                  </div>
+                </div>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 75, height: 85, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 10, letterSpacing: 1 }}>
+                  PHOTO
+                </div>
+              </div>
+
+              {/* PART 1: FICHE D'INSCRIPTION */}
+              <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 8 }}>
+                1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "5px 14px", fontSize: 10.5, marginBottom: 10, border: "1px solid #CBD5E1", padding: "8px 12px", borderRadius: 4 }}>
+                <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
+                <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
+                <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
+                <div><strong>Date & lieu naiss. :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "....../....../.......... à ...................." : `${activeCombinedDoc.dateNaissance ? formatDateFr(activeCombinedDoc.dateNaissance) : "....../....../.........."} à ${activeCombinedDoc.lieuNaissance || activeCombinedDoc.quartier || "Divo"}`}</span></div>
+                <div><strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.profession || "-")}</span></div>
+                <div><strong>Fonction / Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.fonction || activeCombinedDoc.service || "-")}</span></div>
+                <div><strong>Domicile / Quartier :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.domicile || activeCombinedDoc.quartier || "Divo")}</span></div>
+                <div><strong>Tél / WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.tel || "-")}</span></div>
+                <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.sportsPratiques || "Musculation, Fitness")}</span></div>
+                <div><strong>Antécédents médicaux :</strong> <strong>Drép. {(!isBlankCombinedDoc && activeCombinedDoc.drepanocytose) ? "☒" : "☐"} &nbsp; Hypert. {(!isBlankCombinedDoc && (activeCombinedDoc.hypertension || activeCombinedDoc.q6 === "OUI")) ? "☒" : "☐"} &nbsp; Diab. {(!isBlankCombinedDoc && activeCombinedDoc.diabete) ? "☒" : "☐"}</strong></div>
+                
+                <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #CBD5E1", paddingTop: 4, marginTop: 2 }}>
+                  <strong>🚨 Contact d'Urgence (I.C.E.) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceNom || "-")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceTel || "-")}</span> &bull; Domicile : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceDomicile || activeCombinedDoc.quartier || "Divo")}</span>
+                </div>
+                <div style={{ gridColumn: "1 / -1", background: "#EEF2FF", padding: "4px 8px", borderRadius: 4, marginTop: 2, color: "#4338CA" }}>
+                  <strong>Formule souscrite :</strong> {isBlankCombinedDoc ? "Formule: .......................................  /  Cotisation: 10.000 FCFA" : `${activeCombinedDoc.carte || "Bronze"} — ${fmt(activeCombinedDoc.montant || 10000)} F CFA (Inscrit le: ${formatDateFr(activeCombinedDoc.inscription || today())} - Expiration: ${formatDateFr(activeCombinedDoc.expiration)})`}
+                </div>
+              </div>
+
+              {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
+              <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 6 }}>
+                2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
+              </div>
+
+              <p style={{ fontStyle: "italic", fontSize: 9.5, margin: "0 0 6px 0", color: "#334155" }}>
+                Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 10, border: "1px solid #CBD5E1", padding: "6px 10px", borderRadius: 4 }}>
+                {[
+                  { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
+                  { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
+                  { num: "3", id: "q3", text: "Au cours du mois écoulé, aviez-vous des douleurs dans la poitrine alors que vous ne faisiez aucun effort ?" },
+                  { num: "4", id: "q4", text: "Avez-vous des étourdissements qui vous font perdre l'équilibre, ou qui vous font perdre connaissance ?" },
+                  { num: "5", id: "q5", text: "Avez-vous un problème osseux ou articulaire qui pourrait être aggravé par l'exercice physique ?" },
+                  { num: "6", id: "q6", text: "Votre médecin vous prescrit-il des médicaments contre l'hypertension ou l'insuffisance cardiaque ?" },
+                  { num: "7", id: "q7", text: "Votre expérience personnelle ou les propos de votre médecin vous donnent-ils des raisons de penser que vous ne devez pas faire d'exercices physiques sans avis médical ?" }
+                ].map(q => {
+                  const val = isBlankCombinedDoc ? "" : activeCombinedDoc[q.id];
+                  return (
+                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                      <div style={{ flex: 1, textAlign: "justify" }}>
+                        <strong>{q.num}-</strong> {q.text}
+                      </div>
+                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 10.5 }}>
+                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Signatures */}
+              <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #CBD5E1", paddingTop: 8 }}>
+                <div>
+                  <u style={{ fontWeight: 900, fontSize: 11 }}>Signature du client :</u>
+                  <div style={{ height: 35 }}></div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <u style={{ fontWeight: 900, fontSize: 11 }}>Cachet et Signature du Coach :</u>
+                  <div style={{ height: 35 }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14 }}>
+              <button type="button" style={S.btnCancel} onClick={() => setShowCombinedDocModal(false)}>
+                Fermer
+              </button>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, display: "flex", alignItems: "center", gap: 6, padding: "0 22px", height: 42, fontWeight: 800 }}
+                onClick={() => window.print()}
+              >
+                <span>🖨️</span> Imprimer ce Dossier Réuni (1 Page A4)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print template for COMBINED Fiche & Questionnaire (1 Page A4) */}
+      {activeCombinedDoc && (
+        <div className="print-only print-a4" style={{ display: "none" }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, borderBottom: "2px solid #000", paddingBottom: 6 }}>
+            <div>
+              <div style={{ fontStyle: "italic", fontSize: 13.5, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+              <div style={{ fontSize: 12, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
+              <div style={{ fontSize: 9.5, color: "#000", marginTop: 1 }}>
+                Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+              </div>
+            </div>
+            <div style={{ border: "1.5px solid #000", width: 75, height: 85, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 10 }}>
+              PHOTO
+            </div>
+          </div>
+
+          {/* PART 1: FICHE D'INSCRIPTION */}
+          <div style={{ textAlign: "center", fontSize: 11.5, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 6 }}>
+            1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "4px 12px", fontSize: 10, marginBottom: 8, border: "1px solid #000", padding: "6px 10px", borderRadius: 3 }}>
+            <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
+            <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
+            <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
+            <div><strong>Date & lieu naiss. :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "....../....../.......... à ...................." : `${activeCombinedDoc.dateNaissance ? formatDateFr(activeCombinedDoc.dateNaissance) : "....../....../.........."} à ${activeCombinedDoc.lieuNaissance || activeCombinedDoc.quartier || "Divo"}`}</span></div>
+            <div><strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.profession || "-")}</span></div>
+            <div><strong>Fonction / Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.fonction || activeCombinedDoc.service || "-")}</span></div>
+            <div><strong>Domicile / Quartier :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.domicile || activeCombinedDoc.quartier || "Divo")}</span></div>
+            <div><strong>Tél / WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.tel || "-")}</span></div>
+            <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.sportsPratiques || "Musculation, Fitness")}</span></div>
+            <div><strong>Antécédents médicaux :</strong> <strong>Drép. {(!isBlankCombinedDoc && activeCombinedDoc.drepanocytose) ? "☒" : "☐"} &nbsp; Hypert. {(!isBlankCombinedDoc && (activeCombinedDoc.hypertension || activeCombinedDoc.q6 === "OUI")) ? "☒" : "☐"} &nbsp; Diab. {(!isBlankCombinedDoc && activeCombinedDoc.diabete) ? "☒" : "☐"}</strong></div>
+            
+            <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #000", paddingTop: 3, marginTop: 1 }}>
+              <strong>🚨 Contact d'Urgence (I.C.E.) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceNom || "-")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceTel || "-")}</span> &bull; Domicile : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceDomicile || activeCombinedDoc.quartier || "Divo")}</span>
+            </div>
+            <div style={{ gridColumn: "1 / -1", background: "#FFF", borderTop: "1px solid #000", paddingTop: 3, marginTop: 1 }}>
+              <strong>Formule & Cotisation :</strong> {isBlankCombinedDoc ? "Formule: .......................................  /  Cotisation: 10.000 FCFA" : `${activeCombinedDoc.carte || "Bronze"} — ${fmt(activeCombinedDoc.montant || 10000)} F CFA (Inscrit le: ${formatDateFr(activeCombinedDoc.inscription || today())} - Expiration: ${formatDateFr(activeCombinedDoc.expiration)})`}
+            </div>
+          </div>
+
+          {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
+          <div style={{ textAlign: "center", fontSize: 11.5, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
+            2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
+          </div>
+
+          <p style={{ fontStyle: "italic", fontSize: 9, margin: "0 0 5px 0" }}>
+            Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 9.5, border: "1px solid #000", padding: "5px 8px", borderRadius: 3 }}>
+            {[
+              { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
+              { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
+              { num: "3", id: "q3", text: "Au cours du mois écoulé, aviez-vous des douleurs dans la poitrine alors que vous ne faisiez aucun effort ?" },
+              { num: "4", id: "q4", text: "Avez-vous des étourdissements qui vous font perdre l'équilibre, ou qui vous font perdre connaissance ?" },
+              { num: "5", id: "q5", text: "Avez-vous un problème osseux ou articulaire qui pourrait être aggravé par l'exercice physique ?" },
+              { num: "6", id: "q6", text: "Votre médecin vous prescrit-il des médicaments contre l'hypertension ou l'insuffisance cardiaque ?" },
+              { num: "7", id: "q7", text: "Votre expérience personnelle ou les propos de votre médecin vous donnent-ils des raisons de penser que vous ne devez pas faire d'exercices physiques sans avis médical ?" }
+            ].map(q => {
+              const val = isBlankCombinedDoc ? "" : activeCombinedDoc[q.id];
+              return (
+                <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                  <div style={{ flex: 1, textAlign: "justify" }}>
+                    <strong>{q.num}-</strong> {q.text}
+                  </div>
+                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 10 }}>
+                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Signatures */}
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #000", paddingTop: 6 }}>
+            <div>
+              <u style={{ fontWeight: 900, fontSize: 10.5 }}>Signature du client :</u>
+              <div style={{ height: 35 }}></div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <u style={{ fontWeight: 900, fontSize: 10.5 }}>Cachet et Signature du Coach :</u>
+              <div style={{ height: 35 }}></div>
             </div>
           </div>
         </div>
