@@ -195,7 +195,7 @@ export default function GymApp() {
     if (!user) return [];
     if (user.role === "Directeur Général" || user.role === "Administrateur") return TABS;
     if (user.role === "Secretaire") {
-      return TABS.filter(t => t.key === "membres" || t.key === "accueil" || t.key === "planning");
+      return TABS.filter(t => t.key === "membres" || t.key === "accueil" || t.key === "planning" || t.key === "finances");
     }
     if (user.role === "Comptable") {
       return TABS.filter(t => t.key === "finances" || t.key === "personnel");
@@ -5114,7 +5114,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                           >
                             <option value="Directeur Général">👑 Directeur Général (Patron — Accès Total + Pass Invité)</option>
                             <option value="Administrateur">🛡️ Administrateur (Gestion Totale)</option>
-                            <option value="Secretaire">📝 Secrétaire (Accueil, Membres, Tickets, Planning)</option>
+                            <option value="Secretaire">📝 Secrétaire (Accueil, Membres, Tickets, Planning, Finances)</option>
                             <option value="Comptable">💼 Comptable (Finances, Salaires, Dépenses)</option>
                             <option value="Coach">🏋️ Coach Sportif (Planning des cours)</option>
                           </select>
