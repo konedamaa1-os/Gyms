@@ -3132,7 +3132,9 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
     setMontant(ticketPrice);
   }, [ticketPrice]);
 
-  const isAdmin = currentUser && currentUser.role === "Administrateur";
+  const isDirectorOrAdmin = currentUser && (currentUser.role === "Administrateur" || currentUser.role === "Directeur Général");
+  const isAdmin = isDirectorOrAdmin;
+  const canIssueDgPass = currentUser && (currentUser.role === "Directeur Général" || currentUser.role === "Administrateur");
 
   const matchedMember = members.find(m => m.nom.toLowerCase() === name.trim().toLowerCase());
   const isActiveMember = matchedMember && matchedMember.expiration >= today();
@@ -3209,9 +3211,13 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
     }, 1000);
   };
 
-  // Issue VIP Guest Pass for DG / Patron
+  // Issue VIP Guest Pass for DG / Patron (Only accessible to DG & Admin)
   const issueDgPass = async (e) => {
     e.preventDefault();
+    if (!canIssueDgPass) {
+      triggerToast("Accès non autorisé : Seul le Directeur Général ou l'Administrateur peut émettre un Pass Invité DG.");
+      return;
+    }
     if (!dgForm.nom.trim()) {
       triggerToast("Veuillez renseigner le nom de l'invité du DG");
       return;
@@ -3364,28 +3370,30 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
         <CardPanel 
           title="Émettre un Ticket d'Accès" 
           action={
-            <button
-              type="button"
-              className="btn-glow"
-              onClick={() => setShowDgModal(true)}
-              style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: 8,
-                padding: "6px 12px",
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
-              }}
-              title="Créer un Pass VIP Invité du DG avec accès gratuit temporaire"
-            >
-              👑 Pass Invité DG
-            </button>
+            canIssueDgPass && (
+              <button
+                type="button"
+                className="btn-glow"
+                onClick={() => setShowDgModal(true)}
+                style={{
+                  background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
+                }}
+                title="Créer un Pass VIP Invité du DG avec accès gratuit temporaire"
+              >
+                👑 Pass Invité DG
+              </button>
+            )
           }
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
