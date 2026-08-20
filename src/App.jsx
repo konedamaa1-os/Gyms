@@ -26,12 +26,13 @@ const CARD_TIERS_DEFAULT = [
   { key: "Ticket Unique (Séance Unique)", color: "#EF4444", light: "rgba(239, 68, 68, 0.15)", bg: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #EF4444 100%)", price: 1000, duration: 0, description: "Accès d'une journée complète sans engagement aux installations du club." },
 ];
 
-const ROLES = ["Coach", "Secretaire", "Comptable", "Gardien", "Agent d'entretien"];
+const ROLES = ["Directeur Général", "Coach", "Secretaire", "Comptable", "Gardien", "Agent d'entretien"];
 const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-const LEVEL_ROLES = ["Administrateur", "Secretaire", "Comptable"];
+const LEVEL_ROLES = ["Directeur Général", "Administrateur", "Secretaire", "Comptable", "Coach"];
 
 // Default seeds matching employee IDs
 const USERS_SEED = [
+  { id: "usr-dg", username: "dg@clubsportsante.ci", password: "patron2026", role: "Directeur Général", label: "Directeur Général (DG / Propriétaire)" },
   { id: "usr-admin", username: "badrafaly@gmail.com", password: "B@dr@f@ly", role: "Administrateur", label: "Super Admin" }
 ];
 
@@ -75,9 +76,10 @@ export default function GymApp() {
       const savedUser = localStorage.getItem("gyms_user");
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        if (parsed.role === "Administrateur") return "dashboard";
+        if (parsed.role === "Directeur Général" || parsed.role === "Administrateur") return "dashboard";
         if (parsed.role === "Secretaire") return "membres";
         if (parsed.role === "Comptable") return "finances";
+        if (parsed.role === "Coach") return "planning";
       }
       return "dashboard";
     } catch (e) {
@@ -191,12 +193,15 @@ export default function GymApp() {
   // Get tabs filtered by user level/role
   const getFilteredTabs = () => {
     if (!user) return [];
-    if (user.role === "Administrateur") return TABS;
+    if (user.role === "Directeur Général" || user.role === "Administrateur") return TABS;
     if (user.role === "Secretaire") {
       return TABS.filter(t => t.key === "membres" || t.key === "accueil" || t.key === "planning");
     }
     if (user.role === "Comptable") {
       return TABS.filter(t => t.key === "finances" || t.key === "personnel");
+    }
+    if (user.role === "Coach") {
+      return TABS.filter(t => t.key === "planning");
     }
     return [];
   };
@@ -214,9 +219,10 @@ export default function GymApp() {
       setLoginError("");
       
       // Auto redirect to their first authorized tab
-      if (foundUser.role === "Administrateur") setTab("dashboard");
+      if (foundUser.role === "Directeur Général" || foundUser.role === "Administrateur") setTab("dashboard");
       else if (foundUser.role === "Secretaire") setTab("membres");
       else if (foundUser.role === "Comptable") setTab("finances");
+      else if (foundUser.role === "Coach") setTab("planning");
 
       setView("dashboard");
       triggerToast(`Bienvenue dans votre espace, ${foundUser.label} !`);
@@ -646,7 +652,7 @@ export default function GymApp() {
 
           {/* Main Panel Content */}
           <div className="app-main" style={S.main}>
-            {tab === "dashboard" && user.role === "Administrateur" && (
+            {tab === "dashboard" && (user.role === "Administrateur" || user.role === "Directeur Général") && (
               <Dashboard
                 members={members}
                 staff={staff}
@@ -894,7 +900,9 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    if (role === "Administrateur") {
+    if (role === "Directeur Général") {
+      setLoginForm({ username: "dg@clubsportsante.ci", password: "patron2026" });
+    } else if (role === "Administrateur") {
       setLoginForm({ username: "badrafaly@gmail.com", password: "B@dr@f@ly" });
     } else if (role === "Secretaire") {
       setLoginForm({ username: "secretaire@clubsportsante.ci", password: "password123" });
@@ -906,6 +914,15 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
   };
 
   const rolesConfig = [
+    {
+      key: "Directeur Général",
+      label: "Je suis Directeur Général (DG / Patron)",
+      bg: "rgba(245, 158, 11, 0.2)",
+      color: "#D97706",
+      icon: (
+        <span style={{ fontSize: 32 }}>👑</span>
+      )
+    },
     {
       key: "Administrateur",
       label: "Je suis Administrateur",
@@ -1174,6 +1191,7 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
           {/* Test Credentials Helper */}
           <div style={{ marginTop: 24, background: "#F8FAFC", borderRadius: 12, padding: "12px 14px", border: "1px solid #F1F5F9", fontSize: 11.5, color: "#64748B", display: "flex", flexDirection: "column", gap: 4 }}>
             <strong style={{ color: "#334155" }}>💡 Identifiants de test (Auto-remplis) :</strong>
+            {selectedRole === "Directeur Général" && <span>Identifiant : <code>dg@clubsportsante.ci</code> / Mdp : <code>patron2026</code></span>}
             {selectedRole === "Administrateur" && <span>Identifiant : <code>badrafaly@gmail.com</code> / Mdp : <code>B@dr@f@ly</code></span>}
             {selectedRole === "Secretaire" && <span>Identifiant : <code>secretaire@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
             {selectedRole === "Comptable" && <span>Identifiant : <code>comptable@clubsportsante.ci</code> / Mdp : <code>password123</code></span>}
@@ -4636,7 +4654,8 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
 // PERSONNEL (STAFF) & ACCOUNTS (ADMIN ONLY)
 // ==========================================
 function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, triggerToast, cardTiers, setCardTiers }) {
-  const isAdmin = currentUser && currentUser.role === "Administrateur";
+  const isDirectorOrAdmin = currentUser && (currentUser.role === "Administrateur" || currentUser.role === "Directeur Général");
+  const isAdmin = isDirectorOrAdmin;
   const [subTab, setSubTab] = useState("staff"); // "staff", "users" or "tarifs"
   
   // Card Tiers editing form state
@@ -4710,6 +4729,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
   const [giveAccess, setGiveAccess] = useState(false);
   const [accessUsername, setAccessUsername] = useState("");
   const [accessPassword, setAccessPassword] = useState("");
+  const [accessRole, setAccessRole] = useState("Coach");
   
   // User Accounts forms
   const [userForm, setUserForm] = useState({ username: "", password: "", role: "Secretaire", label: "" });
@@ -4722,6 +4742,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     setGiveAccess(false);
     setAccessUsername("");
     setAccessPassword("");
+    setAccessRole("Coach");
     setEditingStaffId(null);
     setShowModal(true);
   };
@@ -4737,10 +4758,12 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
       setGiveAccess(true);
       setAccessUsername(userAccount.username);
       setAccessPassword(userAccount.password);
+      setAccessRole(userAccount.role || "Coach");
     } else {
       setGiveAccess(false);
       setAccessUsername("");
       setAccessPassword("");
+      setAccessRole(LEVEL_ROLES.includes(s.role) ? s.role : "Coach");
     }
     setShowModal(true);
   };
@@ -4800,16 +4823,12 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
 
     // Dynamic Access Login management linked directly inside Staff form
     if (giveAccess) {
-      let targetRole = "Secretaire";
-      if (form.role === "Comptable") targetRole = "Comptable";
-      if (form.role === "Secretaire") targetRole = "Secretaire";
-      
       const userObj = {
         id: staffId,
-        username: accessUsername,
-        password: accessPassword,
-        role: targetRole,
-        label: form.nom
+        username: accessUsername.trim(),
+        password: accessPassword.trim(),
+        role: accessRole || (LEVEL_ROLES.includes(form.role) ? form.role : "Coach"),
+        label: form.nom.trim()
       };
       
       const { error } = await supabase.from("users").upsert([userObj]);
@@ -4820,7 +4839,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
           const otherUsers = prev.filter(u => u.id !== staffId);
           return [...otherUsers, userObj];
         });
-        triggerToast(`Accès de connexion (${accessUsername}) configuré pour ${form.nom}`);
+        triggerToast(`Compte de connexion (${accessUsername}) activé avec rôle "${userObj.role}" pour ${form.nom}`);
       }
     } else {
       const { error } = await supabase.from("users").delete().eq("id", staffId);
@@ -4837,6 +4856,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     setGiveAccess(false);
     setAccessUsername("");
     setAccessPassword("");
+    setAccessRole("Coach");
     setEditingStaffId(null);
     setShowModal(false);
   };
@@ -5092,25 +5112,42 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
 
                   {/* Direct access credentials inside modal */}
                   <div style={{ padding: 14, background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10 }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, cursor: "pointer", color: "#0F172A", fontWeight: 600 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, cursor: "pointer", color: "#0F172A", fontWeight: 700 }}>
                       <input
                         type="checkbox"
                         checked={giveAccess}
                         onChange={e => setGiveAccess(e.target.checked)}
                         style={{ width: 16, height: 16, accentColor: "#6366F1" }}
                       />
-                      Donner un accès direct de connexion (Login / Mot de passe)
+                      🔑 Créer / Attribuer un compte de connexion personnel
                     </label>
                     
                     {giveAccess && (
-                      <div style={{ ...S.formRow, marginTop: 14 }}>
-                        <div style={{ flex: "1 1 200px" }}>
-                          <label style={S.labelStyle}>Identifiant (Login)</label>
-                          <input style={S.input} placeholder="Ex: assetou_c" value={accessUsername} onChange={e => setAccessUsername(e.target.value)} />
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 14 }}>
+                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                          <div style={{ flex: "1 1 180px" }}>
+                            <label style={S.labelStyle}>Identifiant (Email / Login) *</label>
+                            <input style={S.input} placeholder="Ex: amara.kone@clubsportsante.ci" value={accessUsername} onChange={e => setAccessUsername(e.target.value)} required />
+                          </div>
+                          <div style={{ flex: "1 1 180px" }}>
+                            <label style={S.labelStyle}>Mot de passe *</label>
+                            <input style={S.input} placeholder="Ex: MotDePasse123" value={accessPassword} onChange={e => setAccessPassword(e.target.value)} required />
+                          </div>
                         </div>
-                        <div style={{ flex: "1 1 200px" }}>
-                          <label style={S.labelStyle}>Mot de passe</label>
-                          <input style={S.input} placeholder="Mot de passe" value={accessPassword} onChange={e => setAccessPassword(e.target.value)} />
+
+                        <div>
+                          <label style={S.labelStyle}>Niveau d'Accès & Permissions *</label>
+                          <select
+                            style={{ ...S.input, fontWeight: 700 }}
+                            value={accessRole}
+                            onChange={e => setAccessRole(e.target.value)}
+                          >
+                            <option value="Directeur Général">👑 Directeur Général (Patron — Accès Total + Pass Invité)</option>
+                            <option value="Administrateur">🛡️ Administrateur (Gestion Totale)</option>
+                            <option value="Secretaire">📝 Secrétaire (Accueil, Membres, Tickets, Planning)</option>
+                            <option value="Comptable">💼 Comptable (Finances, Salaires, Dépenses)</option>
+                            <option value="Coach">🏋️ Coach Sportif (Planning des cours)</option>
+                          </select>
                         </div>
                       </div>
                     )}
@@ -5277,10 +5314,12 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
                       <td style={S.td}>
                         <span style={{
                           ...S.tag,
-                          background: u.role === "Administrateur" ? "#F5F3FF" : u.role === "Comptable" ? "#FEF3C7" : "#E0F2FE",
-                          color: u.role === "Administrateur" ? "#6366F1" : u.role === "Comptable" ? "#D97706" : "#0284C7"
+                          background: u.role === "Directeur Général" ? "#FEF3C7" : u.role === "Administrateur" ? "#F5F3FF" : u.role === "Comptable" ? "#FEF3C7" : u.role === "Coach" ? "#E0F2FE" : "#D1FAE5",
+                          color: u.role === "Directeur Général" ? "#B45309" : u.role === "Administrateur" ? "#6366F1" : u.role === "Comptable" ? "#D97706" : u.role === "Coach" ? "#0284C7" : "#059669",
+                          border: u.role === "Directeur Général" ? "1px solid #FDE68A" : "none",
+                          fontWeight: 700
                         }}>
-                          {u.role}
+                          {u.role === "Directeur Général" ? "👑 Directeur Général (Patron)" : u.role}
                         </span>
                       </td>
                       <td style={{ ...S.td, textAlign: "right" }}>
