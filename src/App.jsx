@@ -416,32 +416,38 @@ export default function GymApp() {
             print-color-adjust: exact !important;
           }
           
-          /* Hide all screen interface elements */
-          .no-print, .no-print *, .app-sidebar, .mobile-header, .guide-btn, button, nav, .tab-btn {
-            display: none !important;
+          /* Hide entire website interface completely */
+          body * {
+            visibility: hidden !important;
           }
           
-          /* Show only the single receipt container */
-          .print-only {
-            display: block !important;
+          .no-print, .no-print *, .app-sidebar, .mobile-header, .guide-btn, button, nav, .tab-btn {
+            display: none !important;
+            visibility: hidden !important;
+          }
+          
+          /* Show ONLY the single isolated receipt container at the very top */
+          .print-only, .print-only * {
             visibility: visible !important;
+            color: #000000 !important;
+          }
+          
+          .print-only {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            margin: 0 auto !important;
             width: 76mm !important;
             max-width: 76mm !important;
-            margin: 2mm auto !important;
             padding: 4mm 4mm !important;
+            display: block !important;
             background: #FFFFFF !important;
             color: #000000 !important;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
             border: 1px dashed #000000 !important;
             box-sizing: border-box !important;
-            page-break-after: avoid !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          
-          .print-only * {
-            visibility: visible !important;
-            color: #000000 !important;
+            z-index: 9999999 !important;
           }
           
           .print-only .mono {
@@ -2134,6 +2140,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const isAdmin = currentUser && currentUser.role === "Administrateur";
   const [activeReceipt, setActiveReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   
   const printMemberReceipt = (m) => {
     setActiveReceipt(m);
@@ -2161,7 +2168,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     }
   }, [cardTiers]);
 
-  const add = async () => {
+  const add = async (e) => {
+    if (e) e.preventDefault();
     if (!form.nom.trim()) {
       triggerToast("Le nom du membre est obligatoire");
       return;
@@ -2181,8 +2189,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     const newId = uid();
     const newMember = {
       id: newId,
-      nom: form.nom,
-      tel: form.tel,
+      nom: form.nom.trim(),
+      tel: form.tel.trim(),
       carte: form.carte,
       inscription: today(),
       expiration: expDate,
@@ -2201,7 +2209,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     const newTx = {
       id: uid(),
       type: "recette",
-      description: `Adhésion ${form.carte} - ${form.nom}`,
+      description: `Adhésion ${form.carte} - ${form.nom.trim()}`,
       montant: pricePaid,
       date: today()
     };
@@ -2214,6 +2222,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     }
 
     triggerToast(`Membre inscrit avec succès ! Carte ${form.carte} générée.`);
+    setShowAddModal(false);
     setForm({ 
       nom: "", 
       tel: "", 
@@ -2249,49 +2258,38 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
   return (
     <div>
-      <h1 style={S.pageTitle}>Gestion des Membres</h1>
-      <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }}>Enregistrez les membres, émettez des abonnements (mensuels, annuels) ou des packs de séances à la carte.</p>
-      
-      <CardPanel title="Nouvelle Inscription">
-        <div style={S.formRow}>
-          <div style={{ flex: "1 1 180px" }}>
-            <label style={S.labelStyle}>Nom Complet</label>
-            <input style={S.input} placeholder="Ex: Jean Yao" value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} />
-          </div>
-          <div style={{ flex: "1 1 120px" }}>
-            <label style={S.labelStyle}>Téléphone</label>
-            <input style={S.input} placeholder="Ex: 07 44 55 66 77" value={form.tel} onChange={e => setForm({ ...form, tel: e.target.value })} />
-          </div>
-          <div style={{ flex: "1 1 150px" }}>
-            <label style={S.labelStyle}>Niveau de Carte</label>
-            <select 
-              style={S.input} 
-              value={form.carte} 
-              onChange={e => {
-                const tier = cardTiers.find(c => c.key === e.target.value);
-                setForm({ 
-                  ...form, 
-                  carte: e.target.value, 
-                  montant: tier ? tier.price.toString() : "" 
-                });
-              }}
-            >
-              {cardTiers.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
-            </select>
-          </div>
-          <div style={{ flex: "1 1 110px" }}>
-            <label style={S.labelStyle}>Montant payé (F)</label>
-            <input style={S.input} type="number" placeholder="Tarif appliqué" value={form.montant} onChange={e => setForm({ ...form, montant: e.target.value })} />
-          </div>
-          <div style={{ flex: "1 1 140px" }}>
-            <label style={S.labelStyle}>Date d'Expiration (Auto si vide)</label>
-            <input style={S.input} type="date" value={form.expiration} onChange={e => setForm({ ...form, expiration: e.target.value })} />
-          </div>
-          <div style={{ display: "flex", alignItems: "flex-end" }}>
-            <button className="btn-glow" style={{ ...S.btnPrimary, height: 38 }} onClick={add}>Enregistrer</button>
-          </div>
+      {/* Streamlined Top Ribbon */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 12 }} className="no-print">
+        <div>
+          <h1 style={{ ...S.pageTitle, margin: 0 }}>Gestion des Membres</h1>
+          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, abonnements mensuels/annuels et cartes d'accès.</p>
         </div>
-      </CardPanel>
+        <button
+          type="button"
+          className="btn-glow"
+          onClick={() => {
+            setForm({ 
+              nom: "", 
+              tel: "", 
+              carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
+              montant: cardTiers[0]?.price.toString() || "10000",
+              expiration: "" 
+            });
+            setShowAddModal(true);
+          }}
+          style={{
+            ...S.btnPrimary,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "9px 18px",
+            fontSize: 13.5,
+            fontWeight: 700
+          }}
+        >
+          <span>➕</span> Inscrire un Membre
+        </button>
+      </div>
 
       {/* Filter and Search Section */}
       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
@@ -2405,6 +2403,103 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           );
         })}
       </div>
+
+      {/* Modal for New Member Registration */}
+      {showAddModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "92%", maxWidth: 500, borderRadius: 14, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 22 }}>💳</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>Inscrire un Nouvel Adhérent</h3>
+                  <div style={{ fontSize: 12, color: "#64748B" }}>Création de carte de membre et émission de reçu</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer" }} onClick={() => setShowAddModal(false)}>&times;</button>
+            </div>
+
+            <form onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={S.labelStyle}>Nom et Prénoms du Membre *</label>
+                <input 
+                  style={S.input} 
+                  placeholder="Ex: Diarassouba Ibrahima..." 
+                  value={form.nom} 
+                  onChange={e => setForm({ ...form, nom: e.target.value })} 
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Numéro de Téléphone</label>
+                <input 
+                  style={S.input} 
+                  placeholder="Ex: 07 44 55 66 77" 
+                  value={form.tel} 
+                  onChange={e => setForm({ ...form, tel: e.target.value })} 
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={S.labelStyle}>Formule d'Abonnement</label>
+                  <select 
+                    style={S.input} 
+                    value={form.carte} 
+                    onChange={e => {
+                      const tier = cardTiers.find(c => c.key === e.target.value);
+                      setForm({ 
+                        ...form, 
+                        carte: e.target.value, 
+                        montant: tier ? tier.price.toString() : "" 
+                      });
+                    }}
+                  >
+                    {cardTiers.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={S.labelStyle}>Montant Cotisation (F CFA)</label>
+                  <input 
+                    style={S.input} 
+                    type="number" 
+                    placeholder="Montant payé" 
+                    value={form.montant} 
+                    onChange={e => setForm({ ...form, montant: e.target.value })} 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Date d'Expiration (Auto si vide)</label>
+                <input 
+                  style={S.input} 
+                  type="date" 
+                  value={form.expiration} 
+                  onChange={e => setForm({ ...form, expiration: e.target.value })} 
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
+                <button type="button" style={S.btnCancel} onClick={() => setShowAddModal(false)}>
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-glow" 
+                  style={{ ...S.btnPrimary, height: 42, padding: "0 20px", fontWeight: 700 }}
+                  disabled={!form.nom.trim()}
+                >
+                  Enregistrer & Générer le Reçu
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* On-screen Modal for Member Receipt */}
       {showReceiptModal && activeReceipt && (
