@@ -1710,7 +1710,7 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
           </div>
           <div style={{ textAlign: "right", fontSize: 12, color: "#64748B" }}>
             <div>Divo, Côte d'Ivoire</div>
-            <div style={{ marginTop: 4 }}>Contact: info@clubsportsante.ci | Tel: +225 07 00 00 00 00</div>
+            <div style={{ marginTop: 4 }}>Contact: info@clubsportsante.ci | Tel: +225 07 07 78 23 29</div>
           </div>
         </div>
         <div style={{ borderTop: "1px solid #E2E8F0", marginTop: 24, paddingTop: 18, textAlign: "center", fontSize: 11, color: "#94A3B8" }}>
@@ -2522,7 +2522,10 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#0F172A", color: "#FFF", padding: "4px 0", letterSpacing: 0.8, borderRadius: 3 }}>
                   ★ REÇU D'ADHÉSION ★
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
+                <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#334155" }}>
+                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
               <div style={{ fontSize: 11.5, lineHeight: 1.6, marginBottom: 10, color: "#000" }}>
@@ -2618,7 +2621,10 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.8, borderRadius: 3 }}>
               ★ REÇU D'ADHÉSION ★
             </div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
+            <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
+              CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
           </div>
           
           <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 10, color: "#000" }}>
@@ -3782,10 +3788,13 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   👑 PASS VIP INVITÉ DU DG 👑
                 </div>
-                <div style={{ fontSize: 8.5, fontWeight: 800, marginTop: 4, letterSpacing: 0.5 }}>
+                <div style={{ fontSize: 8.5, fontWeight: 800, marginTop: 3, letterSpacing: 0.5 }}>
                   AUTORISATION EXCLUSIVE DIRECTION GÉNÉRALE
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
+                <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 2, color: "#000" }}>
+                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
               <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
@@ -3847,7 +3856,10 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   {lastTicket.isMember ? "★ PASS MEMBRE ADHÉRENT ★" : "★ TICKET D'ENTRÉE SÉANCE ★"}
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
+                <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
+                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
               <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
