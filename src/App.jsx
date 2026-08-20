@@ -3253,18 +3253,30 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
     };
 
     setIsPrinting(true);
-    const { error } = await supabase.from("tickets").insert([dgTicket]);
+    let { error } = await supabase.from("tickets").insert([dgTicket]);
     if (error) {
-      triggerToast("Erreur lors de l'enregistrement du Pass DG sur Supabase");
-      console.error(error);
-      setIsPrinting(false);
-      return;
+      console.warn("First insert attempt failed, retrying with core columns:", error);
+      const coreDgTicket = {
+        id: dgTicket.id,
+        nom: `[INVITÉ DG] ${dgTicket.nom}`,
+        date: dgTicket.date,
+        heure: dgTicket.heure,
+        montant: 0,
+        isMember: false
+      };
+      const { error: fallbackErr } = await supabase.from("tickets").insert([coreDgTicket]);
+      if (fallbackErr) {
+        triggerToast("Erreur lors de l'enregistrement du Pass DG sur Supabase");
+        console.error(fallbackErr);
+        setIsPrinting(false);
+        return;
+      }
     }
 
     setTickets(prev => [...prev, dgTicket]);
     setLastTicket(dgTicket);
     setShowDgModal(false);
-    triggerToast(`👑 Pass Invité DG émis avec succès pour ${dgTicket.nom} !`);
+    triggerToast(`👑 Pass Invité DG validé avec succès pour ${dgTicket.nom} !`);
 
     setTimeout(() => {
       setIsPrinting(false);
