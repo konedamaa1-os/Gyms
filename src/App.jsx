@@ -394,7 +394,7 @@ export default function GymApp() {
         /* Printable thermal receipt & A4 sheet styling */
         @media print {
           @page {
-            margin: 4mm !important;
+            margin: 0 !important;
             size: auto;
           }
           
@@ -411,7 +411,8 @@ export default function GymApp() {
             font-size: 10.5pt !important;
             width: 100% !important;
             height: auto !important;
-            overflow: visible !important;
+            height: 100% !important;
+            overflow: hidden !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
@@ -449,16 +450,18 @@ export default function GymApp() {
           .print-thermal {
             width: 76mm !important;
             max-width: 76mm !important;
+            margin: 4mm auto !important;
             padding: 4mm 4mm !important;
             border: 1px dashed #000000 !important;
           }
           
           .print-a4 {
-            width: 100% !important;
+            width: 198mm !important;
             max-width: 198mm !important;
-            height: 286mm !important;
-            max-height: 286mm !important;
-            padding: 4mm 6mm !important;
+            height: 288mm !important;
+            max-height: 288mm !important;
+            margin: 4mm auto !important;
+            padding: 5mm 8mm !important;
             border: 2px solid #000000 !important;
             box-sizing: border-box !important;
             page-break-inside: avoid !important;
@@ -3639,28 +3642,28 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Paper Preview */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "22px 28px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12, lineHeight: 1.45, boxShadow: "0 4px 14px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "24px 30px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
               {/* Header Box */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0F172A", paddingBottom: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0F172A", paddingBottom: 8 }}>
                 <div>
-                  <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-                  <div style={{ fontSize: 14, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
-                  <div style={{ fontSize: 11, color: "#1E293B", marginTop: 2, lineHeight: 1.35 }}>
+                  <div style={{ fontStyle: "italic", fontSize: 18, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                  <div style={{ fontSize: 15.5, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                  <div style={{ fontSize: 12, color: "#1E293B", marginTop: 2, lineHeight: 1.4 }}>
                     Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
                   </div>
                 </div>
-                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 85, height: 95, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 11, letterSpacing: 1 }}>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 90, height: 105, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 12, letterSpacing: 1 }}>
                   PHOTO
                 </div>
               </div>
 
               {/* PART 1: FICHE D'INSCRIPTION */}
               <div>
-                <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 6 }}>
+                <div style={{ textAlign: "center", fontSize: 14, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 6 }}>
                   1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "6px 14px", fontSize: 11.5, border: "1px solid #CBD5E1", padding: "8px 12px", borderRadius: 4 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "7px 16px", fontSize: 12.5, border: "1px solid #CBD5E1", padding: "10px 14px", borderRadius: 4 }}>
                   <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
                   <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
                   <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
@@ -3672,10 +3675,10 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.sportsPratiques || "Musculation, Fitness")}</span></div>
                   <div><strong>Antécédents médicaux :</strong> <strong>Drép. {(!isBlankCombinedDoc && activeCombinedDoc.drepanocytose) ? "☒" : "☐"} &nbsp; Hypert. {(!isBlankCombinedDoc && (activeCombinedDoc.hypertension || activeCombinedDoc.q6 === "OUI")) ? "☒" : "☐"} &nbsp; Diab. {(!isBlankCombinedDoc && activeCombinedDoc.diabete) ? "☒" : "☐"}</strong></div>
                   
-                  <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #CBD5E1", paddingTop: 4, marginTop: 2 }}>
+                  <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #CBD5E1", paddingTop: 5, marginTop: 2 }}>
                     <strong>🚨 Contact d'Urgence (I.C.E.) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceNom || "-")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceTel || "-")}</span> &bull; Domicile : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceDomicile || activeCombinedDoc.quartier || "Divo")}</span>
                   </div>
-                  <div style={{ gridColumn: "1 / -1", background: "#EEF2FF", padding: "4px 8px", borderRadius: 4, marginTop: 2, color: "#4338CA" }}>
+                  <div style={{ gridColumn: "1 / -1", background: "#EEF2FF", padding: "5px 10px", borderRadius: 4, marginTop: 2, color: "#4338CA" }}>
                     <strong>Formule souscrite :</strong> {isBlankCombinedDoc ? "Formule: .......................................  /  Cotisation: 10.000 FCFA" : `${activeCombinedDoc.carte || "Bronze"} — ${fmt(activeCombinedDoc.montant || 10000)} F CFA (Inscrit le: ${formatDateFr(activeCombinedDoc.inscription || today())} - Expiration: ${formatDateFr(activeCombinedDoc.expiration)})`}
                   </div>
                 </div>
@@ -3683,15 +3686,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
               {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
               <div>
-                <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 4 }}>
+                <div style={{ textAlign: "center", fontSize: 14, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 4 }}>
                   2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
                 </div>
 
-                <p style={{ fontStyle: "italic", fontSize: 10.5, margin: "0 0 6px 0", color: "#334155" }}>
+                <p style={{ fontStyle: "italic", fontSize: 11, margin: "0 0 6px 0", color: "#334155" }}>
                   Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
                 </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 11, border: "1px solid #CBD5E1", padding: "6px 10px", borderRadius: 4 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, border: "1px solid #CBD5E1", padding: "8px 12px", borderRadius: 4 }}>
                   {[
                     { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
                     { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3703,11 +3706,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   ].map(q => {
                     const val = isBlankCombinedDoc ? "" : activeCombinedDoc[q.id];
                     return (
-                      <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                      <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
                         <div style={{ flex: 1, textAlign: "justify" }}>
                           <strong>{q.num}-</strong> {q.text}
                         </div>
-                        <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11.5 }}>
+                        <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 12.5 }}>
                           <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                         </div>
                       </div>
@@ -3719,11 +3722,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               {/* Signatures */}
               <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1.5px solid #CBD5E1", paddingTop: 8 }}>
                 <div>
-                  <u style={{ fontWeight: 900, fontSize: 12 }}>Signature du client :</u>
+                  <u style={{ fontWeight: 900, fontSize: 12.5 }}>Signature du client :</u>
                   <div style={{ height: 45 }}></div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <u style={{ fontWeight: 900, fontSize: 12 }}>Cachet et Signature du Coach :</u>
+                  <u style={{ fontWeight: 900, fontSize: 12.5 }}>Cachet et Signature du Coach :</u>
                   <div style={{ height: 45 }}></div>
                 </div>
               </div>
@@ -3753,24 +3756,24 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #000", paddingBottom: 4 }}>
             <div>
-              <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-              <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
-              <div style={{ fontSize: 10.5, color: "#000", marginTop: 1 }}>
+              <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+              <div style={{ fontSize: 14, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
+              <div style={{ fontSize: 11, color: "#000", marginTop: 1 }}>
                 Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
               </div>
             </div>
-            <div style={{ border: "1.5px solid #000", width: 80, height: 95, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
+            <div style={{ border: "1.5px solid #000", width: 85, height: 100, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
               PHOTO
             </div>
           </div>
 
           {/* PART 1: FICHE D'INSCRIPTION */}
           <div>
-            <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
+            <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
               1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "5px 14px", fontSize: 11, border: "1px solid #000", padding: "7px 10px", borderRadius: 3 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "5px 14px", fontSize: 11.5, border: "1px solid #000", padding: "7px 10px", borderRadius: 3 }}>
               <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
               <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
               <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
@@ -3793,15 +3796,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
           {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
           <div>
-            <div style={{ textAlign: "center", fontSize: 12.5, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 4 }}>
+            <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 4 }}>
               2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
             </div>
 
-            <p style={{ fontStyle: "italic", fontSize: 10, margin: "0 0 4px 0" }}>
+            <p style={{ fontStyle: "italic", fontSize: 10.5, margin: "0 0 4px 0" }}>
               Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 10.5, border: "1px solid #000", padding: "5px 9px", borderRadius: 3 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, border: "1px solid #000", padding: "5px 9px", borderRadius: 3 }}>
               {[
                 { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
                 { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3817,7 +3820,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     <div style={{ flex: 1, textAlign: "justify" }}>
                       <strong>{q.num}-</strong> {q.text}
                     </div>
-                    <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11 }}>
+                    <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11.5 }}>
                       <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                     </div>
                   </div>
@@ -3829,11 +3832,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           {/* Signatures */}
           <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #000", paddingTop: 6 }}>
             <div>
-              <u style={{ fontWeight: 900, fontSize: 11.5 }}>Signature du client :</u>
+              <u style={{ fontWeight: 900, fontSize: 12 }}>Signature du client :</u>
               <div style={{ height: 45 }}></div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <u style={{ fontWeight: 900, fontSize: 11.5 }}>Cachet et Signature du Coach :</u>
+              <u style={{ fontWeight: 900, fontSize: 12 }}>Cachet et Signature du Coach :</u>
               <div style={{ height: 45 }}></div>
             </div>
           </div>
