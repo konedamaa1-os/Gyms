@@ -3351,13 +3351,14 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
 
   const handleCancelTicket = async (t) => {
     if (!isTicketModifiable(t)) {
-      triggerToast("🔒 Délai de 10 minutes écoulé. Seul l'Administrateur peut annuler ce ticket.");
+      triggerToast("🔒 Délai de 10 minutes écoulé. Seul le Directeur Général ou l'Administrateur peut annuler cette entrée.");
       return;
     }
-    if (confirm(`Voulez-vous vraiment annuler le ticket ${t.id} (${t.nom}) ?`)) {
+    if (confirm(`Voulez-vous vraiment supprimer l'entrée ${t.id} (${t.nom}) ?`)) {
       const { error: tErr } = await supabase.from("tickets").delete().eq("id", t.id);
       if (tErr) {
-        triggerToast("Erreur lors de l'annulation du ticket sur Supabase");
+        triggerToast("Erreur lors de la suppression sur Supabase");
+        console.error(tErr);
         return;
       }
 
@@ -3369,7 +3370,10 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       }
 
       setTickets(prev => prev.filter(x => x.id !== t.id));
-      triggerToast(`Ticket ${t.id} annulé avec succès`);
+      if (lastTicket && lastTicket.id === t.id) {
+        setLastTicket(null);
+      }
+      triggerToast(`Entrée ${t.id} (${t.nom}) supprimée avec succès`);
     }
   };
 
@@ -3431,42 +3435,31 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 {matchedMember ? (
                   isActiveMember ? (
                     <div style={{ background: "#E0F2FE", color: "#0369A1", border: "1px solid #BAE6FD", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                      ✅ Membre Actif ({matchedMember.carte})<br/>
-                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiration : {matchedMember.expiration} &bull; Accès gratuit (0 F)</span>
+                      ✅ Membre Actif : <strong>{matchedMember.nom}</strong> ({matchedMember.carte}) — Validité jusqu'au {matchedMember.expiration} (Entrée Gratuite 0 F)
                     </div>
                   ) : (
-                    <div style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FCA5A5", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                      ⚠️ Abonnement Expiré ! ({matchedMember.carte})<br/>
-                      <span style={{ fontSize: 11, fontWeight: "normal" }}>Expiré le : {matchedMember.expiration} &bull; Séance payante ({fmt(ticketPrice)} F)</span>
+                    <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                      ⚠️ Abonnement Expiré depuis le {matchedMember.expiration} — Ticket d'entrée payant requis ({fmt(ticketPrice)} F CFA)
                     </div>
                   )
                 ) : (
                   <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                    👤 Visiteur Externe<br/>
-                    <span style={{ fontSize: 11, fontWeight: "normal" }}>Tarif visiteur standard applicable ({fmt(ticketPrice)} F)</span>
+                    👤 Visiteur sans abonnement — Ticket d'entrée séance ({fmt(ticketPrice)} F CFA)
                   </div>
                 )}
               </div>
             )}
             
-            {!isActiveMember && (
-              <div>
-                <label style={S.labelStyle}>Frais d'Entrée Unique (F CFA)</label>
-                <input
-                  style={S.input}
-                  type="number"
-                  placeholder="F CFA"
-                  value={montant}
-                  onChange={e => setMontant(e.target.value)}
-                  disabled={!isAdmin}
-                />
-                {!isAdmin && (
-                  <span style={{ fontSize: 11, color: "#64748B", marginTop: 4, display: "block" }}>
-                    * Tarif visiteur par défaut : {fmt(ticketPrice)} F CFA (Modifiable sous 10 min après émission).
-                  </span>
-                )}
-              </div>
-            )}
+            <div>
+              <label style={S.labelStyle}>Frais d'accès (F CFA)</label>
+              <input
+                style={{ ...S.input, fontWeight: "bold", color: montant === 0 ? "#10B981" : "#0F172A" }}
+                type="number"
+                value={montant}
+                onChange={e => setMontant(e.target.value)}
+                disabled={isActiveMember}
+              />
+            </div>
 
             <button
               className="btn-glow"
@@ -3592,10 +3585,10 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
         </CardPanel>
       </div>
 
-      {/* Daily Passages Table */}
-      <CardPanel title={`Registre des entrées du jour (${todayTickets.length})`} className="no-print">
+      {/* Daily Ledger of Entrance Passes */}
+      <CardPanel title={`Registre des entrées du jour (${todayTickets.length})`}>
         {todayTickets.length === 0 ? (
-          <div style={S.empty}>Aucun passage aujourd'hui.</div>
+          <div style={S.empty}>Aucune entrée enregistrée pour aujourd'hui.</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={S.table}>
@@ -3606,7 +3599,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   <th style={S.th}>Nom du client</th>
                   <th style={S.th}>Catégorie</th>
                   <th style={{ ...S.th, textAlign: "right" }}>Frais payés</th>
-                  <th style={{ ...S.th, textAlign: "center", width: 140 }}>Actions (10 min)</th>
+                  <th style={{ ...S.th, textAlign: "center", width: 160 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -3619,11 +3612,11 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                       <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
                       <td style={S.td}>
                         {t.isDgGuest ? (
-                          <span style={{ ...S.tag, background: "#FEF3C7", color: "#B45309", border: "1px solid #FDE68A", fontWeight: 800 }}>
+                          <span style={{ ...S.tag, background: "#FEF3C7", color: "#B45309", border: "1px solid #FDE68A", fontWeight: 800, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 4 }}>
                             👑 Invité DG (Gratuit)
                           </span>
                         ) : (
-                          <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
+                          <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7", whiteSpace: "nowrap" }}>
                             {t.isMember ? "Membre" : "Visiteur"}
                           </span>
                         )}
@@ -3632,19 +3625,31 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                         {t.isDgGuest ? "0 F (DG)" : `${fmt(t.montant)} F`}
                       </td>
                       <td style={{ ...S.td, textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center" }}>
+                        <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
                           {t.isDgGuest ? (
-                            <button
-                              className="btn-secondary"
-                              style={{ padding: "4px 8px", fontSize: 11, background: "#FEF3C7", border: "1px solid #FDE68A", color: "#B45309", borderRadius: 4, fontWeight: 700 }}
-                              onClick={() => {
-                                setLastTicket(t);
-                                setTimeout(() => window.print(), 150);
-                              }}
-                              title="Réimprimer le Pass VIP Invité DG"
-                            >
-                              🖨️ Reçu DG
-                            </button>
+                            <>
+                              <button
+                                className="btn-secondary"
+                                style={{ padding: "4px 8px", fontSize: 11, background: "#FEF3C7", border: "1px solid #FDE68A", color: "#B45309", borderRadius: 4, fontWeight: 700 }}
+                                onClick={() => {
+                                  setLastTicket(t);
+                                  setTimeout(() => window.print(), 150);
+                                }}
+                                title="Réimprimer le Pass VIP Invité DG"
+                              >
+                                🖨️ Reçu
+                              </button>
+                              {isDirectorOrAdmin && (
+                                <button
+                                  className="btn-secondary"
+                                  style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4, fontWeight: 700 }}
+                                  onClick={() => handleCancelTicket(t)}
+                                  title="Supprimer cette entrée Invité DG"
+                                >
+                                  🗑️ Supprimer
+                                </button>
+                              )}
+                            </>
                           ) : modifiable ? (
                             <>
                               <button
@@ -3657,17 +3662,17 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                               </button>
                               <button
                                 className="btn-secondary"
-                                style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4 }}
+                                style={{ padding: "4px 8px", fontSize: 11, background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", borderRadius: 4, fontWeight: 700 }}
                                 onClick={() => handleCancelTicket(t)}
-                                title="Annuler le ticket (Autorisé sous 10 min)"
+                                title="Supprimer cette entrée"
                               >
-                                ❌
+                                🗑️ Supprimer
                               </button>
                             </>
                           ) : (
                             <span 
                               style={{ fontSize: 11, color: "#94A3B8", background: "#F1F5F9", padding: "3px 8px", borderRadius: 4, cursor: "not-allowed", border: "1px solid #E2E8F0" }}
-                              onClick={() => triggerToast("🔒 Délai de modification de 10 minutes écoulé. Seul l'Administrateur peut modifier ou annuler cette saisie.")}
+                              onClick={() => triggerToast("🔒 Délai de modification de 10 minutes écoulé. Seul le Directeur Général ou l'Administrateur peut modifier ou annuler cette saisie.")}
                               title="Verrouillé après 10 minutes"
                             >
                               🔒 Verrouillé
