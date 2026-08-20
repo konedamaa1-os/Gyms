@@ -455,9 +455,11 @@ export default function GymApp() {
           
           .print-a4 {
             width: 100% !important;
-            max-width: 195mm !important;
-            padding: 6mm 10mm !important;
+            max-width: 200mm !important;
+            min-height: 275mm !important;
+            padding: 8mm 12mm !important;
             border: 2px solid #000000 !important;
+            box-sizing: border-box !important;
           }
           
           .print-only .mono {
@@ -3208,35 +3210,35 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Fiche Paper (A4 Preview) */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "30px 38px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12, lineHeight: 1.6, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "34px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
               {/* Top Header: Club - Sport - Santé / Coach Arthur Ziega + Photo Box */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
                 <div>
-                  <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
-                  <div style={{ fontSize: 11, color: "#1E293B", marginTop: 2, lineHeight: 1.45 }}>
+                  <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                  <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 3, lineHeight: 1.5 }}>
                     Tél: 07 49 74 70 74<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
                   </div>
                 </div>
-                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 90, height: 110, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 12, letterSpacing: 1 }}>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 100, height: 125, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 13, letterSpacing: 1 }}>
                   PHOTO
                 </div>
               </div>
 
               {/* Title */}
-              <div style={{ textAlign: "center", fontSize: 17, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", marginBottom: 20 }}>
+              <div style={{ textAlign: "center", fontSize: 19, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 22, textDecoration: "underline" }}>
                 FICHE D'INSCRIPTION
               </div>
 
               {/* Form Fields */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 7, fontSize: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9, fontSize: 13 }}>
                 <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
                 <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
                 
-                <div style={{ display: "flex", gap: 24, margin: "2px 0" }}>
+                <div style={{ display: "flex", gap: 28, margin: "3px 0" }}>
                   <span><strong>Sexe :</strong></span>
                   <span><strong>M {(!isBlankFiche && (activeFiche.sexe === "M" || activeFiche.sexe === "Masculin")) ? "☒" : "☐"}</strong></span>
                   <span><strong>F {(!isBlankFiche && (activeFiche.sexe === "F" || activeFiche.sexe === "Féminin")) ? "☒" : "☐"}</strong></span>
@@ -3250,7 +3252,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div><strong>Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................." : (activeFiche.service || "-")}</span></div>
                 <div><strong>E-mail :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................................................................................................................................................." : (activeFiche.email || "-")}</span></div>
                 
-                <div style={{ marginTop: 4, display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ marginTop: 5, display: "flex", gap: 18, flexWrap: "wrap" }}>
                   <span><strong>Antécédents médicaux :</strong></span>
                   <span><strong>Drépanocytose {(!isBlankFiche && activeFiche.drepanocytose) ? "☒" : "☐"}</strong></span>
                   <span><strong>Hypertension {(!isBlankFiche && (activeFiche.hypertension || activeFiche.q6 === "OUI")) ? "☒" : "☐"}</strong></span>
@@ -3260,31 +3262,31 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div><strong>Antécédents chirurgicaux :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................" : (activeFiche.antecedentsChirurgicaux || "-")}</span></div>
                 <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".............................................................................................................................................." : (activeFiche.sportsPratiques || (activeFiche.objectifs ? activeFiche.objectifs.join(", ") : "Musculation, Fitness"))}</span></div>
                 
-                <div style={{ marginTop: 6, fontWeight: 700 }}>
+                <div style={{ marginTop: 8, fontWeight: 700, fontSize: 13.5 }}>
                   Personne à contacter en cas d'urgence (I.C.E.) :
                 </div>
-                <div style={{ paddingLeft: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ paddingLeft: 14, display: "flex", flexDirection: "column", gap: 8 }}>
                   <div><strong>Nom et Prénoms :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................." : (activeFiche.urgenceNom || "-")}</span></div>
                   <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.urgenceDomicile || activeFiche.quartier || "Divo")}</span></div>
                   <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.urgenceAdresse || activeFiche.urgenceTel || "-")}</span></div>
                   <div><strong>E-mail / Tél :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................................................." : (activeFiche.urgenceEmail || activeFiche.urgenceTel || "-")}</span></div>
                 </div>
 
-                <div style={{ marginTop: 6 }}>
+                <div style={{ marginTop: 8 }}>
                   <div><strong>Inscription :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : `${formatDateFr(activeFiche.inscription || today())} (Expire le: ${formatDateFr(activeFiche.expiration)})`}</span></div>
-                  <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 13 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
+                  <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 14 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
                 </div>
               </div>
 
               {/* Signatures */}
-              <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between", padding: "0 10px" }}>
+              <div style={{ marginTop: 45, display: "flex", justifyContent: "space-between", padding: "0 14px" }}>
                 <div>
-                  <u style={{ fontWeight: 900 }}>Signature du client :</u>
-                  <div style={{ height: 45 }}></div>
+                  <u style={{ fontWeight: 900, fontSize: 13.5 }}>Signature du client :</u>
+                  <div style={{ height: 60 }}></div>
                 </div>
                 <div>
-                  <u style={{ fontWeight: 900 }}>Cachet et Signature du Coach :</u>
-                  <div style={{ height: 45 }}></div>
+                  <u style={{ fontWeight: 900, fontSize: 13.5 }}>Cachet et Signature du Coach :</u>
+                  <div style={{ height: 60 }}></div>
                 </div>
               </div>
             </div>
@@ -3389,33 +3391,33 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {activeFiche && (
         <div className="print-only print-a4" style={{ display: "none" }}>
           {/* Top Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
             <div>
-              <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-              <div style={{ fontSize: 13, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
-              <div style={{ fontSize: 10, color: "#000", marginTop: 2, lineHeight: 1.4 }}>
+              <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+              <div style={{ fontSize: 14, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
+              <div style={{ fontSize: 11, color: "#000", marginTop: 2, lineHeight: 1.45 }}>
                 Tél: 07 49 74 70 74<br />
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
               </div>
             </div>
-            <div style={{ border: "2px solid #000", width: 85, height: 105, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
+            <div style={{ border: "2px solid #000", width: 95, height: 120, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12 }}>
               PHOTO
             </div>
           </div>
 
           {/* Title */}
-          <div style={{ textAlign: "center", fontSize: 16, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>
+          <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 20 }}>
             FICHE D'INSCRIPTION
           </div>
 
           {/* Form Lines */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 11.5 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
             <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
             <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
             
-            <div style={{ display: "flex", gap: 20, margin: "1px 0" }}>
+            <div style={{ display: "flex", gap: 24, margin: "2px 0" }}>
               <span><strong>Sexe :</strong></span>
               <span><strong>M {(!isBlankFiche && (activeFiche.sexe === "M" || activeFiche.sexe === "Masculin")) ? "☒" : "☐"}</strong></span>
               <span><strong>F {(!isBlankFiche && (activeFiche.sexe === "F" || activeFiche.sexe === "Féminin")) ? "☒" : "☐"}</strong></span>
@@ -3429,7 +3431,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div><strong>Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................." : (activeFiche.service || "-")}</span></div>
             <div><strong>E-mail :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................................................................................................................................................." : (activeFiche.email || "-")}</span></div>
             
-            <div style={{ marginTop: 3, display: "flex", gap: 14 }}>
+            <div style={{ marginTop: 4, display: "flex", gap: 16 }}>
               <span><strong>Antécédents médicaux :</strong></span>
               <span><strong>Drépanocytose {(!isBlankFiche && activeFiche.drepanocytose) ? "☒" : "☐"}</strong></span>
               <span><strong>Hypertension {(!isBlankFiche && (activeFiche.hypertension || activeFiche.q6 === "OUI")) ? "☒" : "☐"}</strong></span>
@@ -3439,31 +3441,31 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div><strong>Antécédents chirurgicaux :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................" : (activeFiche.antecedentsChirurgicaux || "-")}</span></div>
             <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".............................................................................................................................................." : (activeFiche.sportsPratiques || (activeFiche.objectifs ? activeFiche.objectifs.join(", ") : "Musculation, Fitness"))}</span></div>
             
-            <div style={{ marginTop: 5, fontWeight: 700 }}>
+            <div style={{ marginTop: 7, fontWeight: 700, fontSize: 13 }}>
               Personne à contacter en cas d'urgence (I.C.E.) :
             </div>
-            <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ paddingLeft: 12, display: "flex", flexDirection: "column", gap: 6 }}>
               <div><strong>Nom et Prénoms :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................." : (activeFiche.urgenceNom || "-")}</span></div>
               <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.urgenceDomicile || activeFiche.quartier || "Divo")}</span></div>
               <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.urgenceAdresse || activeFiche.urgenceTel || "-")}</span></div>
               <div><strong>E-mail / Tél :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................................................." : (activeFiche.urgenceEmail || activeFiche.urgenceTel || "-")}</span></div>
             </div>
 
-            <div style={{ marginTop: 5 }}>
+            <div style={{ marginTop: 7 }}>
               <div><strong>Inscription :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : `${formatDateFr(activeFiche.inscription || today())} (Expire le: ${formatDateFr(activeFiche.expiration)})`}</span></div>
-              <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 12.5 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
+              <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 13.5 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
             </div>
           </div>
 
           {/* Signatures */}
-          <div style={{ marginTop: 35, display: "flex", justifyContent: "space-between", padding: "0 10px" }}>
+          <div style={{ marginTop: 45, display: "flex", justifyContent: "space-between", padding: "0 12px" }}>
             <div>
-              <u style={{ fontWeight: 900 }}>Signature du client :</u>
-              <div style={{ height: 45 }}></div>
+              <u style={{ fontWeight: 900, fontSize: 13 }}>Signature du client :</u>
+              <div style={{ height: 55 }}></div>
             </div>
             <div>
-              <u style={{ fontWeight: 900 }}>Cachet et Signature du Coach :</u>
-              <div style={{ height: 45 }}></div>
+              <u style={{ fontWeight: 900, fontSize: 13 }}>Cachet et Signature du Coach :</u>
+              <div style={{ height: 55 }}></div>
             </div>
           </div>
         </div>
@@ -3487,19 +3489,19 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Questionnaire Paper Preview */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "30px 36px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12.5, lineHeight: 1.6, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "36px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
               {/* Header Box */}
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
-                <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+              <div style={{ textAlign: "center", marginBottom: 26 }}>
+                <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
+                <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
               </div>
 
-              <p style={{ fontStyle: "italic", fontSize: 11.5, marginBottom: 24, textAlign: "justify", lineHeight: 1.5, color: "#1E293B" }}>
+              <p style={{ fontStyle: "italic", fontSize: 12.5, marginBottom: 28, textAlign: "justify", lineHeight: 1.6, color: "#1E293B" }}>
                 Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
               </p>
 
               {/* 7 Questions */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 {[
                   { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
                   { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3511,12 +3513,12 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 ].map(q => {
                   const val = isBlankQuestionnaireDoc ? "" : activeQuestionnaireDoc[q.id];
                   return (
-                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
-                      <div style={{ flex: 1, textAlign: "justify" }}>
+                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 18 }}>
+                      <div style={{ flex: 1, textAlign: "justify", fontSize: 13 }}>
                         <strong>{q.num}-</strong> {q.text}
                       </div>
-                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 12 }}>
-                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 13.5 }}>
+                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                       </div>
                     </div>
                   );
@@ -3524,16 +3526,16 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Bottom Identity & Signatures Section */}
-              <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #CBD5E1", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ marginTop: 55, paddingTop: 20, borderTop: "1.5px solid #CBD5E1", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 13 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
                   <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
                   <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
                   <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
                 </div>
-                <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "10px 14px", height: 90 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800 }}>Signature :</div>
-                  <div style={{ fontSize: 9, color: "#64748B", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+                <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "12px 16px", height: 100 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800 }}>Signature :</div>
+                  <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 2 }}>(Mention manuscrite "Lu et approuvé")</div>
                 </div>
               </div>
             </div>
@@ -3560,17 +3562,17 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {activeQuestionnaireDoc && (
         <div className="print-only print-a4" style={{ display: "none" }}>
           {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
-            <div style={{ fontSize: 10, color: "#333", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
+            <div style={{ fontSize: 11, color: "#333", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
           </div>
 
-          <p style={{ fontStyle: "italic", fontSize: 11, marginBottom: 24, textAlign: "justify", lineHeight: 1.5 }}>
+          <p style={{ fontStyle: "italic", fontSize: 12, marginBottom: 26, textAlign: "justify", lineHeight: 1.5 }}>
             Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
           </p>
 
           {/* 7 Questions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 11.5 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 12.5 }}>
             {[
               { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
               { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3586,8 +3588,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <div style={{ flex: 1, textAlign: "justify" }}>
                     <strong>{q.num}-</strong> {q.text}
                   </div>
-                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11.5 }}>
-                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 13 }}>
+                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                   </div>
                 </div>
               );
@@ -3595,16 +3597,16 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           </div>
 
           {/* Bottom Identity & Signatures Section */}
-          <div style={{ marginTop: 45, paddingTop: 16, borderTop: "1px solid #000", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, fontSize: 11.5 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ marginTop: 55, paddingTop: 20, borderTop: "1.5px solid #000", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 12.5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
               <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
               <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
               <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
             </div>
-            <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "8px 12px", height: 90 }}>
-              <div style={{ fontSize: 10.5, fontWeight: 800 }}>Signature :</div>
-              <div style={{ fontSize: 8.5, color: "#333", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+            <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "10px 14px", height: 100 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800 }}>Signature :</div>
+              <div style={{ fontSize: 9.5, color: "#333", fontStyle: "italic", marginTop: 2 }}>(Mention manuscrite "Lu et approuvé")</div>
             </div>
           </div>
         </div>
@@ -3628,27 +3630,27 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Paper Preview */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "24px 30px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 11, lineHeight: 1.45, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "28px 34px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 11.5, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
               {/* Header Box */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, borderBottom: "2px solid #0F172A", paddingBottom: 6 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, borderBottom: "2px solid #0F172A", paddingBottom: 8 }}>
                 <div>
-                  <div style={{ fontStyle: "italic", fontSize: 14, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-                  <div style={{ fontSize: 12.5, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
-                  <div style={{ fontSize: 10, color: "#1E293B", marginTop: 1, lineHeight: 1.35 }}>
+                  <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                  <div style={{ fontSize: 10.5, color: "#1E293B", marginTop: 2, lineHeight: 1.4 }}>
                     Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
                   </div>
                 </div>
-                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 75, height: 85, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 10, letterSpacing: 1 }}>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 80, height: 95, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 11, letterSpacing: 1 }}>
                   PHOTO
                 </div>
               </div>
 
               {/* PART 1: FICHE D'INSCRIPTION */}
-              <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 8 }}>
+              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 8 }}>
                 1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "5px 14px", fontSize: 10.5, marginBottom: 10, border: "1px solid #CBD5E1", padding: "8px 12px", borderRadius: 4 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "6px 14px", fontSize: 11, marginBottom: 10, border: "1px solid #CBD5E1", padding: "10px 14px", borderRadius: 4 }}>
                 <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
                 <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
                 <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
@@ -3660,24 +3662,24 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.sportsPratiques || "Musculation, Fitness")}</span></div>
                 <div><strong>Antécédents médicaux :</strong> <strong>Drép. {(!isBlankCombinedDoc && activeCombinedDoc.drepanocytose) ? "☒" : "☐"} &nbsp; Hypert. {(!isBlankCombinedDoc && (activeCombinedDoc.hypertension || activeCombinedDoc.q6 === "OUI")) ? "☒" : "☐"} &nbsp; Diab. {(!isBlankCombinedDoc && activeCombinedDoc.diabete) ? "☒" : "☐"}</strong></div>
                 
-                <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #CBD5E1", paddingTop: 4, marginTop: 2 }}>
+                <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #CBD5E1", paddingTop: 5, marginTop: 3 }}>
                   <strong>🚨 Contact d'Urgence (I.C.E.) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceNom || "-")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceTel || "-")}</span> &bull; Domicile : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceDomicile || activeCombinedDoc.quartier || "Divo")}</span>
                 </div>
-                <div style={{ gridColumn: "1 / -1", background: "#EEF2FF", padding: "4px 8px", borderRadius: 4, marginTop: 2, color: "#4338CA" }}>
+                <div style={{ gridColumn: "1 / -1", background: "#EEF2FF", padding: "5px 10px", borderRadius: 4, marginTop: 3, color: "#4338CA" }}>
                   <strong>Formule souscrite :</strong> {isBlankCombinedDoc ? "Formule: .......................................  /  Cotisation: 10.000 FCFA" : `${activeCombinedDoc.carte || "Bronze"} — ${fmt(activeCombinedDoc.montant || 10000)} F CFA (Inscrit le: ${formatDateFr(activeCombinedDoc.inscription || today())} - Expiration: ${formatDateFr(activeCombinedDoc.expiration)})`}
                 </div>
               </div>
 
               {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
-              <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 6 }}>
+              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 8 }}>
                 2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
               </div>
 
-              <p style={{ fontStyle: "italic", fontSize: 9.5, margin: "0 0 6px 0", color: "#334155" }}>
+              <p style={{ fontStyle: "italic", fontSize: 10, margin: "0 0 8px 0", color: "#334155" }}>
                 Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 10, border: "1px solid #CBD5E1", padding: "6px 10px", borderRadius: 4 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 10.5, border: "1px solid #CBD5E1", padding: "8px 12px", borderRadius: 4 }}>
                 {[
                   { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
                   { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3689,12 +3691,12 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 ].map(q => {
                   const val = isBlankCombinedDoc ? "" : activeCombinedDoc[q.id];
                   return (
-                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                       <div style={{ flex: 1, textAlign: "justify" }}>
                         <strong>{q.num}-</strong> {q.text}
                       </div>
-                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 10.5 }}>
-                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11 }}>
+                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                       </div>
                     </div>
                   );
@@ -3702,14 +3704,14 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Signatures */}
-              <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #CBD5E1", paddingTop: 8 }}>
+              <div style={{ marginTop: 20, display: "flex", justifyContent: "space-between", padding: "0 12px", borderTop: "1.5px solid #CBD5E1", paddingTop: 10 }}>
                 <div>
-                  <u style={{ fontWeight: 900, fontSize: 11 }}>Signature du client :</u>
-                  <div style={{ height: 35 }}></div>
+                  <u style={{ fontWeight: 900, fontSize: 11.5 }}>Signature du client :</u>
+                  <div style={{ height: 45 }}></div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <u style={{ fontWeight: 900, fontSize: 11 }}>Cachet et Signature du Coach :</u>
-                  <div style={{ height: 35 }}></div>
+                  <u style={{ fontWeight: 900, fontSize: 11.5 }}>Cachet et Signature du Coach :</u>
+                  <div style={{ height: 45 }}></div>
                 </div>
               </div>
             </div>
@@ -3736,25 +3738,25 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {activeCombinedDoc && (
         <div className="print-only print-a4" style={{ display: "none" }}>
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, borderBottom: "2px solid #000", paddingBottom: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10, borderBottom: "2px solid #000", paddingBottom: 6 }}>
             <div>
-              <div style={{ fontStyle: "italic", fontSize: 13.5, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-              <div style={{ fontSize: 12, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
-              <div style={{ fontSize: 9.5, color: "#000", marginTop: 1 }}>
+              <div style={{ fontStyle: "italic", fontSize: 14, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+              <div style={{ fontSize: 13, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
+              <div style={{ fontSize: 10, color: "#000", marginTop: 2 }}>
                 Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
               </div>
             </div>
-            <div style={{ border: "1.5px solid #000", width: 75, height: 85, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 10 }}>
+            <div style={{ border: "1.5px solid #000", width: 80, height: 95, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
               PHOTO
             </div>
           </div>
 
           {/* PART 1: FICHE D'INSCRIPTION */}
-          <div style={{ textAlign: "center", fontSize: 11.5, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 6 }}>
+          <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 6 }}>
             1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "4px 12px", fontSize: 10, marginBottom: 8, border: "1px solid #000", padding: "6px 10px", borderRadius: 3 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "5px 14px", fontSize: 10.5, marginBottom: 8, border: "1px solid #000", padding: "8px 10px", borderRadius: 3 }}>
             <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : activeCombinedDoc.nom.toUpperCase()}</span></div>
             <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankCombinedDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.prenoms || "-")}</span></div>
             <div><strong>Sexe :</strong> <strong>M {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "M" || activeCombinedDoc.sexe === "Masculin")) ? "☒" : "☐"} &nbsp;&nbsp;&nbsp; F {(!isBlankCombinedDoc && (activeCombinedDoc.sexe === "F" || activeCombinedDoc.sexe === "Féminin")) ? "☒" : "☐"}</strong></div>
@@ -3766,24 +3768,24 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "..........................................................." : (activeCombinedDoc.sportsPratiques || "Musculation, Fitness")}</span></div>
             <div><strong>Antécédents médicaux :</strong> <strong>Drép. {(!isBlankCombinedDoc && activeCombinedDoc.drepanocytose) ? "☒" : "☐"} &nbsp; Hypert. {(!isBlankCombinedDoc && (activeCombinedDoc.hypertension || activeCombinedDoc.q6 === "OUI")) ? "☒" : "☐"} &nbsp; Diab. {(!isBlankCombinedDoc && activeCombinedDoc.diabete) ? "☒" : "☐"}</strong></div>
             
-            <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #000", paddingTop: 3, marginTop: 1 }}>
+            <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed #000", paddingTop: 4, marginTop: 2 }}>
               <strong>🚨 Contact d'Urgence (I.C.E.) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceNom || "-")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceTel || "-")}</span> &bull; Domicile : <span style={{ fontWeight: 700 }}>{isBlankCombinedDoc ? "........................................" : (activeCombinedDoc.urgenceDomicile || activeCombinedDoc.quartier || "Divo")}</span>
             </div>
-            <div style={{ gridColumn: "1 / -1", background: "#FFF", borderTop: "1px solid #000", paddingTop: 3, marginTop: 1 }}>
+            <div style={{ gridColumn: "1 / -1", background: "#FFF", borderTop: "1px solid #000", paddingTop: 4, marginTop: 2 }}>
               <strong>Formule & Cotisation :</strong> {isBlankCombinedDoc ? "Formule: .......................................  /  Cotisation: 10.000 FCFA" : `${activeCombinedDoc.carte || "Bronze"} — ${fmt(activeCombinedDoc.montant || 10000)} F CFA (Inscrit le: ${formatDateFr(activeCombinedDoc.inscription || today())} - Expiration: ${formatDateFr(activeCombinedDoc.expiration)})`}
             </div>
           </div>
 
           {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
-          <div style={{ textAlign: "center", fontSize: 11.5, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
+          <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
             2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
           </div>
 
-          <p style={{ fontStyle: "italic", fontSize: 9, margin: "0 0 5px 0" }}>
+          <p style={{ fontStyle: "italic", fontSize: 9.5, margin: "0 0 6px 0" }}>
             Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 9.5, border: "1px solid #000", padding: "5px 8px", borderRadius: 3 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 10, border: "1px solid #000", padding: "6px 10px", borderRadius: 3 }}>
             {[
               { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
               { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3795,12 +3797,12 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             ].map(q => {
               const val = isBlankCombinedDoc ? "" : activeCombinedDoc[q.id];
               return (
-                <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                   <div style={{ flex: 1, textAlign: "justify" }}>
                     <strong>{q.num}-</strong> {q.text}
                   </div>
-                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 10 }}>
-                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 10.5 }}>
+                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
                   </div>
                 </div>
               );
@@ -3808,14 +3810,14 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           </div>
 
           {/* Signatures */}
-          <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #000", paddingTop: 6 }}>
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", padding: "0 12px", borderTop: "1px solid #000", paddingTop: 8 }}>
             <div>
-              <u style={{ fontWeight: 900, fontSize: 10.5 }}>Signature du client :</u>
-              <div style={{ height: 35 }}></div>
+              <u style={{ fontWeight: 900, fontSize: 11 }}>Signature du client :</u>
+              <div style={{ height: 40 }}></div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <u style={{ fontWeight: 900, fontSize: 10.5 }}>Cachet et Signature du Coach :</u>
-              <div style={{ height: 35 }}></div>
+              <u style={{ fontWeight: 900, fontSize: 11 }}>Cachet et Signature du Coach :</u>
+              <div style={{ height: 40 }}></div>
             </div>
           </div>
         </div>
