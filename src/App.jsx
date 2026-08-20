@@ -2114,7 +2114,7 @@ function Dashboard({ members, staff, revenuTotal, depenses, salairesVerses, tick
                     <span className="mono" style={{ color: "#64748B", background: "#F1F5F9", padding: "4px 8px", borderRadius: 6, fontSize: 12, border: "1px solid #E2E8F0" }}>{t.heure}</span>
                     <div>
                       <span style={{ fontWeight: 600, color: "#0F172A" }}>{t.nom}</span>
-                      <span style={{ fontSize: 11, color: "#94A3B8", marginLeft: 10 }}>Date : {t.date}</span>
+                      <span style={{ fontSize: 11, color: "#94A3B8", marginLeft: 10 }}>Date : {formatDateFr(t.date)}</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -2353,7 +2353,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative", zIndex: 2 }}>
                   <div>
                     <div style={{ fontSize: 9, color: "rgba(15,23,42,0.55)", letterSpacing: 0.5 }}>EXPIRATION</div>
-                    <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700 }}>{m.expiration}</div>
+                    <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 700 }}>{formatDateFr(m.expiration)}</div>
                   </div>
                   <div style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.1)", padding: "3px 8px", borderRadius: 6, textAlign: "center" }}>
                     <div style={{ fontSize: 8, color: "rgba(15,23,42,0.6)", letterSpacing: 0.5, fontWeight: 600 }}>COTISATION</div>
@@ -2379,7 +2379,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <span style={{ ...S.tag, background: status.bg, color: status.color }}>
                     {status.label}
                   </span>
-                  <span style={{ fontSize: 12, color: "#64748B" }}>Inscrit: {m.inscription}</span>
+                  <span style={{ fontSize: 12, color: "#64748B" }}>Inscrit: {formatDateFr(m.inscription)}</span>
                 </div>
                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 700, color: tier.color, fontSize: 13.5 }}>Niveau {m.carte.split(" (")[0]}</span>
@@ -4721,7 +4721,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
               <tbody>
                 {filteredTx.map(t => (
                   <tr key={t.id} style={S.tr}>
-                    <td className="mono" style={{ ...S.td, color: "#475569" }}>{t.date}</td>
+                    <td className="mono" style={{ ...S.td, color: "#475569" }}>{formatDateFr(t.date)}</td>
                     <td style={S.td}>
                       <span style={{
                         ...S.tag,
