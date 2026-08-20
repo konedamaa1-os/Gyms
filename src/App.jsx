@@ -4358,33 +4358,33 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
         </CardPanel>
       </div>
 
-      {/* Ledger Table */}
-      <CardPanel title="Grand Livre Comptable">
+      {/* Analyse de Caisse : Recettes par Période */}
+      <CardPanel title="📊 Analyse de Caisse : Recettes par Période">
         {/* Period & Date Filters Bar */}
-        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+        <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 12, padding: 16, marginBottom: 18 }}>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-end" }}>
-            <div style={{ flex: "1 1 140px" }}>
-              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>📅 Période du (Début)</label>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 12, color: "#1E293B", fontWeight: 700 }}>📅 Date de Début</label>
               <input
-                style={{ ...S.input, height: 36, fontSize: 13 }}
+                style={{ ...S.input, height: 38, fontSize: 13, borderColor: "#CBD5E1" }}
                 type="date"
                 value={startDate}
                 onChange={e => setStartDate(e.target.value)}
               />
             </div>
-            <div style={{ flex: "1 1 140px" }}>
-              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>📅 Au (Fin)</label>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 12, color: "#1E293B", fontWeight: 700 }}>📅 Date de Fin</label>
               <input
-                style={{ ...S.input, height: 36, fontSize: 13 }}
+                style={{ ...S.input, height: 38, fontSize: 13, borderColor: "#CBD5E1" }}
                 type="date"
                 value={endDate}
                 onChange={e => setEndDate(e.target.value)}
               />
             </div>
-            <div style={{ flex: "1 1 160px" }}>
-              <label style={{ ...S.labelStyle, fontSize: 11.5, color: "#475569" }}>🔄 Trier par</label>
+            <div style={{ flex: "1 1 170px" }}>
+              <label style={{ ...S.labelStyle, fontSize: 12, color: "#1E293B", fontWeight: 700 }}>🔄 Trier par</label>
               <select
-                style={{ ...S.input, height: 36, fontSize: 13 }}
+                style={{ ...S.input, height: 38, fontSize: 13, borderColor: "#CBD5E1" }}
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
               >
@@ -4398,7 +4398,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                style={{ ...S.btnGhost, padding: "8px 12px", fontSize: 12, background: startDate === today() && endDate === today() ? "#EEF2FF" : "#FFFFFF", borderColor: startDate === today() && endDate === today() ? "#6366F1" : "#CBD5E1", color: startDate === today() && endDate === today() ? "#4F46E5" : "#334155", fontWeight: 700 }}
                 onClick={() => applyPeriodPreset("today")}
               >
                 Aujourd'hui
@@ -4406,7 +4406,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                style={{ ...S.btnGhost, padding: "8px 12px", fontSize: 12, background: "#FFFFFF", borderColor: "#CBD5E1", color: "#334155", fontWeight: 700 }}
                 onClick={() => applyPeriodPreset("week")}
               >
                 Cette Semaine
@@ -4414,7 +4414,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
               <button
                 type="button"
                 className="btn-secondary"
-                style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FFFFFF" }}
+                style={{ ...S.btnGhost, padding: "8px 12px", fontSize: 12, background: "#FFFFFF", borderColor: "#CBD5E1", color: "#334155", fontWeight: 700 }}
                 onClick={() => applyPeriodPreset("month")}
               >
                 Ce Mois
@@ -4423,7 +4423,7 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
                 <button
                   type="button"
                   className="btn-secondary"
-                  style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 11.5, background: "#FEE2E2", color: "#B91C1C", borderColor: "#FCA5A5" }}
+                  style={{ ...S.btnGhost, padding: "8px 12px", fontSize: 12, background: "#FEE2E2", color: "#B91C1C", borderColor: "#FCA5A5", fontWeight: 700 }}
                   onClick={() => applyPeriodPreset("all")}
                 >
                   ✕ Réinitialiser
@@ -4432,25 +4432,46 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
             </div>
           </div>
 
-          {/* Period Summary Ribbon */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
-            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
-              <div style={{ fontSize: 11, color: "#64748B" }}>📈 Recettes Période</div>
-              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#059669", marginTop: 2 }}>+{fmt(periodRecettes)} F</div>
-            </div>
-            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
-              <div style={{ fontSize: 11, color: "#64748B" }}>📉 Dépenses & Salaires</div>
-              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#EF4444", marginTop: 2 }}>-{fmt(periodDepenses)} F</div>
-            </div>
-            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
-              <div style={{ fontSize: 11, color: "#64748B" }}>💼 Solde Net Période</div>
-              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: periodSolde >= 0 ? "#4F46E5" : "#EF4444", marginTop: 2 }}>
-                {periodSolde >= 0 ? "+" : ""}{fmt(periodSolde)} F
+          {/* Revenue Breakdown by Category in Period */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 14, paddingTop: 14, borderTop: "1px solid #E2E8F0" }}>
+            <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0", borderLeft: "4px solid #10B981" }}>
+              <div style={{ fontSize: 11.5, color: "#64748B", fontWeight: 600 }}>🎟️ Tickets Séance Guichet</div>
+              <div className="mono" style={{ fontSize: 17, fontWeight: 900, color: "#059669", marginTop: 4 }}>
+                +{fmt(filteredTx.filter(t => t.type === "recette" && t.description.toLowerCase().includes("ticket")).reduce((s, t) => s + Number(t.montant), 0))} F
+              </div>
+              <div style={{ fontSize: 11, color: "#059669", marginTop: 2 }}>
+                {filteredTx.filter(t => t.type === "recette" && t.description.toLowerCase().includes("ticket")).length} ticket(s) émis
               </div>
             </div>
-            <div style={{ background: "#FFFFFF", padding: "8px 12px", borderRadius: 8, border: "1px solid #E2E8F0" }}>
-              <div style={{ fontSize: 11, color: "#64748B" }}>🔢 Écritures filtrées</div>
-              <div className="mono" style={{ fontSize: 15, fontWeight: 800, color: "#0F172A", marginTop: 2 }}>{filteredTx.length} ligne(s)</div>
+
+            <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0", borderLeft: "4px solid #3B82F6" }}>
+              <div style={{ fontSize: 11.5, color: "#64748B", fontWeight: 600 }}>💳 Cotisations & Cartes</div>
+              <div className="mono" style={{ fontSize: 17, fontWeight: 900, color: "#2563EB", marginTop: 4 }}>
+                +{fmt(filteredTx.filter(t => t.type === "recette" && (t.description.toLowerCase().includes("adhésion") || t.description.toLowerCase().includes("cotisation") || t.description.toLowerCase().includes("abonnement"))).reduce((s, t) => s + Number(t.montant), 0))} F
+              </div>
+              <div style={{ fontSize: 11, color: "#2563EB", marginTop: 2 }}>
+                {filteredTx.filter(t => t.type === "recette" && (t.description.toLowerCase().includes("adhésion") || t.description.toLowerCase().includes("cotisation") || t.description.toLowerCase().includes("abonnement"))).length} adhésion(s)
+              </div>
+            </div>
+
+            <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0", borderLeft: "4px solid #F59E0B" }}>
+              <div style={{ fontSize: 11.5, color: "#64748B", fontWeight: 600 }}>📦 Autres Recettes Diverses</div>
+              <div className="mono" style={{ fontSize: 17, fontWeight: 900, color: "#D97706", marginTop: 4 }}>
+                +{fmt(filteredTx.filter(t => t.type === "recette" && !t.description.toLowerCase().includes("ticket") && !t.description.toLowerCase().includes("adhésion") && !t.description.toLowerCase().includes("cotisation") && !t.description.toLowerCase().includes("abonnement")).reduce((s, t) => s + Number(t.montant), 0))} F
+              </div>
+              <div style={{ fontSize: 11, color: "#D97706", marginTop: 2 }}>
+                {filteredTx.filter(t => t.type === "recette" && !t.description.toLowerCase().includes("ticket") && !t.description.toLowerCase().includes("adhésion") && !t.description.toLowerCase().includes("cotisation") && !t.description.toLowerCase().includes("abonnement")).length} écriture(s)
+              </div>
+            </div>
+
+            <div style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 10, border: "1px solid #E2E8F0", borderLeft: "4px solid #4F46E5" }}>
+              <div style={{ fontSize: 11.5, color: "#64748B", fontWeight: 600 }}>💰 TOTAL RECETTES PÉRIODE</div>
+              <div className="mono" style={{ fontSize: 18, fontWeight: 900, color: "#4F46E5", marginTop: 4 }}>
+                +{fmt(periodRecettes)} F CFA
+              </div>
+              <div style={{ fontSize: 11, color: periodSolde >= 0 ? "#059669" : "#EF4444", marginTop: 2, fontWeight: 700 }}>
+                Solde Net : {periodSolde >= 0 ? "+" : ""}{fmt(periodSolde)} F CFA
+              </div>
             </div>
           </div>
         </div>
