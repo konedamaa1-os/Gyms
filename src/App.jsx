@@ -3098,16 +3098,16 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         </div>
       )}
 
-      {/* On-screen Modal for Fiche de Renseignement (A4 preview) */}
+      {/* On-screen Modal for Fiche d'Inscription (A4 preview) */}
       {showFicheModal && activeFiche && (
         <div style={S.modalOverlay} className="no-print">
           <div style={{ ...S.modalContent, width: "95%", maxWidth: 840, borderRadius: 16, padding: "22px 26px", maxHeight: "94vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 24 }}>📋</span>
+                <span style={{ fontSize: 24 }}>📄</span>
                 <div>
                   <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>
-                    {isBlankFiche ? "Fiche de Renseignement & Contrat d'Adhésion (Vierge)" : `Fiche de Renseignement : ${activeFiche.nom}`}
+                    {isBlankFiche ? "Fiche d'Inscription Officielle (Vierge)" : `Fiche d'Inscription : ${activeFiche.nom} ${activeFiche.prenoms || ""}`}
                   </h3>
                   <div style={{ fontSize: 11.5, color: "#64748B" }}>Document officiel CLUB SPORT SANTE &bull; Format d'impression A4</div>
                 </div>
@@ -3116,137 +3116,83 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Fiche Paper (A4 Preview) */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "20px 24px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 11.5, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
-              {/* Header Box */}
-              <div style={{ borderBottom: "2px solid #0F172A", paddingBottom: 10, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "30px 38px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12, lineHeight: 1.6, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Top Header: Club - Sport - Santé / Coach Arthur Ziega + Photo Box */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, color: "#0F172A" }}>CLUB SPORT SANTE</div>
-                  <div style={{ fontSize: 10, color: "#475569", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Centre de Remise en Forme, Musculation & Bien-Être</div>
-                  <div style={{ fontSize: 10.5, color: "#334155", marginTop: 2 }}>Divo, Côte d'Ivoire &bull; <strong>Tél : 07 07 78 23 29</strong> &bull; contact@clubsportsante.ci</div>
+                  <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                  <div style={{ fontSize: 11, color: "#1E293B", marginTop: 2, lineHeight: 1.45 }}>
+                    Tél: 07 49 74 70 74<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
+                  </div>
                 </div>
-                <div style={{ textAlign: "right", border: "1px solid #CBD5E1", padding: "6px 12px", borderRadius: 6, background: "#F8FAFC" }}>
-                  <div style={{ fontSize: 9.5, color: "#64748B", fontWeight: 700 }}>DOSSIER D'ADHÉSION N°</div>
-                  <div style={{ fontFamily: "monospace", fontSize: 13, fontWeight: 900, color: "#0F172A" }}>
-                    {isBlankFiche ? "........................" : `CSS-${activeFiche.id.substring(0, 8).toUpperCase()}`}
-                  </div>
-                  <div style={{ fontSize: 9.5, color: "#64748B", marginTop: 2 }}>
-                    Date : <strong>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</strong>
-                  </div>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 90, height: 110, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 12, letterSpacing: 1 }}>
+                  PHOTO
                 </div>
               </div>
 
-              {/* Title Banner */}
-              <div style={{ background: "#0F172A", color: "#FFFFFF", textAlign: "center", padding: "6px 0", fontWeight: 900, fontSize: 12.5, letterSpacing: 1, textTransform: "uppercase", borderRadius: 4, marginBottom: 12 }}>
-                FICHE DE RENSEIGNEMENT & CONTRAT D'ADHÉSION
+              {/* Title */}
+              <div style={{ textAlign: "center", fontSize: 17, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", marginBottom: 20 }}>
+                FICHE D'INSCRIPTION
               </div>
 
-              {/* Section 1: Identification */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
-                  1. Identification de l'Adhérent(e)
+              {/* Form Fields */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 7, fontSize: 12 }}>
+                <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
+                <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
+                
+                <div style={{ display: "flex", gap: 24, margin: "2px 0" }}>
+                  <span><strong>Sexe :</strong></span>
+                  <span><strong>M {(!isBlankFiche && (activeFiche.sexe === "M" || activeFiche.sexe === "Masculin")) ? "☒" : "☐"}</strong></span>
+                  <span><strong>F {(!isBlankFiche && (activeFiche.sexe === "F" || activeFiche.sexe === "Féminin")) ? "☒" : "☐"}</strong></span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 5 }}>
-                  <div>
-                    <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
-                  </div>
-                  <div>
-                    <strong>Sexe :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "[   ] M   [   ] F" : (activeFiche.sexe || "Masculin")}</span>
-                  </div>
+
+                <div><strong>Date et lieu de naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "................................................................................................................................" : `${activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "....../....../.........."} à ${activeFiche.lieuNaissance || activeFiche.quartier || "Divo"}`}</span></div>
+                <div><strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................................................................................................................." : (activeFiche.profession || "-")}</span></div>
+                <div><strong>Fonction :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "......................................................................................................................................................." : (activeFiche.fonction || activeFiche.profession || "-")}</span></div>
+                <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.adresse || activeFiche.quartier || "Divo, Côte d'Ivoire")}</span></div>
+                <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.domicile || activeFiche.quartier || "Divo")}</span></div>
+                <div><strong>Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................." : (activeFiche.service || "-")}</span></div>
+                <div><strong>E-mail :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................................................................................................................................................." : (activeFiche.email || "-")}</span></div>
+                
+                <div style={{ marginTop: 4, display: "flex", gap: 16, flexWrap: "wrap" }}>
+                  <span><strong>Antécédents médicaux :</strong></span>
+                  <span><strong>Drépanocytose {(!isBlankFiche && activeFiche.drepanocytose) ? "☒" : "☐"}</strong></span>
+                  <span><strong>Hypertension {(!isBlankFiche && (activeFiche.hypertension || activeFiche.q6 === "OUI")) ? "☒" : "☐"}</strong></span>
+                  <span><strong>Diabète {(!isBlankFiche && activeFiche.diabete) ? "☒" : "☐"}</strong></span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 5 }}>
-                  <div>
-                    <strong>Date de Naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : (activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "Non renseignée")}</span>
-                  </div>
-                  <div>
-                    <strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................." : (activeFiche.profession || "Non renseignée")}</span>
-                  </div>
+                <div><strong>Si autres à préciser :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "................................................................................................................................................" : (activeFiche.autresAntecedents || activeFiche.remarques || "-")}</span></div>
+                <div><strong>Antécédents chirurgicaux :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................" : (activeFiche.antecedentsChirurgicaux || "-")}</span></div>
+                <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".............................................................................................................................................." : (activeFiche.sportsPratiques || (activeFiche.objectifs ? activeFiche.objectifs.join(", ") : "Musculation, Fitness"))}</span></div>
+                
+                <div style={{ marginTop: 6, fontWeight: 700 }}>
+                  Personne à contacter en cas d'urgence (I.C.E.) :
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 5 }}>
-                  <div>
-                    <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
-                  </div>
-                  <div>
-                    <strong>WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.whatsapp || activeFiche.tel || "Non renseigné")}</span>
-                  </div>
+                <div style={{ paddingLeft: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div><strong>Nom et Prénoms :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................." : (activeFiche.urgenceNom || "-")}</span></div>
+                  <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.urgenceDomicile || activeFiche.quartier || "Divo")}</span></div>
+                  <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.urgenceAdresse || activeFiche.urgenceTel || "-")}</span></div>
+                  <div><strong>E-mail / Tél :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................................................." : (activeFiche.urgenceEmail || activeFiche.urgenceTel || "-")}</span></div>
+                </div>
+
+                <div style={{ marginTop: 6 }}>
+                  <div><strong>Inscription :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : `${formatDateFr(activeFiche.inscription || today())} (Expire le: ${formatDateFr(activeFiche.expiration)})`}</span></div>
+                  <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 13 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between", padding: "0 10px" }}>
+                <div>
+                  <u style={{ fontWeight: 900 }}>Signature du client :</u>
+                  <div style={{ height: 45 }}></div>
                 </div>
                 <div>
-                  <strong>Adresse / Quartier de résidence :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................." : (activeFiche.quartier ? `${activeFiche.quartier}, Divo` : "Divo, Côte d'Ivoire")}</span>
-                </div>
-                <div style={{ marginTop: 6, paddingTop: 5, borderTop: "1px dashed #E2E8F0", fontSize: 10.5 }}>
-                  <strong>🚨 Contact d'Urgence (Personne à prévenir) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceNom || "Non renseigné")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceTel || "Non renseigné")}</span> &bull; Lien : <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................." : (activeFiche.urgenceLien || "-")}</span>
-                </div>
-              </div>
-
-              {/* Section 2: Formule & Validité */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
-                  2. Formule Souscrite & Règlement
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10, marginBottom: 5 }}>
-                  <div>
-                    <strong>Formule choisie :</strong> <span style={{ fontWeight: 800, color: "#4F46E5" }}>{isBlankFiche ? "[ ] Bronze   [ ] Argent   [ ] Or   [ ] Diamant" : activeFiche.carte}</span>
-                  </div>
-                  <div>
-                    <strong>Montant Cotisation :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "................................. F CFA" : `${(() => {
-                      const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeFiche.nom));
-                      if (memberTx) return fmt(memberTx.montant);
-                      const tier = cardTiers.find(c => c.key === activeFiche.carte);
-                      return fmt(tier ? tier.price : 0);
-                    })()} F CFA`}</span>
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div>
-                    <strong>Date de début :</strong> <span>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</span>
-                  </div>
-                  <div>
-                    <strong>Date d'expiration :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.expiration)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Questionnaire Médical & Objectifs */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
-                  3. Questionnaire d'Aptitude Physique & Objectifs Sportifs
-                </div>
-                <div style={{ fontSize: 11, marginBottom: 6 }}>
-                  <strong>Vos objectifs :</strong> {isBlankFiche ? "[  ] Remise en forme • [  ] Perte de poids • [  ] Prise de muscle • [  ] Cardio • [  ] Force" : (
-                    (activeFiche.objectifs && activeFiche.objectifs.length > 0) ? (
-                      <span style={{ fontWeight: 700, color: "#4F46E5" }}>{activeFiche.objectifs.join(" • ")}</span>
-                    ) : <span style={{ fontWeight: 700 }}>Remise en forme générale</span>
-                  )}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 10.5 }}>
-                  <div>• Antécédents cardiaques / asthme : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.antecedents === "OUI" ? `[X] OUI (${activeFiche.antecedentsDetails || "Précisé"})` : "[X] NON")}</strong></div>
-                  <div>• Douleurs articulaires / musculaires : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.douleurs === "OUI" ? `[X] OUI (${activeFiche.douleursDetails || "Précisé"})` : "[X] NON")}</strong></div>
-                  <div>• Suivez-vous un traitement médical ? <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.traitement === "OUI" ? `[X] OUI (${activeFiche.traitementDetails || "Précisé"})` : "[X] NON")}</strong></div>
-                  <div>• Niveau sportif : <strong>{isBlankFiche ? "Débutant / Intermédiaire / Confirmé" : (activeFiche.niveauSportif || "Débutant")}</strong></div>
-                </div>
-                {activeFiche.remarques && (
-                  <div style={{ marginTop: 4, fontSize: 10, fontStyle: "italic", color: "#475569" }}>
-                    Notes Coach / Secrétariat : {activeFiche.remarques}
-                  </div>
-                )}
-              </div>
-
-              {/* Section 4: Engagement & Signatures */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 5 }}>
-                  4. Déclaration sur l'Honneur & Règlement Intérieur
-                </div>
-                <div style={{ fontSize: 9.5, lineHeight: 1.35, color: "#334155", textAlign: "justify", marginBottom: 10 }}>
-                  * Je soussigné(e), déclare sur l'honneur être apte à la pratique du sport et certifie l'exactitude des renseignements fournis ci-dessus. Je reconnais avoir pris connaissance du règlement intérieur de CLUB SPORT SANTE (tenue de sport appropriée, serviette obligatoire, rangement du matériel après usage) et m'engage à le respecter scrupuleusement. *
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 70 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Signature de l'Adhérent(e) :</div>
-                    <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
-                  </div>
-                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 70 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Pour CLUB SPORT SANTE :</div>
-                    <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
-                  </div>
+                  <u style={{ fontWeight: 900 }}>Cachet et Signature du Coach :</u>
+                  <div style={{ height: 45 }}></div>
                 </div>
               </div>
             </div>
@@ -3347,139 +3293,85 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         </div>
       )}
 
-      {/* Hidden print template for Fiche de Renseignement (A4) */}
+      {/* Hidden print template for Fiche d'Inscription (A4) */}
       {activeFiche && (
         <div className="print-only print-a4" style={{ display: "none" }}>
-          {/* Header Box */}
-          <div style={{ borderBottom: "2px solid #000", paddingBottom: 8, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {/* Top Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
-              <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1, color: "#000" }}>CLUB SPORT SANTE</div>
-              <div style={{ fontSize: 9.5, color: "#333", fontWeight: 700, textTransform: "uppercase" }}>Centre de Remise en Forme, Musculation & Bien-Être</div>
-              <div style={{ fontSize: 10, color: "#000", marginTop: 2 }}>Divo, Côte d'Ivoire &bull; <strong>Tél : 07 07 78 23 29</strong> &bull; contact@clubsportsante.ci</div>
+              <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+              <div style={{ fontSize: 13, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
+              <div style={{ fontSize: 10, color: "#000", marginTop: 2, lineHeight: 1.4 }}>
+                Tél: 07 49 74 70 74<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
+              </div>
             </div>
-            <div style={{ textAlign: "right", border: "1px solid #000", padding: "5px 10px", borderRadius: 4 }}>
-              <div style={{ fontSize: 9, fontWeight: 700 }}>DOSSIER D'ADHÉSION N°</div>
-              <div style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 900 }}>
-                {isBlankFiche ? "........................" : `CSS-${activeFiche.id.substring(0, 8).toUpperCase()}`}
-              </div>
-              <div style={{ fontSize: 9, marginTop: 2 }}>
-                Date : <strong>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</strong>
-              </div>
+            <div style={{ border: "2px solid #000", width: 85, height: 105, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
+              PHOTO
             </div>
           </div>
 
-          {/* Title Banner */}
-          <div style={{ background: "#000", color: "#FFF", textAlign: "center", padding: "5px 0", fontWeight: 900, fontSize: 12, letterSpacing: 1, textTransform: "uppercase", borderRadius: 3, marginBottom: 10 }}>
-            FICHE DE RENSEIGNEMENT & CONTRAT D'ADHÉSION
+          {/* Title */}
+          <div style={{ textAlign: "center", fontSize: 16, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", marginBottom: 16 }}>
+            FICHE D'INSCRIPTION
           </div>
 
-          {/* Section 1: Identification */}
-          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 11 }}>
-            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 6 }}>
-              1. Identification de l'Adhérent(e)
+          {/* Form Lines */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 11.5 }}>
+            <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
+            <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
+            
+            <div style={{ display: "flex", gap: 20, margin: "1px 0" }}>
+              <span><strong>Sexe :</strong></span>
+              <span><strong>M {(!isBlankFiche && (activeFiche.sexe === "M" || activeFiche.sexe === "Masculin")) ? "☒" : "☐"}</strong></span>
+              <span><strong>F {(!isBlankFiche && (activeFiche.sexe === "F" || activeFiche.sexe === "Féminin")) ? "☒" : "☐"}</strong></span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginBottom: 5 }}>
-              <div>
-                <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
-              </div>
-              <div>
-                <strong>Sexe :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "[   ] M   [   ] F" : (activeFiche.sexe || "Masculin")}</span>
-              </div>
+
+            <div><strong>Date et lieu de naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "................................................................................................................................" : `${activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "....../....../.........."} à ${activeFiche.lieuNaissance || activeFiche.quartier || "Divo"}`}</span></div>
+            <div><strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................................................................................................................." : (activeFiche.profession || "-")}</span></div>
+            <div><strong>Fonction :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "......................................................................................................................................................." : (activeFiche.fonction || activeFiche.profession || "-")}</span></div>
+            <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.adresse || activeFiche.quartier || "Divo, Côte d'Ivoire")}</span></div>
+            <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.domicile || activeFiche.quartier || "Divo")}</span></div>
+            <div><strong>Service :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................." : (activeFiche.service || "-")}</span></div>
+            <div><strong>E-mail :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................................................................................................................................................." : (activeFiche.email || "-")}</span></div>
+            
+            <div style={{ marginTop: 3, display: "flex", gap: 14 }}>
+              <span><strong>Antécédents médicaux :</strong></span>
+              <span><strong>Drépanocytose {(!isBlankFiche && activeFiche.drepanocytose) ? "☒" : "☐"}</strong></span>
+              <span><strong>Hypertension {(!isBlankFiche && (activeFiche.hypertension || activeFiche.q6 === "OUI")) ? "☒" : "☐"}</strong></span>
+              <span><strong>Diabète {(!isBlankFiche && activeFiche.diabete) ? "☒" : "☐"}</strong></span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
-              <div>
-                <strong>Date de Naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : (activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "Non renseignée")}</span>
-              </div>
-              <div>
-                <strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................." : (activeFiche.profession || "Non renseignée")}</span>
-              </div>
+            <div><strong>Si autres à préciser :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "................................................................................................................................................" : (activeFiche.autresAntecedents || activeFiche.remarques || "-")}</span></div>
+            <div><strong>Antécédents chirurgicaux :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................" : (activeFiche.antecedentsChirurgicaux || "-")}</span></div>
+            <div><strong>Sports pratiqués :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".............................................................................................................................................." : (activeFiche.sportsPratiques || (activeFiche.objectifs ? activeFiche.objectifs.join(", ") : "Musculation, Fitness"))}</span></div>
+            
+            <div style={{ marginTop: 5, fontWeight: 700 }}>
+              Personne à contacter en cas d'urgence (I.C.E.) :
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
-              <div>
-                <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
-              </div>
-              <div>
-                <strong>WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.whatsapp || activeFiche.tel || "Non renseigné")}</span>
-              </div>
+            <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+              <div><strong>Nom et Prénoms :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................." : (activeFiche.urgenceNom || "-")}</span></div>
+              <div><strong>Domicile :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................................................................................................................................" : (activeFiche.urgenceDomicile || activeFiche.quartier || "Divo")}</span></div>
+              <div><strong>Adresse complète :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................................................................................................................" : (activeFiche.urgenceAdresse || activeFiche.urgenceTel || "-")}</span></div>
+              <div><strong>E-mail / Tél :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................................................." : (activeFiche.urgenceEmail || activeFiche.urgenceTel || "-")}</span></div>
+            </div>
+
+            <div style={{ marginTop: 5 }}>
+              <div><strong>Inscription :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : `${formatDateFr(activeFiche.inscription || today())} (Expire le: ${formatDateFr(activeFiche.expiration)})`}</span></div>
+              <div><strong>Paiement mensuel:</strong> <strong style={{ fontSize: 12.5 }}>{isBlankFiche ? "10.000 FCFA" : `${fmt(activeFiche.montant || 10000)} FCFA (${activeFiche.carte || "Mensuel"})`}</strong></div>
+            </div>
+          </div>
+
+          {/* Signatures */}
+          <div style={{ marginTop: 35, display: "flex", justifyContent: "space-between", padding: "0 10px" }}>
+            <div>
+              <u style={{ fontWeight: 900 }}>Signature du client :</u>
+              <div style={{ height: 45 }}></div>
             </div>
             <div>
-              <strong>Adresse / Quartier de résidence :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................." : (activeFiche.quartier ? `${activeFiche.quartier}, Divo` : "Divo, Côte d'Ivoire")}</span>
-            </div>
-            <div style={{ marginTop: 5, paddingTop: 4, borderTop: "1px dashed #666", fontSize: 10 }}>
-              <strong>🚨 Contact d'Urgence :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceNom || "Non renseigné")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceTel || "Non renseigné")}</span> &bull; Lien : <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................." : (activeFiche.urgenceLien || "-")}</span>
-            </div>
-          </div>
-
-          {/* Section 2: Formule & Validité */}
-          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 11 }}>
-            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 6 }}>
-              2. Formule Souscrite & Règlement
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 8, marginBottom: 5 }}>
-              <div>
-                <strong>Formule choisie :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "[ ] Bronze   [ ] Argent   [ ] Or   [ ] Diamant" : activeFiche.carte}</span>
-              </div>
-              <div>
-                <strong>Montant Cotisation :</strong> <span style={{ fontWeight: 800 }}>{isBlankFiche ? "................................. F CFA" : `${(() => {
-                  const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeFiche.nom));
-                  if (memberTx) return fmt(memberTx.montant);
-                  const tier = cardTiers.find(c => c.key === activeFiche.carte);
-                  return fmt(tier ? tier.price : 0);
-                })()} F CFA`}</span>
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              <div>
-                <strong>Date de début :</strong> <span>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.inscription || today())}</span>
-              </div>
-              <div>
-                <strong>Date d'expiration :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : formatDateFr(activeFiche.expiration)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Questionnaire Médical & Objectifs */}
-          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 10.5 }}>
-            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 5 }}>
-              3. Questionnaire d'Aptitude Physique & Objectifs
-            </div>
-            <div style={{ marginBottom: 4 }}>
-              <strong>Vos objectifs :</strong> {isBlankFiche ? "[  ] Remise en forme • [  ] Perte de poids • [  ] Prise de muscle • [  ] Cardio • [  ] Force" : (
-                (activeFiche.objectifs && activeFiche.objectifs.length > 0) ? (
-                  <span style={{ fontWeight: 700 }}>{activeFiche.objectifs.join(" • ")}</span>
-                ) : <span style={{ fontWeight: 700 }}>Remise en forme générale</span>
-              )}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10 }}>
-              <div>• Antécédents cardiaques / asthme : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.antecedents === "OUI" ? `[X] OUI (${activeFiche.antecedentsDetails || "Précisé"})` : "[X] NON")}</strong></div>
-              <div>• Douleurs articulaires / musculaires : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.douleurs === "OUI" ? `[X] OUI (${activeFiche.douleursDetails || "Précisé"})` : "[X] NON")}</strong></div>
-              <div>• Suivez-vous un traitement médical ? <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.traitement === "OUI" ? `[X] OUI (${activeFiche.traitementDetails || "Précisé"})` : "[X] NON")}</strong></div>
-              <div>• Niveau sportif : <strong>{isBlankFiche ? "Débutant / Intermédiaire / Confirmé" : (activeFiche.niveauSportif || "Débutant")}</strong></div>
-            </div>
-            {activeFiche.remarques && (
-              <div style={{ marginTop: 4, fontSize: 9.5, fontStyle: "italic" }}>
-                Notes Coach / Secrétariat : {activeFiche.remarques}
-              </div>
-            )}
-          </div>
-
-          {/* Section 4: Engagement & Signatures */}
-          <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", fontSize: 10.5 }}>
-            <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 5 }}>
-              4. Déclaration sur l'Honneur & Règlement Intérieur
-            </div>
-            <div style={{ fontSize: 9, lineHeight: 1.3, textAlign: "justify", marginBottom: 10 }}>
-              * Je soussigné(e), déclare sur l'honneur être apte à la pratique du sport et certifie l'exactitude des renseignements fournis ci-dessus. Je reconnais avoir pris connaissance du règlement intérieur de CLUB SPORT SANTE (tenue de sport appropriée, serviette obligatoire, rangement du matériel après usage) et m'engage à le respecter scrupuleusement. *
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 10px", height: 75 }}>
-                <div style={{ fontSize: 9.5, fontWeight: 800 }}>Signature de l'Adhérent(e) :</div>
-                <div style={{ fontSize: 8, color: "#444", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
-              </div>
-              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 10px", height: 75 }}>
-                <div style={{ fontSize: 9.5, fontWeight: 800 }}>Pour CLUB SPORT SANTE :</div>
-                <div style={{ fontSize: 8, color: "#444", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
-              </div>
+              <u style={{ fontWeight: 900 }}>Cachet et Signature du Coach :</u>
+              <div style={{ height: 45 }}></div>
             </div>
           </div>
         </div>
