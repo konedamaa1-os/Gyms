@@ -42,6 +42,24 @@ const seedSchedule = () => [];
 const seedTickets = () => [];
 const seedTx = () => [];
 
+const formatDateFr = (d) => {
+  if (!d) return "";
+  if (typeof d !== "string") return String(d);
+  if (d.includes("-")) {
+    const parts = d.split("-");
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return d;
+};
+
+const formatPeriodFr = (start, end) => {
+  if (!start && !end) return "";
+  const s = formatDateFr(start);
+  const e = formatDateFr(end);
+  if (!e || s === e) return `Le ${s}`;
+  return `Du ${s} au ${e}`;
+};
+
 const getMemberStatus = (m) => {
   const t = today();
   if (m.expiration < t) return { label: "Expiré", color: "#EF4444", bg: "#FEE2E2" };
@@ -2387,12 +2405,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {/* Hidden print template for subscription receipt */}
       {activeReceipt && (
         <div className="print-only" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8, color: "#000" }}>🏋️ CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 2, color: "#333" }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
-            <div style={{ fontSize: 9, color: "#555" }}>Divo, Côte d'Ivoire &bull; Tél : +225 07 00 00 00 00</div>
-            <div style={{ borderBottom: "2px solid #000", margin: "8px 0 6px 0" }} />
-            <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "4px 0", letterSpacing: 0.8, borderRadius: 3 }}>
+          <div style={{ textAlign: "center", marginBottom: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.8, borderRadius: 3 }}>
               ★ REÇU D'ADHÉSION ★
             </div>
             <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
@@ -2405,11 +2419,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>DATE PAIEMENT :</span>
-              <span>{activeReceipt.inscription || today()}</span>
+              <span>{formatDateFr(activeReceipt.inscription || today())}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>VALIDITÉ JUSQU'AU :</span>
-              <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{activeReceipt.expiration}</strong>
+              <strong style={{ fontFamily: "monospace", fontSize: 12 }}>{formatDateFr(activeReceipt.expiration)}</strong>
             </div>
             
             <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
@@ -3531,18 +3545,14 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
           {lastTicket.isDgGuest ? (
             /* VIP PASS FOR DG GUEST THERMAL RECEIPT */
             <div style={{ textAlign: "center", color: "#000" }}>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
-                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE — DIVO</div>
-                <div style={{ fontSize: 9, color: "#444" }}>Tél : +225 07 00 00 00 00</div>
-                <div style={{ borderBottom: "2px solid #000", margin: "8px 0 5px 0" }} />
-                <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "4px 0", letterSpacing: 0.5, borderRadius: 3 }}>
+              <div style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   👑 PASS VIP INVITÉ DU DG 👑
                 </div>
                 <div style={{ fontSize: 8.5, fontWeight: 800, marginTop: 4, letterSpacing: 0.5 }}>
                   AUTORISATION EXCLUSIVE DIRECTION GÉNÉRALE
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
               </div>
               
               <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
@@ -3552,7 +3562,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>DATE ÉMISSION :</span>
-                  <span>{lastTicket.date} ({lastTicket.heure})</span>
+                  <span>{formatDateFr(lastTicket.date)} à {lastTicket.heure}</span>
                 </div>
                 
                 <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
@@ -3567,7 +3577,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
                   <span>PÉRIODE D'ACCÈS :</span>
-                  <span>{lastTicket.dgPeriod || `Du ${lastTicket.startDate} au ${lastTicket.endDate}`}</span>
+                  <span>{formatPeriodFr(lastTicket.startDate, lastTicket.endDate) || lastTicket.dgPeriod}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
                   <span>DROITS ACCORDÉS :</span>
@@ -3600,15 +3610,11 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
           ) : (
             /* STANDARD TICKET THERMAL RECEIPT */
             <div style={{ textAlign: "center", color: "#000" }}>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
-                <div style={{ fontSize: 9, fontWeight: 700, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
-                <div style={{ fontSize: 9, color: "#444" }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
-                <div style={{ borderBottom: "2px solid #000", margin: "8px 0 5px 0" }} />
-                <div style={{ fontSize: 12, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 0.5, borderRadius: 3 }}>
-                  {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
+              <div style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
+                  {lastTicket.isMember ? "★ PASS MEMBRE ADHÉRENT ★" : "★ TICKET D'ENTRÉE SÉANCE ★"}
                 </div>
-                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
               </div>
               
               <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 8, textAlign: "left", color: "#000" }}>
@@ -3618,7 +3624,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>DATE :</span>
-                  <span>{lastTicket.date}</span>
+                  <span>{formatDateFr(lastTicket.date)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>HEURE :</span>
@@ -4540,17 +4546,22 @@ function Finances({ tx, setTx, tickets, staff, revenuTotal, depenses, salairesVe
       {/* Hidden print template for cash withdrawal voucher */}
       {activeWithdrawalReceipt && (
         <div className="print-only" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
-            <div style={{ fontSize: 20, fontWeight: "bold" }}>CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 10 }}>Divo, Côte d'Ivoire</div>
-            <div style={{ fontSize: 10 }}>Tel: +225 07 00 00 00 00</div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "10px 0" }} />
-            <div style={{ fontSize: 14, fontWeight: "bold" }}>BON DE DÉCAISSEMENT CAISSE</div>
+          <div style={{ textAlign: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
+              ★ BON DE DÉCAISSEMENT CAISSE ★
+            </div>
+            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0 8px 0" }} />
           </div>
           
-          <div style={{ fontSize: 12, lineHeight: 1.6, marginBottom: 14 }}>
-            <div>RÉF CAISSE : BD-{activeWithdrawalReceipt.id.substring(0, 8).toUpperCase()}</div>
-            <div>DATE DU RETRAIT : {activeWithdrawalReceipt.date}</div>
+          <div style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 12, textAlign: "left", color: "#000" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>RÉF CAISSE :</span>
+              <strong style={{ fontFamily: "monospace", fontSize: 12 }}>BD-{activeWithdrawalReceipt.id.substring(0, 8).toUpperCase()}</strong>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>DATE DU RETRAIT :</span>
+              <span>{formatDateFr(activeWithdrawalReceipt.date)}</span>
+            </div>
             <div>MODE DE PAIEMENT : {activeWithdrawalReceipt.mode}</div>
             {activeWithdrawalReceipt.justificatif && activeWithdrawalReceipt.justificatif !== "Aucun" && (
               <div>RÉF PIÈCE JUSTIF. : {activeWithdrawalReceipt.justificatif}</div>
