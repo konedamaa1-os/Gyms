@@ -3100,6 +3100,15 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
   const [montant, setMontant] = useState(ticketPrice || 1000); // Walk-in default price: 1000 F CFA
   const [lastTicket, setLastTicket] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showDgModal, setShowDgModal] = useState(false);
+  const [dgForm, setDgForm] = useState({
+    nom: "",
+    tel: "",
+    periodType: "7", // "1", "3", "7", "14", "30", "custom"
+    startDate: today(),
+    endDate: "",
+    note: "Invité personnel de Monsieur le Directeur Général (DG)"
+  });
 
   useEffect(() => {
     setMontant(ticketPrice);
@@ -3180,6 +3189,72 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       setName("");
       setMontant(ticketPrice);
     }, 1000);
+  };
+
+  // Issue VIP Guest Pass for DG / Patron
+  const issueDgPass = async (e) => {
+    e.preventDefault();
+    if (!dgForm.nom.trim()) {
+      triggerToast("Veuillez renseigner le nom de l'invité du DG");
+      return;
+    }
+
+    const start = dgForm.startDate || today();
+    let end = dgForm.endDate;
+    if (dgForm.periodType !== "custom") {
+      const days = parseInt(dgForm.periodType, 10) || 1;
+      const d = new Date(start);
+      d.setDate(d.getDate() + (days - 1));
+      end = d.toISOString().slice(0, 10);
+    } else if (!end) {
+      end = start;
+    }
+
+    const newId = `VIP-DG-${Math.random().toString(36).substring(3, 8).toUpperCase()}`;
+    const now = new Date();
+    const dgTicket = {
+      id: newId,
+      nom: dgForm.nom.trim(),
+      tel: dgForm.tel.trim(),
+      date: today(),
+      heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      montant: 0,
+      isMember: false,
+      isDgGuest: true,
+      startDate: start,
+      endDate: end,
+      dgPeriod: start === end ? `Le ${start}` : `Du ${start} au ${end}`,
+      dgNote: dgForm.note || "Invité personnel de Monsieur le Directeur Général (DG)",
+      timestamp: Date.now()
+    };
+
+    setIsPrinting(true);
+    const { error } = await supabase.from("tickets").insert([dgTicket]);
+    if (error) {
+      triggerToast("Erreur lors de l'enregistrement du Pass DG sur Supabase");
+      console.error(error);
+      setIsPrinting(false);
+      return;
+    }
+
+    setTickets(prev => [...prev, dgTicket]);
+    setLastTicket(dgTicket);
+    setShowDgModal(false);
+    triggerToast(`👑 Pass Invité DG émis avec succès pour ${dgTicket.nom} !`);
+
+    setTimeout(() => {
+      setIsPrinting(false);
+      window.print();
+    }, 400);
+
+    setDgForm({
+      nom: "",
+      tel: "",
+      periodType: "7",
+      startDate: today(),
+      endDate: "",
+      note: "Invité personnel de Monsieur le Directeur Général (DG)"
+    });
   };
 
   const handlePrintAction = () => {
@@ -3268,7 +3343,33 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       
       <div style={S.grid2} className="no-print">
         {/* Entrance Desk */}
-        <CardPanel title="Émettre un Ticket d'Accès">
+        <CardPanel 
+          title="Émettre un Ticket d'Accès" 
+          action={
+            <button
+              type="button"
+              className="btn-glow"
+              onClick={() => setShowDgModal(true)}
+              style={{
+                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 800,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
+              }}
+              title="Créer un Pass VIP Invité du DG avec accès gratuit temporaire"
+            >
+              👑 Pass Invité DG
+            </button>
+          }
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <label style={S.labelStyle}>Rechercher membre ou saisir nom visiteur</label>
@@ -3351,40 +3452,86 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
 
             {lastTicket && !isPrinting && (
               <div style={{ ...S.ticketPaper, borderRadius: 8 }} className="animate-ticket printable-receipt">
-                <div style={{ textAlign: "center", marginBottom: 10 }}>
-                  <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
-                  <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>COMPLEXE SPORTIF — DIVO</div>
-                  <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
-                  <div style={{ borderBottom: "2px solid #0F172A", margin: "8px 0 6px 0" }} />
-                  <div style={{ fontSize: 11, color: "#000", fontWeight: 800, background: "#E2E8F0", padding: "2px 0", borderRadius: 4 }}>
-                    {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
-                  </div>
-                  <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0 8px 0" }} />
-                </div>
-                
-                <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>CODE :</span>
-                    <strong>{lastTicket.id}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>DATE :</span>
-                    <span>{lastTicket.date}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>HEURE :</span>
-                    <span>{lastTicket.heure}</span>
-                  </div>
-                  <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
-                  <div style={{ fontSize: 12, fontWeight: 800, display: "flex", justifyContent: "space-between", color: "#0F172A" }}>
-                    <span>CLIENT :</span>
-                    <span>{lastTicket.nom}</span>
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
-                    <span>MONTANT :</span>
-                    <span>{fmt(lastTicket.montant)} F CFA</span>
-                  </div>
-                </div>
+                {lastTicket.isDgGuest ? (
+                  <>
+                    <div style={{ textAlign: "center", marginBottom: 10 }}>
+                      <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
+                      <div style={{ fontSize: 9.5, color: "#D97706", fontWeight: 800, textTransform: "uppercase" }}>★ DIRECTION GÉNÉRALE — DIVO ★</div>
+                      <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
+                      <div style={{ borderBottom: "2px solid #D97706", margin: "8px 0 6px 0" }} />
+                      <div style={{ fontSize: 11, color: "#92400E", fontWeight: 900, background: "#FEF3C7", padding: "4px 0", borderRadius: 4, border: "1px solid #FDE68A" }}>
+                        👑 PASS INVITÉ DU DG (GRATUIT)
+                      </div>
+                      <div style={{ borderBottom: "1px dashed #D97706", margin: "6px 0 8px 0" }} />
+                    </div>
+
+                    <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>N° PASS :</span>
+                        <strong style={{ color: "#D97706" }}>{lastTicket.id}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>INVITÉ DU DG :</span>
+                        <strong style={{ color: "#0F172A" }}>{lastTicket.nom}</strong>
+                      </div>
+                      {lastTicket.tel && (
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>TÉLÉPHONE :</span>
+                          <span>{lastTicket.tel}</span>
+                        </div>
+                      )}
+                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
+                      <div style={{ display: "flex", justifyContent: "space-between", color: "#0F172A", fontWeight: 700 }}>
+                        <span>PÉRIODE :</span>
+                        <span>{lastTicket.dgPeriod || `Du ${lastTicket.startDate} au ${lastTicket.endDate}`}</span>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
+                        <span>ACCÈS :</span>
+                        <span>0 F CFA (OFFERT PAR LE DG)</span>
+                      </div>
+                      <div style={{ fontSize: 9.5, color: "#64748B", marginTop: 4, fontStyle: "italic" }}>
+                        "{lastTicket.dgNote || "Invité personnel du Directeur Général"}"
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ textAlign: "center", marginBottom: 10 }}>
+                      <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
+                      <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>COMPLEXE SPORTIF — DIVO</div>
+                      <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
+                      <div style={{ borderBottom: "2px solid #0F172A", margin: "8px 0 6px 0" }} />
+                      <div style={{ fontSize: 11, color: "#000", fontWeight: 800, background: "#E2E8F0", padding: "2px 0", borderRadius: 4 }}>
+                        {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
+                      </div>
+                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0 8px 0" }} />
+                    </div>
+                    
+                    <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>CODE :</span>
+                        <strong>{lastTicket.id}</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>DATE :</span>
+                        <span>{lastTicket.date}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>HEURE :</span>
+                        <span>{lastTicket.heure}</span>
+                      </div>
+                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
+                      <div style={{ fontSize: 12, fontWeight: 800, display: "flex", justifyContent: "space-between", color: "#0F172A" }}>
+                        <span>CLIENT :</span>
+                        <span>{lastTicket.nom}</span>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
+                        <span>MONTANT :</span>
+                        <span>{fmt(lastTicket.montant)} F CFA</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, borderTop: "1px dashed #CBD5E1", paddingTop: 8 }}>
                   {/* Custom QR Code */}
@@ -3395,8 +3542,7 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                     <path d="M9 1h1v2H9zm2 0h1v1h-1zm1 2h1v3h-1zm-3 2h2v1H9zm4-4h1v1h-1zm3 8h2v1h-2zm-5 1h1v2h-1zm3 1h2v1h-2zm-5 3h1v1H9zm3 2h1v1h-1zm2-3h1v2h-1zm1 2h2v1h-2zm1-3h1v1h-1zm-6 2h1v1h-1z" fill="#000" />
                   </svg>
                   <div className="mono" style={{ fontSize: 8, color: "#475569", textAlign: "center" }}>
-                    * Tenue & serviette obligatoires *<br />
-                    BONNE SÉANCE !
+                    {lastTicket.isDgGuest ? "★ ACCÈS EXCLUSIF DIRECTION — BON ENTRAÎNEMENT ★" : "* Tenue & serviette obligatoires * — BONNE SÉANCE !"}
                   </div>
                 </div>
               </div>
@@ -3431,14 +3577,34 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                       <td className="mono" style={{ ...S.td, color: "#334155" }}>{t.heure}</td>
                       <td style={{ ...S.td, fontWeight: 600, color: "#0F172A" }}>{t.nom}</td>
                       <td style={S.td}>
-                        <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
-                          {t.isMember ? "Membre" : "Visiteur"}
-                        </span>
+                        {t.isDgGuest ? (
+                          <span style={{ ...S.tag, background: "#FEF3C7", color: "#B45309", border: "1px solid #FDE68A", fontWeight: 800 }}>
+                            👑 Invité DG (Gratuit)
+                          </span>
+                        ) : (
+                          <span style={{ ...S.tag, background: t.isMember ? "#D1FAE5" : "#E0F2FE", color: t.isMember ? "#059669" : "#0284C7" }}>
+                            {t.isMember ? "Membre" : "Visiteur"}
+                          </span>
+                        )}
                       </td>
-                      <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: "#0F172A" }}>{fmt(t.montant)} F</td>
+                      <td className="mono" style={{ ...S.td, textAlign: "right", fontWeight: 700, color: t.isDgGuest ? "#D97706" : "#0F172A" }}>
+                        {t.isDgGuest ? "0 F (DG)" : `${fmt(t.montant)} F`}
+                      </td>
                       <td style={{ ...S.td, textAlign: "center" }}>
                         <div style={{ display: "flex", gap: 6, justifyContent: "center", alignItems: "center" }}>
-                          {modifiable ? (
+                          {t.isDgGuest ? (
+                            <button
+                              className="btn-secondary"
+                              style={{ padding: "4px 8px", fontSize: 11, background: "#FEF3C7", border: "1px solid #FDE68A", color: "#B45309", borderRadius: 4, fontWeight: 700 }}
+                              onClick={() => {
+                                setLastTicket(t);
+                                setTimeout(() => window.print(), 150);
+                              }}
+                              title="Réimprimer le Pass VIP Invité DG"
+                            >
+                              🖨️ Reçu DG
+                            </button>
+                          ) : modifiable ? (
                             <>
                               <button
                                 className="btn-secondary"
@@ -3480,56 +3646,268 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       {/* Hidden print template */}
       {lastTicket && (
         <div className="print-only" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
-            <div style={{ fontSize: 9, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
-            <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
-            <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
-            <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "2px 0", letterSpacing: 0.5 }}>
-              {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
-            </div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
-          </div>
-          
-          <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>TICKET N° :</span>
-              <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>DATE :</span>
-              <span>{lastTicket.date}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>HEURE :</span>
-              <span>{lastTicket.heure}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>TYPE ACCÈS :</span>
-              <strong>{lastTicket.isMember ? "MEMBRE ADHÉRENT" : "VISITEUR PASS"}</strong>
-            </div>
-            <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-            
-            <div style={{ fontSize: 11.5, fontWeight: 900, display: "flex", justifyContent: "space-between" }}>
-              <span>CLIENT :</span>
-              <span>{lastTicket.nom.toUpperCase()}</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-              <span>MONTANT ENCAISSÉ :</span>
-              <span>{fmt(lastTicket.montant)} F CFA</span>
-            </div>
-          </div>
+          {lastTicket.isDgGuest ? (
+            /* VIP PASS FOR DG GUEST THERMAL RECEIPT */
+            <div style={{ textAlign: "center" }}>
+              <div style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
+                <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE — DIVO</div>
+                <div style={{ fontSize: 8.5, color: "#333" }}>Tél : +225 07 00 00 00 00</div>
+                <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
+                <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "3px 0", letterSpacing: 0.5 }}>
+                  👑 PASS VIP INVITÉ DU DG 👑
+                </div>
+                <div style={{ fontSize: 8, fontWeight: 800, marginTop: 3 }}>
+                  AUTORISATION EXCLUSIVE DIRECTION GÉNÉRALE
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
+              </div>
+              
+              <div style={{ fontSize: 10, lineHeight: 1.5, marginBottom: 8, textAlign: "left" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>N° DU PASS :</span>
+                  <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>DATE ÉMISSION :</span>
+                  <span>{lastTicket.date} ({lastTicket.heure})</span>
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
+                
+                <div style={{ fontSize: 11.5, fontWeight: 900 }}>
+                  INVITÉ(E) DU DG : {lastTicket.nom.toUpperCase()}
+                </div>
+                {lastTicket.tel && (
+                  <div style={{ fontSize: 9.5 }}>CONTACT : {lastTicket.tel}</div>
+                )}
+                
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}>
+                  <span>PÉRIODE D'ACCÈS :</span>
+                  <span>{lastTicket.dgPeriod || `Du ${lastTicket.startDate} au ${lastTicket.endDate}`}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                  <span>DROITS ACCORDÉS :</span>
+                  <strong>ACCÈS TOTAL ILLIMITÉ</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                  <span>FRAIS D'ENTRÉE :</span>
+                  <strong>0 F CFA (OFFERT PAR LE DG)</strong>
+                </div>
+                
+                <div style={{ borderBottom: "1px dashed #000", margin: "5px 0" }} />
+                <div style={{ fontSize: 8.5, fontStyle: "italic", color: "#333" }}>
+                  Motif : {lastTicket.dgNote || "Invité personnel de Monsieur le Directeur Général"}
+                </div>
+              </div>
 
-          <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-          
-          <div style={{ textAlign: "center", fontSize: 8.5, lineHeight: 1.3, color: "#222", margin: "4px 0" }}>
-            * Billet valable pour 1 séance le jour d'émission *<br />
-            * Tenue de sport & serviette obligatoires *
-          </div>
+              <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+              
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 8.5, textAlign: "left" }}>
+                <div>Émis au Guichet</div>
+                <div style={{ textAlign: "right" }}>Le Directeur Général / DG<br /><strong>(Autorisation Accordée)</strong></div>
+              </div>
+              <div style={{ height: 26 }}></div>
 
-          <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
-          <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700 }}>
-            MERCI DE VOTRE VISITE ! A BIENTÔT.
+              <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+              <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 800 }}>
+                LE DIRECTEUR GÉNÉRAL VOUS SOUHAITE UN EXCELLENT ENTRAÎNEMENT !
+              </div>
+            </div>
+          ) : (
+            /* STANDARD TICKET THERMAL RECEIPT */
+            <div style={{ textAlign: "center" }}>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>🏋️ CLUB SPORT SANTE</div>
+                <div style={{ fontSize: 9, marginTop: 2 }}>COMPLEXE SPORTIF & BIEN-ÊTRE</div>
+                <div style={{ fontSize: 9 }}>Divo, Côte d'Ivoire &bull; Tél: +225 07 00 00 00 00</div>
+                <div style={{ borderBottom: "2px solid #000", margin: "6px 0 4px 0" }} />
+                <div style={{ fontSize: 11, fontWeight: 900, background: "#000", color: "#FFF", padding: "2px 0", letterSpacing: 0.5 }}>
+                  {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "4px 0 6px 0" }} />
+              </div>
+              
+              <div style={{ fontSize: 10.5, lineHeight: 1.5, marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>TICKET N° :</span>
+                  <strong style={{ fontFamily: "monospace" }}>{lastTicket.id}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>DATE :</span>
+                  <span>{lastTicket.date}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>HEURE :</span>
+                  <span>{lastTicket.heure}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>TYPE ACCÈS :</span>
+                  <strong>{lastTicket.isMember ? "MEMBRE ADHÉRENT" : "VISITEUR PASS"}</strong>
+                </div>
+                <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+                
+                <div style={{ fontSize: 11.5, fontWeight: 900, display: "flex", justifyContent: "space-between" }}>
+                  <span>CLIENT :</span>
+                  <span>{lastTicket.nom.toUpperCase()}</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  <span>MONTANT ENCAISSÉ :</span>
+                  <span>{fmt(lastTicket.montant)} F CFA</span>
+                </div>
+              </div>
+
+              <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+              
+              <div style={{ textAlign: "center", fontSize: 8.5, lineHeight: 1.3, color: "#222", margin: "4px 0" }}>
+                * Billet valable pour 1 séance le jour d'émission *<br />
+                * Tenue de sport & serviette obligatoires *
+              </div>
+
+              <div style={{ borderBottom: "1px dashed #000", margin: "6px 0" }} />
+              <div style={{ textAlign: "center", fontSize: 8.5, fontWeight: 700 }}>
+                MERCI DE VOTRE VISITE ! A BIENTÔT.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* DG VIP Guest Modal */}
+      {showDgModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "92%", maxWidth: 440, borderRadius: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #F59E0B, #D97706)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "#FFF" }}>
+                👑
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>Pass Invité du DG (Patron)</h3>
+                <div style={{ fontSize: 12, color: "#64748B" }}>Accès gratuit temporaire offert par le Directeur Général</div>
+              </div>
+            </div>
+
+            <form onSubmit={issueDgPass} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <div>
+                <label style={S.labelStyle}>Nom complet de l'ami / invité du DG *</label>
+                <input
+                  style={S.input}
+                  placeholder="Ex: M. Armand Touré"
+                  value={dgForm.nom}
+                  onChange={e => setDgForm({ ...dgForm, nom: e.target.value })}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Numéro de Téléphone (Optionnel)</label>
+                <input
+                  style={S.input}
+                  placeholder="Ex: 07 55 66 77 88"
+                  value={dgForm.tel}
+                  onChange={e => setDgForm({ ...dgForm, tel: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Période de gratuité accordée par le DG *</label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 8 }}>
+                  {[
+                    { id: "1", label: "1 Séance (1j)" },
+                    { id: "3", label: "3 Jours" },
+                    { id: "7", label: "1 Semaine (7j)" },
+                    { id: "14", label: "2 Semaines" },
+                    { id: "30", label: "1 Mois (30j)" },
+                    { id: "custom", label: "Date libre" }
+                  ].map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setDgForm({ ...dgForm, periodType: p.id })}
+                      style={{
+                        padding: "8px 4px",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        borderRadius: 6,
+                        border: dgForm.periodType === p.id ? "2px solid #D97706" : "1px solid #CBD5E1",
+                        background: dgForm.periodType === p.id ? "#FEF3C7" : "#FFFFFF",
+                        color: dgForm.periodType === p.id ? "#B45309" : "#334155",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {dgForm.periodType === "custom" ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 11, color: "#64748B" }}>Date Début</label>
+                      <input
+                        type="date"
+                        style={{ ...S.input, height: 36, fontSize: 12.5 }}
+                        value={dgForm.startDate}
+                        onChange={e => setDgForm({ ...dgForm, startDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 11, color: "#64748B" }}>Date Fin</label>
+                      <input
+                        type="date"
+                        style={{ ...S.input, height: 36, fontSize: 12.5 }}
+                        value={dgForm.endDate}
+                        onChange={e => setDgForm({ ...dgForm, endDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11.5, color: "#059669", background: "#ECFDF5", padding: "6px 10px", borderRadius: 6, border: "1px solid #A7F3D0" }}>
+                    ✓ Gratuité totale accordée pour <strong>{dgForm.periodType === "1" ? "la séance du jour" : `${dgForm.periodType} jours consécutifs`}</strong>.
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Motif / Note du DG</label>
+                <input
+                  style={S.input}
+                  placeholder="Ex: Invité personnel de M. le Directeur Général"
+                  value={dgForm.note}
+                  onChange={e => setDgForm({ ...dgForm, note: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  style={S.btnGhost}
+                  onClick={() => setShowDgModal(false)}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="btn-glow"
+                  style={{
+                    background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "10px 18px",
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    fontSize: 13.5,
+                    cursor: "pointer"
+                  }}
+                >
+                  👑 Valider & Imprimer le Pass DG
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
