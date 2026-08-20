@@ -2154,6 +2154,8 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const [activeFiche, setActiveFiche] = useState(null);
   const [showFicheModal, setShowFicheModal] = useState(false);
   const [isBlankFiche, setIsBlankFiche] = useState(false);
+  const [editingMemberId, setEditingMemberId] = useState(null);
+  const [activeStepForm, setActiveStepForm] = useState(1); // 1: État civil, 2: Santé & Objectifs, 3: Formule
   
   const printMemberReceipt = (m) => {
     setActiveFiche(null);
@@ -2177,27 +2179,144 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       id: "VIERGE",
       nom: "",
       tel: "",
+      whatsapp: "",
+      sexe: "",
+      dateNaissance: "",
+      profession: "",
+      quartier: "",
+      urgenceNom: "",
+      urgenceTel: "",
+      urgenceLien: "",
       carte: cardTiers[0]?.key || "Bronze (Mensuel)",
       inscription: today(),
       expiration: "",
-      montant: ""
+      montant: "",
+      objectifs: [],
+      antecedents: "NON",
+      antecedentsDetails: "",
+      douleurs: "NON",
+      douleursDetails: "",
+      traitement: "NON",
+      traitementDetails: "",
+      niveauSportif: "Débutant"
     });
     setIsBlankFiche(true);
     setShowFicheModal(true);
   };
 
-  const [form, setForm] = useState({ 
+  const initialForm = {
     nom: "", 
+    prenoms: "",
     tel: "", 
+    whatsapp: "",
+    sexe: "Masculin",
+    dateNaissance: "",
+    profession: "",
+    quartier: "Divo",
+    lieu: "Divo",
+    urgenceNom: "",
+    urgenceTel: "",
+    urgenceLien: "",
     carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
     montant: cardTiers[0]?.price.toString() || "10000",
-    expiration: "" 
-  });
+    expiration: "",
+    // Les 7 questions officielles du Questionnaire Médical
+    q1: "NON",
+    q2: "NON",
+    q3: "NON",
+    q4: "NON",
+    q5: "NON",
+    q6: "NON",
+    q7: "NON",
+    objectifs: ["Remise en forme", "Santé & Cardio"],
+    remarques: ""
+  };
+
+  const [form, setForm] = useState(initialForm);
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("Tous");
+  const [activeQuestionnaireDoc, setActiveQuestionnaireDoc] = useState(null);
+  const [showQuestionnaireDocModal, setShowQuestionnaireDocModal] = useState(false);
+  const [isBlankQuestionnaireDoc, setIsBlankQuestionnaireDoc] = useState(false);
+
+  const openMemberQuestionnaireDoc = (m) => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc(m);
+    setIsBlankQuestionnaireDoc(false);
+    setShowQuestionnaireDocModal(true);
+  };
+
+  const openBlankQuestionnaireDoc = () => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc({
+      nom: "",
+      prenoms: "",
+      lieu: "Divo",
+      date: today(),
+      q1: "NON",
+      q2: "NON",
+      q3: "NON",
+      q4: "NON",
+      q5: "NON",
+      q6: "NON",
+      q7: "NON"
+    });
+    setIsBlankQuestionnaireDoc(true);
+    setShowQuestionnaireDocModal(true);
+  };
+
+  const startNewMemberQuestionnaire = () => {
+    setEditingMemberId(null);
+    setActiveStepForm(1);
+    setForm({
+      ...initialForm,
+      carte: cardTiers[0]?.key || "Bronze (Mensuel)",
+      montant: cardTiers[0]?.price.toString() || "10000"
+    });
+    setShowAddModal(true);
+  };
+
+  const startEditMemberQuestionnaire = (m) => {
+    setEditingMemberId(m.id);
+    setActiveStepForm(1);
+    const tier = cardTiers.find(c => c.key === m.carte) || cardTiers[0];
+    setForm({
+      nom: m.nom || "",
+      prenoms: m.prenoms || "",
+      tel: m.tel || "",
+      whatsapp: m.whatsapp || m.tel || "",
+      sexe: m.sexe || "Masculin",
+      dateNaissance: m.dateNaissance || "",
+      profession: m.profession || "",
+      quartier: m.quartier || "Divo",
+      lieu: m.lieu || "Divo",
+      urgenceNom: m.urgenceNom || "",
+      urgenceTel: m.urgenceTel || "",
+      urgenceLien: m.urgenceLien || "",
+      carte: m.carte || (cardTiers[0]?.key || "Bronze (Mensuel)"),
+      montant: m.montant ? m.montant.toString() : tier.price.toString(),
+      expiration: m.expiration || "",
+      objectifs: m.objectifs || ["Remise en forme"],
+      q1: m.q1 || "NON",
+      q2: m.q2 || "NON",
+      q3: m.q3 || "NON",
+      q4: m.q4 || "NON",
+      q5: m.q5 || "NON",
+      q6: m.q6 || "NON",
+      q7: m.q7 || "NON",
+      remarques: m.remarques || ""
+    });
+    setShowAddModal(true);
+  };
 
   useEffect(() => {
-    if (cardTiers && cardTiers.length > 0) {
+    if (cardTiers && cardTiers.length > 0 && !editingMemberId) {
       const activeTier = cardTiers.find(c => c.key === form.carte) || cardTiers[0];
       setForm(prev => ({
         ...prev,
@@ -2207,10 +2326,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     }
   }, [cardTiers]);
 
-  const add = async (e) => {
+  const saveMemberQuestionnaire = async (e) => {
     if (e) e.preventDefault();
     if (!form.nom.trim()) {
       triggerToast("Le nom du membre est obligatoire");
+      setActiveStepForm(1);
       return;
     }
     
@@ -2225,51 +2345,105 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       expDate = exp.toISOString().slice(0, 10);
     }
     
-    const newId = uid();
-    const newMember = {
-      id: newId,
-      nom: form.nom.trim(),
-      tel: form.tel.trim(),
-      carte: form.carte,
-      inscription: today(),
-      expiration: expDate,
-    };
+    if (editingMemberId) {
+      // UPDATE EXISTING MEMBER
+      const updatedData = {
+        nom: form.nom.trim(),
+        prenoms: form.prenoms ? form.prenoms.trim() : "",
+        tel: form.tel.trim(),
+        whatsapp: form.whatsapp.trim(),
+        sexe: form.sexe,
+        dateNaissance: form.dateNaissance,
+        profession: form.profession.trim(),
+        quartier: form.quartier.trim(),
+        lieu: form.lieu || "Divo",
+        urgenceNom: form.urgenceNom.trim(),
+        urgenceTel: form.urgenceTel.trim(),
+        urgenceLien: form.urgenceLien.trim(),
+        carte: form.carte,
+        expiration: expDate,
+        objectifs: form.objectifs,
+        q1: form.q1,
+        q2: form.q2,
+        q3: form.q3,
+        q4: form.q4,
+        q5: form.q5,
+        q6: form.q6,
+        q7: form.q7,
+        remarques: form.remarques
+      };
 
-    const { error: memberError } = await supabase.from("members").insert([newMember]);
-    if (memberError) {
-      triggerToast("Erreur lors de l'inscription sur Supabase");
-      console.error(memberError);
-      return;
-    }
+      const { error: memberError } = await supabase.from("members").update(updatedData).eq("id", editingMemberId);
+      if (memberError) {
+        triggerToast("Erreur lors de la mise à jour sur Supabase");
+        console.error(memberError);
+        return;
+      }
 
-    setMembers([...members, newMember]);
-    
-    // Auto post subscription transaction to accountant ledger
-    const newTx = {
-      id: uid(),
-      type: "recette",
-      description: `Adhésion ${form.carte} - ${form.nom.trim()}`,
-      montant: pricePaid,
-      date: today()
-    };
-
-    const { error: txError } = await supabase.from("tx").insert([newTx]);
-    if (txError) {
-      console.error("Failed to post tx to Supabase:", txError);
+      setMembers(prev => prev.map(m => m.id === editingMemberId ? { ...m, ...updatedData } : m));
+      triggerToast(`Questionnaire et fiche de ${form.nom} mis à jour avec succès !`);
+      setShowAddModal(false);
+      openMemberQuestionnaireDoc({ ...form, id: editingMemberId, inscription: today(), expiration: expDate });
     } else {
-      setTx(prev => [...prev, newTx]);
-    }
+      // CREATE NEW MEMBER
+      const newId = uid();
+      const newMember = {
+        id: newId,
+        nom: form.nom.trim(),
+        prenoms: form.prenoms ? form.prenoms.trim() : "",
+        tel: form.tel.trim(),
+        whatsapp: form.whatsapp.trim(),
+        sexe: form.sexe,
+        dateNaissance: form.dateNaissance,
+        profession: form.profession.trim(),
+        quartier: form.quartier.trim(),
+        lieu: form.lieu || "Divo",
+        urgenceNom: form.urgenceNom.trim(),
+        urgenceTel: form.urgenceTel.trim(),
+        urgenceLien: form.urgenceLien.trim(),
+        carte: form.carte,
+        inscription: today(),
+        expiration: expDate,
+        objectifs: form.objectifs,
+        q1: form.q1,
+        q2: form.q2,
+        q3: form.q3,
+        q4: form.q4,
+        q5: form.q5,
+        q6: form.q6,
+        q7: form.q7,
+        remarques: form.remarques
+      };
 
-    triggerToast(`Membre inscrit avec succès ! Carte ${form.carte} générée.`);
-    setShowAddModal(false);
-    setForm({ 
-      nom: "", 
-      tel: "", 
-      carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
-      montant: cardTiers[0]?.price.toString() || "10000",
-      expiration: "" 
-    });
-    printMemberReceipt(newMember);
+      const { error: memberError } = await supabase.from("members").insert([newMember]);
+      if (memberError) {
+        triggerToast("Erreur lors de l'inscription sur Supabase");
+        console.error(memberError);
+        return;
+      }
+
+      setMembers([...members, newMember]);
+      
+      // Auto post subscription transaction to accountant ledger
+      const newTx = {
+        id: uid(),
+        type: "recette",
+        description: `Adhésion ${form.carte} - ${form.nom.trim()}`,
+        montant: pricePaid,
+        date: today()
+      };
+
+      const { error: txError } = await supabase.from("tx").insert([newTx]);
+      if (txError) {
+        console.error("Failed to post tx to Supabase:", txError);
+      } else {
+        setTx(prev => [...prev, newTx]);
+      }
+
+      triggerToast(`Adhérent inscrit ! Questionnaire et fiche générés.`);
+      setShowAddModal(false);
+      openMemberQuestionnaireDoc(newMember);
+    }
   };
 
   const remove = async (id) => {
@@ -2289,8 +2463,19 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     }
   };
 
+  const toggleObjective = (obj) => {
+    setForm(prev => {
+      const current = prev.objectifs || [];
+      if (current.includes(obj)) {
+        return { ...prev, objectifs: current.filter(o => o !== obj) };
+      } else {
+        return { ...prev, objectifs: [...current, obj] };
+      }
+    });
+  };
+
   const filteredMembers = members.filter(m => {
-    const matchSearch = m.nom.toLowerCase().includes(search.toLowerCase()) || m.tel.includes(search);
+    const matchSearch = m.nom.toLowerCase().includes(search.toLowerCase()) || (m.tel && m.tel.includes(search));
     const matchFilter = filterTier === "Tous" || m.carte === filterTier;
     return matchSearch && matchFilter;
   });
@@ -2301,9 +2486,29 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 12 }} className="no-print">
         <div>
           <h1 style={{ ...S.pageTitle, margin: 0 }}>Gestion des Membres</h1>
-          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, abonnements mensuels/annuels, fiches de renseignement et cartes d'accès.</p>
+          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, fiches de renseignement, questionnaire médical officiel et cartes d'accès.</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={openBlankQuestionnaireDoc}
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #CBD5E1",
+              color: "#334155",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              borderRadius: 8,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.04)"
+            }}
+          >
+            <span>🩺</span> Questionnaire Vierge (A4)
+          </button>
           <button
             type="button"
             className="btn-secondary"
@@ -2315,7 +2520,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               display: "flex",
               alignItems: "center",
               gap: 6,
-              padding: "9px 15px",
+              padding: "9px 14px",
               fontSize: 13,
               fontWeight: 700,
               borderRadius: 8,
@@ -2327,16 +2532,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           <button
             type="button"
             className="btn-glow"
-            onClick={() => {
-              setForm({ 
-                nom: "", 
-                tel: "", 
-                carte: cardTiers[0]?.key || "Bronze (Mensuel)", 
-                montant: cardTiers[0]?.price.toString() || "10000",
-                expiration: "" 
-              });
-              setShowAddModal(true);
-            }}
+            onClick={startNewMemberQuestionnaire}
             style={{
               ...S.btnPrimary,
               display: "flex",
@@ -2347,7 +2543,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               fontWeight: 700
             }}
           >
-            <span>➕</span> Inscrire un Membre
+            <span>➕</span> Poser les Questions au Client
           </button>
         </div>
       </div>
@@ -2405,7 +2601,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 </div>
                 
                 <div style={{ position: "relative", zIndex: 2 }}>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: "#0F172A" }}>{m.nom}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: "#0F172A" }}>{m.nom} {m.prenoms || ""}</div>
                   <div style={{ fontSize: 11, color: "rgba(15,23,42,0.85)", marginTop: 2 }}>
                     {m.tel ? `${m.tel} • ` : ""}<strong style={{ color: tier.color }}>{m.carte.split(" (")[0]} ({fmt(tier.price)} F CFA)</strong>
                   </div>
@@ -2447,7 +2643,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button 
                       className="btn-secondary no-print" 
-                      style={{ padding: "5px 9px", fontSize: 11.5, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", fontWeight: 700, borderRadius: 6 }} 
+                      style={{ padding: "5px 8px", fontSize: 11.5, background: "#FEF3C7", border: "1px solid #FDE68A", color: "#B45309", fontWeight: 700, borderRadius: 6 }} 
+                      onClick={() => openMemberQuestionnaireDoc(m)}
+                      title="Imprimer le Questionnaire Médical Officiel A4 de ce membre"
+                    >
+                      🩺 Questionnaire A4
+                    </button>
+                    <button 
+                      className="btn-secondary no-print" 
+                      style={{ padding: "5px 8px", fontSize: 11.5, background: "#EEF2FF", border: "1px solid #C7D2FE", color: "#4F46E5", fontWeight: 700, borderRadius: 6 }} 
                       onClick={() => openMemberFiche(m)}
                       title="Afficher et imprimer la fiche de renseignement de ce membre"
                     >
@@ -2455,7 +2659,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     </button>
                     <button 
                       className="btn-secondary no-print" 
-                      style={{ padding: "5px 9px", fontSize: 11.5, background: "#FFFFFF", border: "1px solid #CBD5E1", color: "#334155", fontWeight: 700, borderRadius: 6 }} 
+                      style={{ padding: "5px 8px", fontSize: 11.5, background: "#F1F5F9", border: "1px solid #CBD5E1", color: "#0F172A", fontWeight: 700, borderRadius: 6 }} 
+                      onClick={() => startEditMemberQuestionnaire(m)}
+                      title="Remplir ou modifier les réponses au questionnaire"
+                    >
+                      ✏️ Remplir
+                    </button>
+                    <button 
+                      className="btn-secondary no-print" 
+                      style={{ padding: "5px 8px", fontSize: 11.5, background: "#FFFFFF", border: "1px solid #CBD5E1", color: "#334155", fontWeight: 700, borderRadius: 6 }} 
                       onClick={() => printMemberReceipt(m)}
                       title="Imprimer le reçu d'adhésion"
                     >
@@ -2474,98 +2686,300 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         })}
       </div>
 
-      {/* Modal for New Member Registration */}
+      {/* Interactive Questionnaire Modal (Poser les questions au client) */}
       {showAddModal && (
         <div style={S.modalOverlay} className="no-print">
-          <div style={{ ...S.modalContent, width: "92%", maxWidth: 500, borderRadius: 14, padding: 24 }}>
+          <div style={{ ...S.modalContent, width: "95%", maxWidth: 740, borderRadius: 16, padding: "22px 26px", maxHeight: "94vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 22 }}>💳</span>
+                <span style={{ fontSize: 24 }}>🩺</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>Inscrire un Nouvel Adhérent</h3>
-                  <div style={{ fontSize: 12, color: "#64748B" }}>Création de carte de membre et émission de reçu</div>
+                  <h3 style={{ margin: 0, fontSize: 18, color: "#0F172A" }}>
+                    {editingMemberId ? `Questionnaire & Fiche : ${form.nom}` : "Questionnaire Médical & Inscription Client"}
+                  </h3>
+                  <div style={{ fontSize: 12, color: "#64748B" }}>
+                    Posez directement ces questions au client pour renseigner son dossier
+                  </div>
                 </div>
               </div>
-              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer" }} onClick={() => setShowAddModal(false)}>&times;</button>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 24, cursor: "pointer" }} onClick={() => setShowAddModal(false)}>&times;</button>
             </div>
 
-            <form onSubmit={add} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <label style={S.labelStyle}>Nom et Prénoms du Membre *</label>
-                <input 
-                  style={S.input} 
-                  placeholder="Ex: Diarassouba Ibrahima..." 
-                  value={form.nom} 
-                  onChange={e => setForm({ ...form, nom: e.target.value })} 
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label style={S.labelStyle}>Numéro de Téléphone</label>
-                <input 
-                  style={S.input} 
-                  placeholder="Ex: 07 44 55 66 77" 
-                  value={form.tel} 
-                  onChange={e => setForm({ ...form, tel: e.target.value })} 
-                />
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>
-                  <label style={S.labelStyle}>Formule d'Abonnement</label>
-                  <select 
-                    style={S.input} 
-                    value={form.carte} 
-                    onChange={e => {
-                      const tier = cardTiers.find(c => c.key === e.target.value);
-                      setForm({ 
-                        ...form, 
-                        carte: e.target.value, 
-                        montant: tier ? tier.price.toString() : "" 
-                      });
-                    }}
-                  >
-                    {cardTiers.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={S.labelStyle}>Montant Cotisation (F CFA)</label>
-                  <input 
-                    style={S.input} 
-                    type="number" 
-                    placeholder="Montant payé" 
-                    value={form.montant} 
-                    onChange={e => setForm({ ...form, montant: e.target.value })} 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={S.labelStyle}>Date d'Expiration (Auto si vide)</label>
-                <input 
-                  style={S.input} 
-                  type="date" 
-                  value={form.expiration} 
-                  onChange={e => setForm({ ...form, expiration: e.target.value })} 
-                />
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
-                <button type="button" style={S.btnCancel} onClick={() => setShowAddModal(false)}>
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-glow" 
-                  style={{ ...S.btnPrimary, height: 42, padding: "0 20px", fontWeight: 700 }}
-                  disabled={!form.nom.trim()}
+            {/* Stepper / Tab navigation */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 18, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              {[
+                { step: 1, label: "1. 👤 Identité & Contact" },
+                { step: 2, label: "2. 🩺 Les 7 Questions Médicales" },
+                { step: 3, label: "3. 💳 Formule & Règlement" }
+              ].map(tab => (
+                <button
+                  key={tab.step}
+                  type="button"
+                  onClick={() => setActiveStepForm(tab.step)}
+                  style={{
+                    flex: 1,
+                    padding: "9px 10px",
+                    borderRadius: 8,
+                    border: "1px solid",
+                    borderColor: activeStepForm === tab.step ? "#6366F1" : "#CBD5E1",
+                    background: activeStepForm === tab.step ? "#EEF2FF" : "#FFFFFF",
+                    color: activeStepForm === tab.step ? "#4F46E5" : "#475569",
+                    fontWeight: activeStepForm === tab.step ? 700 : 500,
+                    fontSize: 12.5,
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
                 >
-                  Enregistrer & Générer le Reçu
+                  {tab.label}
                 </button>
-              </div>
+              ))}
+            </div>
+
+            <form onSubmit={saveMemberQuestionnaire}>
+              {/* STEP 1: Identité & Contact */}
+              {activeStepForm === 1 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", padding: "10px 14px", borderRadius: 8, fontSize: 12, color: "#475569" }}>
+                    💬 <em>« Bonjour ! Pour démarrer votre inscription, pouvez-vous me donner votre nom, prénoms et vos coordonnées ? »</em>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={S.labelStyle}>Nom de famille *</label>
+                      <input 
+                        style={S.input} 
+                        placeholder="Ex: DIARASSOUBA" 
+                        value={form.nom} 
+                        onChange={e => setForm({ ...form, nom: e.target.value })} 
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label style={S.labelStyle}>Prénoms</label>
+                      <input 
+                        style={S.input} 
+                        placeholder="Ex: Ibrahima Marc" 
+                        value={form.prenoms} 
+                        onChange={e => setForm({ ...form, prenoms: e.target.value })} 
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={S.labelStyle}>Sexe</label>
+                      <select style={S.input} value={form.sexe} onChange={e => setForm({ ...form, sexe: e.target.value })}>
+                        <option value="Masculin">Masculin (Homme)</option>
+                        <option value="Féminin">Féminin (Femme)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={S.labelStyle}>Date de Naissance</label>
+                      <input style={S.input} type="date" value={form.dateNaissance} onChange={e => setForm({ ...form, dateNaissance: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={S.labelStyle}>Profession / Activité</label>
+                      <input style={S.input} placeholder="Ex: Enseignant, Commerçant..." value={form.profession} onChange={e => setForm({ ...form, profession: e.target.value })} />
+                    </div>
+                    <div>
+                      <label style={S.labelStyle}>Lieu / Quartier de résidence</label>
+                      <input style={S.input} placeholder="Ex: Divo - Boudépé" value={form.quartier} onChange={e => setForm({ ...form, quartier: e.target.value, lieu: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={S.labelStyle}>Téléphone Principal (Appels) *</label>
+                      <input style={S.input} placeholder="Ex: 07 00 00 00 00" value={form.tel} onChange={e => setForm({ ...form, tel: e.target.value })} />
+                    </div>
+                    <div>
+                      <label style={S.labelStyle}>Numéro WhatsApp</label>
+                      <input style={S.input} placeholder="Ex: 07 00 00 00 00" value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div style={{ borderTop: "1px dashed #CBD5E1", paddingTop: 10, marginTop: 4 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>
+                      🚨 Contact d'Urgence (Personne à prévenir en cas de malaise / incident)
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 10 }}>
+                      <div>
+                        <label style={{ ...S.labelStyle, fontSize: 10.5 }}>Nom du contact</label>
+                        <input style={{ ...S.input, padding: "8px 10px", fontSize: 12.5 }} placeholder="Ex: Kouamé Marc" value={form.urgenceNom} onChange={e => setForm({ ...form, urgenceNom: e.target.value })} />
+                      </div>
+                      <div>
+                        <label style={{ ...S.labelStyle, fontSize: 10.5 }}>Téléphone</label>
+                        <input style={{ ...S.input, padding: "8px 10px", fontSize: 12.5 }} placeholder="Ex: 05 00 00 00 00" value={form.urgenceTel} onChange={e => setForm({ ...form, urgenceTel: e.target.value })} />
+                      </div>
+                      <div>
+                        <label style={{ ...S.labelStyle, fontSize: 10.5 }}>Lien de parenté</label>
+                        <input style={{ ...S.input, padding: "8px 10px", fontSize: 12.5 }} placeholder="Ex: Conjoint, Frère..." value={form.urgenceLien} onChange={e => setForm({ ...form, urgenceLien: e.target.value })} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                    <button type="button" className="btn-glow" style={{ ...S.btnPrimary, height: 40 }} onClick={() => setActiveStepForm(2)}>
+                      Suivant : Les 7 Questions Médicales ➔
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Les 7 Questions Médicales Officielles */}
+              {activeStepForm === 2 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ background: "#FEF3C7", border: "1px solid #FDE68A", padding: "10px 14px", borderRadius: 8, fontSize: 12, color: "#92400E" }}>
+                    📋 <strong>Consigne officielle :</strong> Le client doit répondre obligatoirement et sincèrement à toutes les questions suivantes en indiquant OUI ou NON.
+                  </div>
+
+                  {[
+                    { id: "q1", num: "1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
+                    { id: "q2", num: "2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
+                    { id: "q3", num: "3", text: "Au cours du mois écoulé, aviez-vous des douleurs dans la poitrine alors que vous ne faisiez aucun effort ?" },
+                    { id: "q4", num: "4", text: "Avez-vous des étourdissements qui vous font perdre l'équilibre, ou qui vous font perdre connaissance ?" },
+                    { id: "q5", num: "5", text: "Avez-vous un problème osseux ou articulaire qui pourrait être aggravé par l'exercice physique ?" },
+                    { id: "q6", num: "6", text: "Votre médecin vous prescrit-il des médicaments contre l'hypertension ou l'insuffisance cardiaque ?" },
+                    { id: "q7", num: "7", text: "Votre expérience personnelle ou les propos de votre médecin vous donnent-ils des raisons de penser que vous ne devez pas faire d'exercices physiques sans avis médical ?" }
+                  ].map(q => (
+                    <div 
+                      key={q.id}
+                      style={{ 
+                        background: form[q.id] === "OUI" ? "#FEF2F2" : "#F8FAFC", 
+                        border: "1px solid", 
+                        borderColor: form[q.id] === "OUI" ? "#FECACA" : "#E2E8F0", 
+                        padding: "10px 14px", 
+                        borderRadius: 8,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 12
+                      }}
+                    >
+                      <div style={{ fontSize: 12.5, color: "#0F172A", lineHeight: 1.4, flex: 1 }}>
+                        <strong>{q.num}-</strong> {q.text}
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, [q.id]: "NON" })}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: 6,
+                            border: "1px solid",
+                            borderColor: form[q.id] === "NON" ? "#22C55E" : "#CBD5E1",
+                            background: form[q.id] === "NON" ? "#DCFCE7" : "#FFFFFF",
+                            color: form[q.id] === "NON" ? "#15803D" : "#64748B",
+                            fontWeight: 800,
+                            fontSize: 12,
+                            cursor: "pointer"
+                          }}
+                        >
+                          NON
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, [q.id]: "OUI" })}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: 6,
+                            border: "1px solid",
+                            borderColor: form[q.id] === "OUI" ? "#EF4444" : "#CBD5E1",
+                            background: form[q.id] === "OUI" ? "#FEE2E2" : "#FFFFFF",
+                            color: form[q.id] === "OUI" ? "#B91C1C" : "#64748B",
+                            fontWeight: 800,
+                            fontSize: 12,
+                            cursor: "pointer"
+                          }}
+                        >
+                          OUI
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+                    <button type="button" style={S.btnCancel} onClick={() => setActiveStepForm(1)}>
+                      ⬅ Précédent
+                    </button>
+                    <button type="button" className="btn-glow" style={{ ...S.btnPrimary, height: 40 }} onClick={() => setActiveStepForm(3)}>
+                      Suivant : Formule & Abonnement ➔
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Formule & Règlement */}
+              {activeStepForm === 3 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", padding: "10px 14px", borderRadius: 8, fontSize: 12, color: "#475569" }}>
+                    💬 <em>« Quelle est la formule d'abonnement souhaitée par le client ? »</em>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={S.labelStyle}>Formule d'Abonnement</label>
+                      <select 
+                        style={S.input} 
+                        value={form.carte} 
+                        onChange={e => {
+                          const tier = cardTiers.find(c => c.key === e.target.value);
+                          setForm({ 
+                            ...form, 
+                            carte: e.target.value, 
+                            montant: tier ? tier.price.toString() : "" 
+                          });
+                        }}
+                      >
+                        {cardTiers.map(c => <option key={c.key} value={c.key}>{c.key} ({fmt(c.price)} F)</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={S.labelStyle}>Montant Cotisation (F CFA)</label>
+                      <input 
+                        style={S.input} 
+                        type="number" 
+                        placeholder="Montant payé" 
+                        value={form.montant} 
+                        onChange={e => setForm({ ...form, montant: e.target.value })} 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={S.labelStyle}>Date d'Expiration (Calculée automatiquement si vide)</label>
+                    <input 
+                      style={S.input} 
+                      type="date" 
+                      value={form.expiration} 
+                      onChange={e => setForm({ ...form, expiration: e.target.value })} 
+                    />
+                  </div>
+
+                  <div style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", padding: "12px 14px", borderRadius: 8, fontSize: 12.5, color: "#4338CA" }}>
+                    ✅ <strong>Résumé du dossier :</strong> {form.nom ? form.nom.toUpperCase() : "Client"} {form.prenoms || ""} &bull; {form.carte} &bull; Cotisation : {fmt(form.montant || 0)} F CFA
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
+                    <button type="button" style={S.btnCancel} onClick={() => setActiveStepForm(2)}>
+                      ⬅ Précédent
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn-glow" 
+                      style={{ ...S.btnPrimary, height: 42, padding: "0 22px", fontWeight: 700 }}
+                      disabled={!form.nom.trim()}
+                    >
+                      {editingMemberId ? "💾 Enregistrer les Modifications" : "✅ Valider & Imprimer le Questionnaire A4"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -2702,7 +3116,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Fiche Paper (A4 Preview) */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "20px 24px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "20px 24px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 11.5, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
               {/* Header Box */}
               <div style={{ borderBottom: "2px solid #0F172A", paddingBottom: 10, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -2722,53 +3136,53 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Title Banner */}
-              <div style={{ background: "#0F172A", color: "#FFFFFF", textAlign: "center", padding: "6px 0", fontWeight: 900, fontSize: 13, letterSpacing: 1, textTransform: "uppercase", borderRadius: 4, marginBottom: 14 }}>
+              <div style={{ background: "#0F172A", color: "#FFFFFF", textAlign: "center", padding: "6px 0", fontWeight: 900, fontSize: 12.5, letterSpacing: 1, textTransform: "uppercase", borderRadius: 4, marginBottom: 12 }}>
                 FICHE DE RENSEIGNEMENT & CONTRAT D'ADHÉSION
               </div>
 
               {/* Section 1: Identification */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
                   1. Identification de l'Adhérent(e)
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10, marginBottom: 5 }}>
                   <div>
                     <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
                   </div>
                   <div>
-                    <strong>Sexe :</strong> {isBlankFiche ? "[   ] M   [   ] F" : "[ X ] Adhérent(e)"}
+                    <strong>Sexe :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "[   ] M   [   ] F" : (activeFiche.sexe || "Masculin")}</span>
                   </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 5 }}>
                   <div>
-                    <strong>Date de Naissance :</strong> {isBlankFiche ? "....../....../.........." : "...................."}
+                    <strong>Date de Naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : (activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "Non renseignée")}</span>
                   </div>
                   <div>
-                    <strong>Profession :</strong> {isBlankFiche ? "...................................................." : "..................................."}
+                    <strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................." : (activeFiche.profession || "Non renseignée")}</span>
                   </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 5 }}>
                   <div>
                     <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
                   </div>
                   <div>
-                    <strong>WhatsApp :</strong> {isBlankFiche ? "........................................" : (activeFiche.tel || "....................")}
+                    <strong>WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.whatsapp || activeFiche.tel || "Non renseigné")}</span>
                   </div>
                 </div>
                 <div>
-                  <strong>Adresse / Quartier de résidence :</strong> {isBlankFiche ? "..................................................................................................................." : "Divo, Côte d'Ivoire"}
+                  <strong>Adresse / Quartier de résidence :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................." : (activeFiche.quartier ? `${activeFiche.quartier}, Divo` : "Divo, Côte d'Ivoire")}</span>
                 </div>
-                <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px dashed #E2E8F0", fontSize: 11 }}>
-                  <strong>🚨 Contact d'Urgence (Personne à prévenir) :</strong> Nom : ............................................ &bull; Tél : ............................................ &bull; Lien : ..........................
+                <div style={{ marginTop: 6, paddingTop: 5, borderTop: "1px dashed #E2E8F0", fontSize: 10.5 }}>
+                  <strong>🚨 Contact d'Urgence (Personne à prévenir) :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceNom || "Non renseigné")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceTel || "Non renseigné")}</span> &bull; Lien : <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................." : (activeFiche.urgenceLien || "-")}</span>
                 </div>
               </div>
 
               {/* Section 2: Formule & Validité */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
                   2. Formule Souscrite & Règlement
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10, marginBottom: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10, marginBottom: 5 }}>
                   <div>
                     <strong>Formule choisie :</strong> <span style={{ fontWeight: 800, color: "#4F46E5" }}>{isBlankFiche ? "[ ] Bronze   [ ] Argent   [ ] Or   [ ] Diamant" : activeFiche.carte}</span>
                   </div>
@@ -2791,36 +3205,45 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 </div>
               </div>
 
-              {/* Section 3: Questionnaire Médical */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", marginBottom: 12, background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 8 }}>
-                  3. Questionnaire d'Aptitude Physique & Objectifs
+              {/* Section 3: Questionnaire Médical & Objectifs */}
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", marginBottom: 10, background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
+                  3. Questionnaire d'Aptitude Physique & Objectifs Sportifs
                 </div>
                 <div style={{ fontSize: 11, marginBottom: 6 }}>
-                  <strong>Vos objectifs :</strong> [  ] Remise en forme &bull; [  ] Perte de poids &bull; [  ] Prise de muscle &bull; [  ] Cardio & Santé &bull; [  ] Force athlétique
+                  <strong>Vos objectifs :</strong> {isBlankFiche ? "[  ] Remise en forme • [  ] Perte de poids • [  ] Prise de muscle • [  ] Cardio • [  ] Force" : (
+                    (activeFiche.objectifs && activeFiche.objectifs.length > 0) ? (
+                      <span style={{ fontWeight: 700, color: "#4F46E5" }}>{activeFiche.objectifs.join(" • ")}</span>
+                    ) : <span style={{ fontWeight: 700 }}>Remise en forme générale</span>
+                  )}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 10.5 }}>
-                  <div>• Antécédents cardiaques ou respiratoires : <strong>[  ] OUI   [  ] NON</strong></div>
-                  <div>• Douleurs articulaires / musculaires : <strong>[  ] OUI   [  ] NON</strong></div>
-                  <div>• Suivez-vous un traitement médical ? <strong>[  ] OUI   [  ] NON</strong></div>
-                  <div>• Fumeur / Habitudes spécifiques : <strong>[  ] OUI   [  ] NON</strong></div>
+                  <div>• Antécédents cardiaques / asthme : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.antecedents === "OUI" ? `[X] OUI (${activeFiche.antecedentsDetails || "Précisé"})` : "[X] NON")}</strong></div>
+                  <div>• Douleurs articulaires / musculaires : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.douleurs === "OUI" ? `[X] OUI (${activeFiche.douleursDetails || "Précisé"})` : "[X] NON")}</strong></div>
+                  <div>• Suivez-vous un traitement médical ? <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.traitement === "OUI" ? `[X] OUI (${activeFiche.traitementDetails || "Précisé"})` : "[X] NON")}</strong></div>
+                  <div>• Niveau sportif : <strong>{isBlankFiche ? "Débutant / Intermédiaire / Confirmé" : (activeFiche.niveauSportif || "Débutant")}</strong></div>
                 </div>
+                {activeFiche.remarques && (
+                  <div style={{ marginTop: 4, fontSize: 10, fontStyle: "italic", color: "#475569" }}>
+                    Notes Coach / Secrétariat : {activeFiche.remarques}
+                  </div>
+                )}
               </div>
 
               {/* Section 4: Engagement & Signatures */}
-              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "10px 14px", background: "#F8FAFC" }}>
-                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 6 }}>
+              <div style={{ border: "1px solid #CBD5E1", borderRadius: 6, padding: "9px 12px", background: "#F8FAFC" }}>
+                <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", textTransform: "uppercase", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 5 }}>
                   4. Déclaration sur l'Honneur & Règlement Intérieur
                 </div>
-                <div style={{ fontSize: 9.5, lineHeight: 1.4, color: "#334155", textAlign: "justify", marginBottom: 12 }}>
+                <div style={{ fontSize: 9.5, lineHeight: 1.35, color: "#334155", textAlign: "justify", marginBottom: 10 }}>
                   * Je soussigné(e), déclare sur l'honneur être apte à la pratique du sport et certifie l'exactitude des renseignements fournis ci-dessus. Je reconnais avoir pris connaissance du règlement intérieur de CLUB SPORT SANTE (tenue de sport appropriée, serviette obligatoire, rangement du matériel après usage) et m'engage à le respecter scrupuleusement. *
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, paddingTop: 4 }}>
-                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 75 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 70 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Signature de l'Adhérent(e) :</div>
                     <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
                   </div>
-                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 75 }}>
+                  <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "8px 12px", background: "#FFFFFF", height: 70 }}>
                     <div style={{ fontSize: 10, fontWeight: 800, color: "#0F172A" }}>Pour CLUB SPORT SANTE :</div>
                     <div style={{ fontSize: 8.5, color: "#94A3B8", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
                   </div>
@@ -2960,15 +3383,15 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <strong>Nom & Prénoms :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "...................................................................................." : activeFiche.nom.toUpperCase()}</span>
               </div>
               <div>
-                <strong>Sexe :</strong> {isBlankFiche ? "[   ] M   [   ] F" : "[ X ] Adhérent(e)"}
+                <strong>Sexe :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "[   ] M   [   ] F" : (activeFiche.sexe || "Masculin")}</span>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
               <div>
-                <strong>Date de Naissance :</strong> {isBlankFiche ? "....../....../.........." : "...................."}
+                <strong>Date de Naissance :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "....../....../.........." : (activeFiche.dateNaissance ? formatDateFr(activeFiche.dateNaissance) : "Non renseignée")}</span>
               </div>
               <div>
-                <strong>Profession :</strong> {isBlankFiche ? "...................................................." : "..................................."}
+                <strong>Profession :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "...................................................." : (activeFiche.profession || "Non renseignée")}</span>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 5 }}>
@@ -2976,14 +3399,14 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <strong>Téléphone Principal :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.tel || "Non renseigné")}</span>
               </div>
               <div>
-                <strong>WhatsApp :</strong> {isBlankFiche ? "........................................" : (activeFiche.tel || "....................")}
+                <strong>WhatsApp :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "........................................" : (activeFiche.whatsapp || activeFiche.tel || "Non renseigné")}</span>
               </div>
             </div>
             <div>
-              <strong>Adresse / Quartier de résidence :</strong> {isBlankFiche ? "..................................................................................................................." : "Divo, Côte d'Ivoire"}
+              <strong>Adresse / Quartier de résidence :</strong> <span style={{ fontWeight: 700 }}>{isBlankFiche ? "..................................................................................................................." : (activeFiche.quartier ? `${activeFiche.quartier}, Divo` : "Divo, Côte d'Ivoire")}</span>
             </div>
             <div style={{ marginTop: 5, paddingTop: 4, borderTop: "1px dashed #666", fontSize: 10 }}>
-              <strong>🚨 Contact d'Urgence :</strong> Nom : ............................................ &bull; Tél : ............................................ &bull; Lien : ..........................
+              <strong>🚨 Contact d'Urgence :</strong> Nom : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceNom || "Non renseigné")}</span> &bull; Tél : <span style={{ fontWeight: 700 }}>{isBlankFiche ? "............................................" : (activeFiche.urgenceTel || "Non renseigné")}</span> &bull; Lien : <span style={{ fontWeight: 700 }}>{isBlankFiche ? ".........................." : (activeFiche.urgenceLien || "-")}</span>
             </div>
           </div>
 
@@ -3015,20 +3438,29 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
           </div>
 
-          {/* Section 3: Questionnaire Médical */}
+          {/* Section 3: Questionnaire Médical & Objectifs */}
           <div style={{ border: "1px solid #000", borderRadius: 4, padding: "8px 12px", marginBottom: 8, fontSize: 10.5 }}>
             <div style={{ fontWeight: 900, textTransform: "uppercase", borderBottom: "1px solid #000", paddingBottom: 3, marginBottom: 5 }}>
               3. Questionnaire d'Aptitude Physique & Objectifs
             </div>
             <div style={{ marginBottom: 4 }}>
-              <strong>Vos objectifs :</strong> [  ] Remise en forme &bull; [  ] Perte de poids &bull; [  ] Prise de muscle &bull; [  ] Cardio & Santé &bull; [  ] Force athlétique
+              <strong>Vos objectifs :</strong> {isBlankFiche ? "[  ] Remise en forme • [  ] Perte de poids • [  ] Prise de muscle • [  ] Cardio • [  ] Force" : (
+                (activeFiche.objectifs && activeFiche.objectifs.length > 0) ? (
+                  <span style={{ fontWeight: 700 }}>{activeFiche.objectifs.join(" • ")}</span>
+                ) : <span style={{ fontWeight: 700 }}>Remise en forme générale</span>
+              )}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10 }}>
-              <div>• Antécédents cardiaques ou respiratoires : <strong>[  ] OUI   [  ] NON</strong></div>
-              <div>• Douleurs articulaires / musculaires : <strong>[  ] OUI   [  ] NON</strong></div>
-              <div>• Suivez-vous un traitement médical ? <strong>[  ] OUI   [  ] NON</strong></div>
-              <div>• Fumeur / Habitudes spécifiques : <strong>[  ] OUI   [  ] NON</strong></div>
+              <div>• Antécédents cardiaques / asthme : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.antecedents === "OUI" ? `[X] OUI (${activeFiche.antecedentsDetails || "Précisé"})` : "[X] NON")}</strong></div>
+              <div>• Douleurs articulaires / musculaires : <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.douleurs === "OUI" ? `[X] OUI (${activeFiche.douleursDetails || "Précisé"})` : "[X] NON")}</strong></div>
+              <div>• Suivez-vous un traitement médical ? <strong>{isBlankFiche ? "[  ] OUI   [  ] NON" : (activeFiche.traitement === "OUI" ? `[X] OUI (${activeFiche.traitementDetails || "Précisé"})` : "[X] NON")}</strong></div>
+              <div>• Niveau sportif : <strong>{isBlankFiche ? "Débutant / Intermédiaire / Confirmé" : (activeFiche.niveauSportif || "Débutant")}</strong></div>
             </div>
+            {activeFiche.remarques && (
+              <div style={{ marginTop: 4, fontSize: 9.5, fontStyle: "italic" }}>
+                Notes Coach / Secrétariat : {activeFiche.remarques}
+              </div>
+            )}
           </div>
 
           {/* Section 4: Engagement & Signatures */}
@@ -3048,6 +3480,147 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div style={{ fontSize: 9.5, fontWeight: 800 }}>Pour CLUB SPORT SANTE :</div>
                 <div style={{ fontSize: 8, color: "#444", fontStyle: "italic" }}>(Cachet & Signature de la Direction)</div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* On-screen Modal for Questionnaire Médical Officiel (A4 preview) */}
+      {showQuestionnaireDocModal && activeQuestionnaireDoc && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "95%", maxWidth: 840, borderRadius: 16, padding: "22px 26px", maxHeight: "94vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 24 }}>🩺</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>
+                    {isBlankQuestionnaireDoc ? "Questionnaire Médical Officiel (Vierge)" : `Questionnaire Médical : ${activeQuestionnaireDoc.nom} ${activeQuestionnaireDoc.prenoms || ""}`}
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: "#64748B" }}>Document officiel CLUB SPORT SANTE &bull; Format d'impression A4</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 24, cursor: "pointer" }} onClick={() => setShowQuestionnaireDocModal(false)}>&times;</button>
+            </div>
+
+            {/* Questionnaire Paper Preview */}
+            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "30px 36px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 12.5, lineHeight: 1.6, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Header Box */}
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
+                <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+              </div>
+
+              <p style={{ fontStyle: "italic", fontSize: 11.5, marginBottom: 24, textAlign: "justify", lineHeight: 1.5, color: "#1E293B" }}>
+                Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
+              </p>
+
+              {/* 7 Questions */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {[
+                  { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
+                  { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
+                  { num: "3", id: "q3", text: "Au cours du mois écoulé, aviez-vous des douleurs dans la poitrine alors que vous ne faisiez aucun effort ?" },
+                  { num: "4", id: "q4", text: "Avez-vous des étourdissements qui vous font perdre l'équilibre, ou qui vous font perdre connaissance ?" },
+                  { num: "5", id: "q5", text: "Avez-vous un problème osseux ou articulaire qui pourrait être aggravé par l'exercice physique ?" },
+                  { num: "6", id: "q6", text: "Votre médecin vous prescrit-il des médicaments contre l'hypertension ou l'insuffisance cardiaque ?" },
+                  { num: "7", id: "q7", text: "Votre expérience personnelle ou les propos de votre médecin vous donnent-ils des raisons de penser que vous ne devez pas faire d'exercices physiques sans avis médical ?" }
+                ].map(q => {
+                  const val = isBlankQuestionnaireDoc ? "" : activeQuestionnaireDoc[q.id];
+                  return (
+                    <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+                      <div style={{ flex: 1, textAlign: "justify" }}>
+                        <strong>{q.num}-</strong> {q.text}
+                      </div>
+                      <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 12 }}>
+                        <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom Identity & Signatures Section */}
+              <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #CBD5E1", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
+                  <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
+                  <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
+                  <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
+                </div>
+                <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "10px 14px", height: 90 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800 }}>Signature :</div>
+                  <div style={{ fontSize: 9, color: "#64748B", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14 }}>
+              <button type="button" style={S.btnCancel} onClick={() => setShowQuestionnaireDocModal(false)}>
+                Fermer
+              </button>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, display: "flex", alignItems: "center", gap: 6, padding: "0 20px", height: 40 }}
+                onClick={() => window.print()}
+              >
+                <span>🖨️</span> Imprimer ce Questionnaire (Format A4)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print template for Questionnaire Médical (A4) */}
+      {activeQuestionnaireDoc && (
+        <div className="print-only print-a4" style={{ display: "none" }}>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
+            <div style={{ fontSize: 10, color: "#333", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+          </div>
+
+          <p style={{ fontStyle: "italic", fontSize: 11, marginBottom: 24, textAlign: "justify", lineHeight: 1.5 }}>
+            Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
+          </p>
+
+          {/* 7 Questions */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 11.5 }}>
+            {[
+              { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
+              { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
+              { num: "3", id: "q3", text: "Au cours du mois écoulé, aviez-vous des douleurs dans la poitrine alors que vous ne faisiez aucun effort ?" },
+              { num: "4", id: "q4", text: "Avez-vous des étourdissements qui vous font perdre l'équilibre, ou qui vous font perdre connaissance ?" },
+              { num: "5", id: "q5", text: "Avez-vous un problème osseux ou articulaire qui pourrait être aggravé par l'exercice physique ?" },
+              { num: "6", id: "q6", text: "Votre médecin vous prescrit-il des médicaments contre l'hypertension ou l'insuffisance cardiaque ?" },
+              { num: "7", id: "q7", text: "Votre expérience personnelle ou les propos de votre médecin vous donnent-ils des raisons de penser que vous ne devez pas faire d'exercices physiques sans avis médical ?" }
+            ].map(q => {
+              const val = isBlankQuestionnaireDoc ? "" : activeQuestionnaireDoc[q.id];
+              return (
+                <div key={q.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ flex: 1, textAlign: "justify" }}>
+                    <strong>{q.num}-</strong> {q.text}
+                  </div>
+                  <div style={{ whiteSpace: "nowrap", fontWeight: 700, fontSize: 11.5 }}>
+                    <span>OUI {val === "OUI" ? "☒" : "☐"}</span> &nbsp;&nbsp;&nbsp; <span>NON {val === "NON" ? "☒" : "☐"}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Bottom Identity & Signatures Section */}
+          <div style={{ marginTop: 45, paddingTop: 16, borderTop: "1px solid #000", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, fontSize: 11.5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
+              <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
+              <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
+              <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
+            </div>
+            <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "8px 12px", height: 90 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800 }}>Signature :</div>
+              <div style={{ fontSize: 8.5, color: "#333", fontStyle: "italic" }}>(Mention manuscrite "Lu et approuvé")</div>
             </div>
           </div>
         </div>
