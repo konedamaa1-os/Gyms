@@ -3131,6 +3131,8 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
     note: "Invité personnel de Monsieur le Directeur Général (DG)"
   });
 
+  const [showTicketModal, setShowTicketModal] = useState(false);
+
   useEffect(() => {
     setMontant(ticketPrice);
   }, [ticketPrice]);
@@ -3202,16 +3204,18 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       }
     }
 
-    // Animate printing delay
+    setShowTicketModal(false);
+    setTickets(prev => [...prev, t]);
+    setLastTicket(t);
+    triggerToast(`Ticket émis avec succès (${newId})`);
+    
     setTimeout(() => {
-      setTickets(prev => [...prev, t]);
-      setLastTicket(t);
-      
-      triggerToast(`Ticket émis avec succès (${newId})`);
       setIsPrinting(false);
-      setName("");
-      setMontant(ticketPrice);
-    }, 1000);
+      window.print();
+    }, 400);
+
+    setName("");
+    setMontant(ticketPrice);
   };
 
   // Issue VIP Guest Pass for DG / Patron (Only accessible to DG & Admin)
@@ -3381,211 +3385,62 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
 
   return (
     <div>
-      <h1 style={S.pageTitle} className="no-print">Guichet & Accueil</h1>
-      <p style={{ fontSize: 13, color: "#64748B", marginTop: 4, marginBottom: 24 }} className="no-print">Enregistrez les passages des membres ou émettez des tickets d'entrée payants pour les visiteurs.</p>
-      
-      <div style={S.grid2} className="no-print">
-        {/* Entrance Desk */}
-        <CardPanel 
-          title="Émettre un Ticket d'Accès" 
-          action={
-            canIssueDgPass && (
-              <button
-                type="button"
-                className="btn-glow"
-                onClick={() => setShowDgModal(true)}
-                style={{
-                  background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                  color: "#FFFFFF",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "6px 12px",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
-                }}
-                title="Créer un Pass VIP Invité du DG avec accès gratuit temporaire"
-              >
-                👑 Pass Invité DG
-              </button>
-            )
-          }
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div>
-              <label style={S.labelStyle}>Rechercher membre ou saisir nom visiteur</label>
-              <input
-                style={S.input}
-                list="members-search"
-                placeholder="Ex: Yao Koffi..."
-                value={name}
-                onChange={e => handleMemberSelect(e.target.value)}
-              />
-              <datalist id="members-search">
-                {members.map(m => <option key={m.id} value={m.nom}>{m.carte} - Exp: {m.expiration}</option>)}
-              </datalist>
-            </div>
-            
-            {name.trim() !== "" && (
-              <div style={{ marginTop: 4, marginBottom: 4 }}>
-                {matchedMember ? (
-                  isActiveMember ? (
-                    <div style={{ background: "#E0F2FE", color: "#0369A1", border: "1px solid #BAE6FD", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                      ✅ Membre Actif : <strong>{matchedMember.nom}</strong> ({matchedMember.carte}) — Validité jusqu'au {matchedMember.expiration} (Entrée Gratuite 0 F)
-                    </div>
-                  ) : (
-                    <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                      ⚠️ Abonnement Expiré depuis le {matchedMember.expiration} — Ticket d'entrée payant requis ({fmt(ticketPrice)} F CFA)
-                    </div>
-                  )
-                ) : (
-                  <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                    👤 Visiteur sans abonnement — Ticket d'entrée séance ({fmt(ticketPrice)} F CFA)
-                  </div>
-                )}
-              </div>
-            )}
-            
-            <div>
-              <label style={S.labelStyle}>Frais d'accès (F CFA)</label>
-              <input
-                style={{ ...S.input, fontWeight: "bold", color: montant === 0 ? "#10B981" : "#0F172A" }}
-                type="number"
-                value={montant}
-                onChange={e => setMontant(e.target.value)}
-                disabled={isActiveMember}
-              />
-            </div>
-
+      {/* Top Header Ribbon with Action Buttons */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 12 }} className="no-print">
+        <div>
+          <h1 style={{ ...S.pageTitle, margin: 0 }}>Guichet & Accueil</h1>
+          <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Enregistrement direct des passages membres, tickets visiteurs et pass VIP.</p>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-glow"
+            onClick={() => {
+              setName("");
+              setMontant(ticketPrice);
+              setShowTicketModal(true);
+            }}
+            style={{
+              ...S.btnPrimary,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 16px",
+              fontSize: 13.5,
+              fontWeight: 700
+            }}
+          >
+            <span>🎟️</span> Émettre un Ticket Séance
+          </button>
+          
+          {canIssueDgPass && (
             <button
+              type="button"
               className="btn-glow"
-              style={{ ...S.btnPrimary, width: "100%", height: 42, display: "flex", justifyContent: "center", alignItems: "center" }}
-              onClick={issue}
-              disabled={isPrinting}
+              onClick={() => setShowDgModal(true)}
+              style={{
+                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: 8,
+                padding: "9px 16px",
+                fontSize: 13.5,
+                fontWeight: 800,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                boxShadow: "0 2px 8px rgba(217, 119, 6, 0.3)"
+              }}
+              title="Créer un Pass VIP Invité du DG avec accès gratuit temporaire"
             >
-              {isPrinting ? "Génération du ticket..." : "Émettre le Ticket d'Accès"}
+              👑 Pass Invité DG
             </button>
-          </div>
-        </CardPanel>
-
-        {/* Thermal Receipt Visualizer */}
-        <CardPanel title="Aperçu du Reçu de Caisse" action={lastTicket && <button className="btn-secondary" style={S.btnGhost} onClick={handlePrintAction}>Imprimer</button>}>
-          <div style={S.printerSlot}>
-            {!lastTicket && !isPrinting && <div style={S.empty}>Aucun ticket émis dans cette session.</div>}
-            
-            {isPrinting && (
-              <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 28, height: 28, border: "3px solid #6366F1", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                <div style={{ fontSize: 12, color: "#64748B" }}>Impression thermique en cours...</div>
-              </div>
-            )}
-
-            {lastTicket && !isPrinting && (
-              <div style={{ ...S.ticketPaper, borderRadius: 8 }} className="animate-ticket printable-receipt">
-                {lastTicket.isDgGuest ? (
-                  <>
-                    <div style={{ textAlign: "center", marginBottom: 10 }}>
-                      <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
-                      <div style={{ fontSize: 9.5, color: "#D97706", fontWeight: 800, textTransform: "uppercase" }}>★ DIRECTION GÉNÉRALE — DIVO ★</div>
-                      <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
-                      <div style={{ borderBottom: "2px solid #D97706", margin: "8px 0 6px 0" }} />
-                      <div style={{ fontSize: 11, color: "#92400E", fontWeight: 900, background: "#FEF3C7", padding: "4px 0", borderRadius: 4, border: "1px solid #FDE68A" }}>
-                        👑 PASS INVITÉ DU DG (GRATUIT)
-                      </div>
-                      <div style={{ borderBottom: "1px dashed #D97706", margin: "6px 0 8px 0" }} />
-                    </div>
-
-                    <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>N° PASS :</span>
-                        <strong style={{ color: "#D97706" }}>{lastTicket.id}</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>INVITÉ DU DG :</span>
-                        <strong style={{ color: "#0F172A" }}>{lastTicket.nom}</strong>
-                      </div>
-                      {lastTicket.tel && (
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span>TÉLÉPHONE :</span>
-                          <span>{lastTicket.tel}</span>
-                        </div>
-                      )}
-                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
-                      <div style={{ display: "flex", justifyContent: "space-between", color: "#0F172A", fontWeight: 700 }}>
-                        <span>PÉRIODE :</span>
-                        <span>{lastTicket.dgPeriod || `Du ${lastTicket.startDate} au ${lastTicket.endDate}`}</span>
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
-                        <span>ACCÈS :</span>
-                        <span>0 F CFA (OFFERT PAR LE DG)</span>
-                      </div>
-                      <div style={{ fontSize: 9.5, color: "#64748B", marginTop: 4, fontStyle: "italic" }}>
-                        "{lastTicket.dgNote || "Invité personnel du Directeur Général"}"
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ textAlign: "center", marginBottom: 10 }}>
-                      <div style={{ fontSize: 17, color: "#000", fontWeight: 900, letterSpacing: 0.8 }}>🏋️ CLUB SPORT SANTE</div>
-                      <div style={{ fontSize: 9.5, color: "#475569", fontWeight: 600 }}>COMPLEXE SPORTIF — DIVO</div>
-                      <div style={{ fontSize: 9, color: "#64748B" }}>Tél : +225 07 00 00 00 00</div>
-                      <div style={{ borderBottom: "2px solid #0F172A", margin: "8px 0 6px 0" }} />
-                      <div style={{ fontSize: 11, color: "#000", fontWeight: 800, background: "#E2E8F0", padding: "2px 0", borderRadius: 4 }}>
-                        {lastTicket.isMember ? "PASS MEMBRE ADHÉRENT" : "TICKET D'ENTRÉE SÉANCE"}
-                      </div>
-                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0 8px 0" }} />
-                    </div>
-                    
-                    <div className="mono" style={{ fontSize: 10.5, color: "#0F172A", lineHeight: 1.5, marginBottom: 10 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>CODE :</span>
-                        <strong>{lastTicket.id}</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>DATE :</span>
-                        <span>{lastTicket.date}</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span>HEURE :</span>
-                        <span>{lastTicket.heure}</span>
-                      </div>
-                      <div style={{ borderBottom: "1px dashed #CBD5E1", margin: "6px 0" }} />
-                      <div style={{ fontSize: 12, fontWeight: 800, display: "flex", justifyContent: "space-between", color: "#0F172A" }}>
-                        <span>CLIENT :</span>
-                        <span>{lastTicket.nom}</span>
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 900, display: "flex", justifyContent: "space-between", marginTop: 4, color: "#059669" }}>
-                        <span>MONTANT :</span>
-                        <span>{fmt(lastTicket.montant)} F CFA</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, borderTop: "1px dashed #CBD5E1", paddingTop: 8 }}>
-                  {/* Custom QR Code */}
-                  <svg width="56" height="56" viewBox="0 0 21 21" style={{ background: "#fff", padding: 2 }}>
-                    <path d="M0 0h7v7H0zm1 1v5h5V1zm1 1h3v3H2z" fill="#000" />
-                    <path d="M14 0h7v7h-7zm1 1v5h5V1zm1 1h3v3h-2z" fill="#000" />
-                    <path d="M0 14h7v7H0zm1 1v5h5v-5zm1 1h3v3H2z" fill="#000" />
-                    <path d="M9 1h1v2H9zm2 0h1v1h-1zm1 2h1v3h-1zm-3 2h2v1H9zm4-4h1v1h-1zm3 8h2v1h-2zm-5 1h1v2h-1zm3 1h2v1h-2zm-5 3h1v1H9zm3 2h1v1h-1zm2-3h1v2h-1zm1 2h2v1h-2zm1-3h1v1h-1zm-6 2h1v1h-1z" fill="#000" />
-                  </svg>
-                  <div className="mono" style={{ fontSize: 8, color: "#475569", textAlign: "center" }}>
-                    {lastTicket.isDgGuest ? "★ ACCÈS EXCLUSIF DIRECTION — BON ENTRAÎNEMENT ★" : "* Tenue & serviette obligatoires * — BONNE SÉANCE !"}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardPanel>
+          )}
+        </div>
       </div>
 
-      {/* Daily Ledger of Entrance Passes */}
+      {/* Daily Ledger of Entrance Passes directly at the top */}
       <CardPanel title={`Registre des entrées du jour (${todayTickets.length})`}>
         {todayTickets.length === 0 ? (
           <div style={S.empty}>Aucune entrée enregistrée pour aujourd'hui.</div>
@@ -3822,6 +3677,87 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Quick Ticket Séance Modal */}
+      {showTicketModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "92%", maxWidth: 460, borderRadius: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 22 }}>🎟️</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A" }}>Émettre un Ticket d'Accès Séance</h3>
+                  <div style={{ fontSize: 12, color: "#64748B" }}>Passage membre ou ticket payant pour visiteur</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 22, cursor: "pointer" }} onClick={() => setShowTicketModal(false)}>&times;</button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={S.labelStyle}>Rechercher un membre ou saisir le nom du visiteur *</label>
+                <input
+                  style={S.input}
+                  list="members-search-modal"
+                  placeholder="Ex: Yao Koffi ou nom du visiteur..."
+                  value={name}
+                  onChange={e => handleMemberSelect(e.target.value)}
+                  autoFocus
+                />
+                <datalist id="members-search-modal">
+                  {members.map(m => <option key={m.id} value={m.nom}>{m.carte} - Exp: {m.expiration}</option>)}
+                </datalist>
+              </div>
+
+              {name.trim() !== "" && (
+                <div style={{ marginTop: 2, marginBottom: 2 }}>
+                  {matchedMember ? (
+                    isActiveMember ? (
+                      <div style={{ background: "#E0F2FE", color: "#0369A1", border: "1px solid #BAE6FD", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                        ✅ Membre Actif : <strong>{matchedMember.nom}</strong> ({matchedMember.carte}) — Validité jusqu'au {matchedMember.expiration} (Entrée Gratuite 0 F)
+                      </div>
+                    ) : (
+                      <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                        ⚠️ Abonnement Expiré depuis le {matchedMember.expiration} — Ticket d'entrée payant requis ({fmt(ticketPrice)} F CFA)
+                      </div>
+                    )
+                  ) : (
+                    <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
+                      👤 Visiteur sans abonnement — Séance unique ({fmt(ticketPrice)} F CFA)
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <label style={S.labelStyle}>Frais d'accès (F CFA)</label>
+                <input
+                  style={{ ...S.input, fontWeight: "bold", color: montant === 0 ? "#10B981" : "#0F172A" }}
+                  type="number"
+                  value={montant}
+                  onChange={e => setMontant(e.target.value)}
+                  disabled={isActiveMember}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 8, paddingTop: 12, borderTop: "1px solid #E2E8F0" }}>
+                <button type="button" style={S.btnCancel} onClick={() => setShowTicketModal(false)}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className="btn-glow"
+                  style={{ ...S.btnPrimary, height: 42, padding: "0 18px", fontWeight: 700 }}
+                  onClick={issue}
+                  disabled={isPrinting || !name.trim()}
+                >
+                  {isPrinting ? "Génération en cours..." : "Valider & Imprimer le Reçu"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
