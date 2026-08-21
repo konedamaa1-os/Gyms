@@ -614,7 +614,8 @@ export default function GymApp() {
         <>
           {/* Mobile Top Header */}
           <div className="mobile-header no-print">
-            <div className="disp" style={{ color: "#FFF", fontSize: 20, fontWeight: 800 }}>
+            <div className="disp" style={{ color: "#FFF", fontSize: 18, fontWeight: 800, display: "flex", alignItems: "center", gap: 8 }}>
+              <img src="/logo-club-sport-sante.jpg" alt="Logo" style={{ width: 30, height: 30, borderRadius: 6, objectFit: "contain" }} />
               CLUB SPORT SANTE
             </div>
             <button
@@ -636,17 +637,14 @@ export default function GymApp() {
           {/* Sidebar Navigation - Deep Dark Slate-800 for high quality split design */}
           <div className={`app-sidebar ${mobileMenuOpen ? "open" : ""} no-print`} style={S.sidebar}>
             <div style={S.brand}>
-              <div className="disp" style={{ ...S.brandTitle, display: "flex", alignItems: "center" }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 8, flexShrink: 0 }}>
-                  <path d="M6 12h12" />
-                  <path d="M6.5 8v8" strokeWidth="3" />
-                  <path d="M4.5 9v6" strokeWidth="4" />
-                  <path d="M17.5 8v8" strokeWidth="3" />
-                  <path d="M19.5 9v6" strokeWidth="4" />
-                </svg>
-                CLUB SPORT SANTE
+              <div className="disp" style={{ ...S.brandTitle, display: "flex", alignItems: "center", gap: 10 }}>
+                <img src="/logo-club-sport-sante.jpg" alt="Logo" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain", border: "1px solid rgba(220,38,38,0.5)" }} />
+                <div>
+                  <div style={{ lineHeight: 1.1 }}>CLUB SPORT SANTE</div>
+                  <div style={{ fontSize: 10, color: "#EF4444", fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
+                </div>
               </div>
-              <div style={S.brandSub}>GESTION DE SALLE</div>
+              <div style={S.brandSub}>GESTION DE SALLE &bull; DIVO</div>
             </div>
 
             {/* Quick Start Guide Button (Matches requested brown style) */}
@@ -2258,6 +2256,21 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const [showCombinedDocModal, setShowCombinedDocModal] = useState(false);
   const [isBlankCombinedDoc, setIsBlankCombinedDoc] = useState(false);
 
+  // Prestige Advertising Flyer A4
+  const [showFlyerModal, setShowFlyerModal] = useState(false);
+
+  const openFlyerModal = () => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc(null);
+    setShowQuestionnaireDocModal(false);
+    setActiveCombinedDoc(null);
+    setShowCombinedDocModal(false);
+    setShowFlyerModal(true);
+  };
+
   const openMemberCombinedDoc = (m) => {
     setActiveReceipt(null);
     setShowReceiptModal(false);
@@ -2566,6 +2579,27 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, fiches de renseignement, questionnaire médical officiel et cartes d'accès.</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-glow"
+            onClick={openFlyerModal}
+            style={{
+              background: "linear-gradient(135deg, #DC2626, #991B1B)",
+              color: "#FFFFFF",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 15px",
+              fontSize: 13,
+              fontWeight: 800,
+              borderRadius: 8,
+              boxShadow: "0 4px 12px rgba(220, 38, 38, 0.3)",
+              cursor: "pointer"
+            }}
+          >
+            <span>📢</span> Affiche Publicitaire Prestige (A4)
+          </button>
           <button
             type="button"
             className="btn-glow"
@@ -3107,18 +3141,43 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Visual Receipt Paper Preview on Screen */}
-            <div style={{ ...S.ticketPaper, borderRadius: 8, margin: "0 auto 16px auto", border: "1px dashed #CBD5E1", background: "#FFFFFF", padding: "16px 18px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
-              <div style={{ textAlign: "center", marginBottom: 8 }}>
+            <div style={{ ...S.ticketPaper, position: "relative", overflow: "hidden", borderRadius: 8, margin: "0 auto 16px auto", border: "1px dashed #CBD5E1", background: "#FFFFFF", padding: "16px 18px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+              {/* Receipt Background Watermark */}
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 140,
+                height: 140,
+                backgroundImage: "url(/logo-club-sport-sante.jpg)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.06,
+                pointerEvents: "none",
+                zIndex: 0
+              }} />
+
+              <div style={{ textAlign: "center", marginBottom: 8, position: "relative", zIndex: 1 }}>
+                <img 
+                  src="/logo-club-sport-sante.jpg" 
+                  alt="Logo Club Sport Santé" 
+                  style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 8, margin: "0 auto 6px auto", display: "block" }} 
+                />
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#0F172A", color: "#FFF", padding: "4px 0", letterSpacing: 0.8, borderRadius: 3 }}>
                   ★ REÇU D'ADHÉSION ★
                 </div>
-                <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#334155" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, marginTop: 3, color: "#334155" }}>
                   CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                </div>
+                <div style={{ fontSize: 9, color: "#64748B", fontStyle: "italic", marginTop: 1 }}>
+                  Votre Santé, Notre Énergie
                 </div>
                 <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
               
-              <div style={{ fontSize: 11.5, lineHeight: 1.6, marginBottom: 10, color: "#000" }}>
+              <div style={{ fontSize: 11.5, lineHeight: 1.6, marginBottom: 10, color: "#000", position: "relative", zIndex: 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>N° REÇU :</span>
                   <strong style={{ fontFamily: "monospace", fontSize: 12 }}>R-{activeReceipt.id.substring(0, 8).toUpperCase()}</strong>
@@ -3222,17 +3281,39 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Fiche Paper (A4 Preview) */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "34px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
-              {/* Top Header: Club - Sport - Santé / Coach Arthur Ziega + Photo Box */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-                <div>
-                  <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
-                  <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 3, lineHeight: 1.5 }}>
-                    Tél: 07 49 74 70 74<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
+            <div style={{ position: "relative", overflow: "hidden", background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "34px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Background Watermark */}
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 320,
+                height: 320,
+                backgroundImage: "url(/logo-club-sport-sante.jpg)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.06,
+                pointerEvents: "none",
+                zIndex: 0
+              }} />
+
+              {/* Top Header: Logo + Club - Sport - Santé / Coach Arthur Ziega + Photo Box */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, position: "relative", zIndex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <img 
+                    src="/logo-club-sport-sante.jpg" 
+                    alt="Logo Club Sport Santé" 
+                    style={{ width: 68, height: 68, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
+                  />
+                  <div>
+                    <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                    <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 3, lineHeight: 1.5 }}>
+                      Tél: 07 49 74 70 74 &bull; 05 85 74 70 74<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                    </div>
                   </div>
                 </div>
                 <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 100, height: 125, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 13, letterSpacing: 1 }}>
@@ -3241,12 +3322,12 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Title */}
-              <div style={{ textAlign: "center", fontSize: 19, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 22, textDecoration: "underline" }}>
+              <div style={{ textAlign: "center", fontSize: 19, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 22, textDecoration: "underline", position: "relative", zIndex: 1 }}>
                 FICHE D'INSCRIPTION
               </div>
 
               {/* Form Fields */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 9, fontSize: 13 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9, fontSize: 13, position: "relative", zIndex: 1 }}>
                 <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
                 <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
                 
@@ -3323,13 +3404,38 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
       {/* Hidden print template for subscription receipt */}
       {activeReceipt && (
-        <div className="print-only print-thermal" style={{ display: "none" }}>
-          <div style={{ textAlign: "center", marginBottom: 6 }}>
+        <div className="print-only print-thermal" style={{ display: "none", position: "relative" }}>
+          {/* Thermal Receipt Background Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 140,
+            height: 140,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.05,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
+          <div style={{ textAlign: "center", marginBottom: 6, position: "relative", zIndex: 1 }}>
+            <img 
+              src="/logo-club-sport-sante.jpg" 
+              alt="Logo Club Sport Santé" 
+              style={{ width: 52, height: 52, objectFit: "contain", borderRadius: 6, margin: "0 auto 4px auto", display: "block" }} 
+            />
             <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.8, borderRadius: 3 }}>
               ★ REÇU D'ADHÉSION ★
             </div>
             <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
               CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+            </div>
+            <div style={{ fontSize: 8.5, color: "#000", fontStyle: "italic", marginTop: 1 }}>
+              Votre Santé, Notre Énergie
             </div>
             <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
           </div>
@@ -3401,31 +3507,53 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
       {/* Hidden print template for Fiche d'Inscription (A4) */}
       {activeFiche && (
-        <div className="print-only print-a4" style={{ display: "none" }}>
+        <div className="print-only print-a4" style={{ display: "none", position: "relative", overflow: "hidden" }}>
+          {/* Background Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 320,
+            height: 320,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.05,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
           {/* Top Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-            <div>
-              <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-              <div style={{ fontSize: 14, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
-              <div style={{ fontSize: 11, color: "#000", marginTop: 2, lineHeight: 1.45 }}>
-                Tél: 07 49 74 70 74<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;05 85 74 70 74<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;07 07 78 23 29
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img 
+                src="/logo-club-sport-sante.jpg" 
+                alt="Logo Club Sport Santé" 
+                style={{ width: 62, height: 62, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
+              />
+              <div>
+                <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                <div style={{ fontSize: 14, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
+                <div style={{ fontSize: 10.5, color: "#000", marginTop: 2, lineHeight: 1.4 }}>
+                  Tél: 07 49 74 70 74 &bull; 05 85 74 70 74<br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                </div>
               </div>
             </div>
-            <div style={{ border: "2px solid #000", width: 95, height: 120, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12 }}>
+            <div style={{ border: "2px solid #000", width: 95, height: 115, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12 }}>
               PHOTO
             </div>
           </div>
 
           {/* Title */}
-          <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 20 }}>
+          <div style={{ textAlign: "center", fontSize: 18, fontWeight: 900, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 18, position: "relative", zIndex: 1 }}>
             FICHE D'INSCRIPTION
           </div>
 
           {/* Form Lines */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5, position: "relative", zIndex: 1 }}>
             <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "..........................................................................................................................................................." : activeFiche.nom.toUpperCase()}</span></div>
             <div><strong>Prénom(s) :</strong> <span style={{ textDecoration: isBlankFiche ? "none" : "underline", fontWeight: 700 }}>{isBlankFiche ? "....................................................................................................................................................." : (activeFiche.prenoms || "-")}</span></div>
             
@@ -3501,19 +3629,43 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Questionnaire Paper Preview */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "36px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+            <div style={{ position: "relative", overflow: "hidden", background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "34px 44px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.7, boxShadow: "0 4px 14px rgba(0,0,0,0.06)" }}>
+              {/* Background Watermark */}
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 320,
+                height: 320,
+                backgroundImage: "url(/logo-club-sport-sante.jpg)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.06,
+                pointerEvents: "none",
+                zIndex: 0
+              }} />
+
               {/* Header Box */}
-              <div style={{ textAlign: "center", marginBottom: 26 }}>
-                <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
-                <div style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+              <div style={{ textAlign: "center", marginBottom: 20, position: "relative", zIndex: 1 }}>
+                <img 
+                  src="/logo-club-sport-sante.jpg" 
+                  alt="Logo Club Sport Santé" 
+                  style={{ width: 70, height: 70, objectFit: "contain", borderRadius: 8, margin: "0 auto 6px auto", display: "block" }} 
+                />
+                <div style={{ fontSize: 21, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE MÉDICAL</div>
+                <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
+                  CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 / 07 07 78 23 29
+                </div>
               </div>
 
-              <p style={{ fontStyle: "italic", fontSize: 12.5, marginBottom: 28, textAlign: "justify", lineHeight: 1.6, color: "#1E293B" }}>
+              <p style={{ fontStyle: "italic", fontSize: 12.5, marginBottom: 24, textAlign: "justify", lineHeight: 1.6, color: "#1E293B", position: "relative", zIndex: 1 }}>
                 Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
               </p>
 
               {/* 7 Questions */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 18, position: "relative", zIndex: 1 }}>
                 {[
                   { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
                   { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3538,14 +3690,14 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Bottom Identity & Signatures Section */}
-              <div style={{ marginTop: 55, paddingTop: 20, borderTop: "1.5px solid #CBD5E1", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 13 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ marginTop: 45, paddingTop: 18, borderTop: "1.5px solid #CBD5E1", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 13, position: "relative", zIndex: 1 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
                   <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
                   <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
                   <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
                 </div>
-                <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "12px 16px", height: 100 }}>
+                <div style={{ border: "1px dashed #94A3B8", borderRadius: 6, padding: "12px 16px", height: 95 }}>
                   <div style={{ fontSize: 12, fontWeight: 800 }}>Signature :</div>
                   <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 2 }}>(Mention manuscrite "Lu et approuvé")</div>
                 </div>
@@ -3572,19 +3724,43 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
       {/* Hidden print template for Questionnaire Médical (A4) */}
       {activeQuestionnaireDoc && (
-        <div className="print-only print-a4" style={{ display: "none" }}>
+        <div className="print-only print-a4" style={{ display: "none", position: "relative", overflow: "hidden" }}>
+          {/* Background Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 320,
+            height: 320,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.05,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
           {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE</div>
-            <div style={{ fontSize: 11, color: "#333", marginTop: 4 }}>CLUB SPORT SANTE &bull; Divo, Côte d'Ivoire &bull; Tél : 07 07 78 23 29</div>
+          <div style={{ textAlign: "center", marginBottom: 18, position: "relative", zIndex: 1 }}>
+            <img 
+              src="/logo-club-sport-sante.jpg" 
+              alt="Logo Club Sport Santé" 
+              style={{ width: 62, height: 62, objectFit: "contain", borderRadius: 6, margin: "0 auto 4px auto", display: "block" }} 
+            />
+            <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE MÉDICAL</div>
+            <div style={{ fontSize: 10.5, color: "#000", marginTop: 2 }}>
+              CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 / 07 07 78 23 29
+            </div>
           </div>
 
-          <p style={{ fontStyle: "italic", fontSize: 12, marginBottom: 26, textAlign: "justify", lineHeight: 1.5 }}>
+          <p style={{ fontStyle: "italic", fontSize: 11.5, marginBottom: 20, textAlign: "justify", lineHeight: 1.5, position: "relative", zIndex: 1 }}>
             Le client doit répondre obligatoirement et sincèrement à toutes les questions en cochant la case correspondant à sa réponse.
           </p>
 
           {/* 7 Questions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 12.5 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, fontSize: 12.5, position: "relative", zIndex: 1 }}>
             {[
               { num: "1", id: "q1", text: "Votre médecin vous a-t-il déjà dit que vous aviez des problèmes cardiaques et que vous ne devriez pas faire d'exercices sans avis médical ?" },
               { num: "2", id: "q2", text: "L'activité physique vous occasionne-t-elle des douleurs dans la poitrine ?" },
@@ -3609,14 +3785,14 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           </div>
 
           {/* Bottom Identity & Signatures Section */}
-          <div style={{ marginTop: 55, paddingTop: 20, borderTop: "1.5px solid #000", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 12.5 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ marginTop: 45, paddingTop: 18, borderTop: "1.5px solid #000", display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 24, fontSize: 12.5, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div><strong>Nom :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : activeQuestionnaireDoc.nom.toUpperCase()}</span></div>
               <div><strong>Prénoms :</strong> <span style={{ textDecoration: isBlankQuestionnaireDoc ? "none" : "underline", fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.prenoms || "-")}</span></div>
               <div><strong>Lieu :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "..........................................................." : (activeQuestionnaireDoc.lieu || activeQuestionnaireDoc.quartier || "Divo")}</span></div>
               <div><strong>Date :</strong> <span style={{ fontWeight: 700 }}>{isBlankQuestionnaireDoc ? "....../....../.........." : formatDateFr(activeQuestionnaireDoc.inscription || activeQuestionnaireDoc.date || today())}</span></div>
             </div>
-            <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "10px 14px", height: 100 }}>
+            <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "10px 14px", height: 95 }}>
               <div style={{ fontSize: 11.5, fontWeight: 800 }}>Signature :</div>
               <div style={{ fontSize: 9.5, color: "#333", fontStyle: "italic", marginTop: 2 }}>(Mention manuscrite "Lu et approuvé")</div>
             </div>
@@ -3642,23 +3818,47 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
 
             {/* Paper Preview */}
-            <div style={{ background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "24px 30px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ position: "relative", overflow: "hidden", background: "#FFFFFF", border: "2px solid #0F172A", borderRadius: 8, padding: "24px 30px", color: "#000", fontFamily: "Arial, sans-serif", fontSize: 13, lineHeight: 1.5, boxShadow: "0 4px 14px rgba(0,0,0,0.06)", display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Background Watermark */}
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 320,
+                height: 320,
+                backgroundImage: "url(/logo-club-sport-sante.jpg)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.06,
+                pointerEvents: "none",
+                zIndex: 0
+              }} />
+
               {/* Header Box */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0F172A", paddingBottom: 8 }}>
-                <div>
-                  <div style={{ fontStyle: "italic", fontSize: 18, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-                  <div style={{ fontSize: 15.5, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
-                  <div style={{ fontSize: 12, color: "#1E293B", marginTop: 2, lineHeight: 1.4 }}>
-                    Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0F172A", paddingBottom: 8, position: "relative", zIndex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <img 
+                    src="/logo-club-sport-sante.jpg" 
+                    alt="Logo Club Sport Santé" 
+                    style={{ width: 66, height: 66, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
+                  />
+                  <div>
+                    <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                    <div style={{ fontSize: 15, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
+                    <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 2, lineHeight: 1.4 }}>
+                      Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                    </div>
                   </div>
                 </div>
-                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 90, height: 105, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 12, letterSpacing: 1 }}>
+                <div style={{ border: "2px solid #D97706", background: "#FEF3C7", width: 85, height: 95, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#92400E", fontSize: 12, letterSpacing: 1 }}>
                   PHOTO
                 </div>
               </div>
 
               {/* PART 1: FICHE D'INSCRIPTION */}
-              <div>
+              <div style={{ position: "relative", zIndex: 1 }}>
                 <div style={{ textAlign: "center", fontSize: 14, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 6 }}>
                   1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
                 </div>
@@ -3685,7 +3885,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
-              <div>
+              <div style={{ position: "relative", zIndex: 1 }}>
                 <div style={{ textAlign: "center", fontSize: 14, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", background: "#0F172A", color: "#FFF", padding: "4px 0", borderRadius: 3, marginBottom: 4 }}>
                   2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
                 </div>
@@ -3720,7 +3920,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               </div>
 
               {/* Signatures */}
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1.5px solid #CBD5E1", paddingTop: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1.5px solid #CBD5E1", paddingTop: 8, position: "relative", zIndex: 1 }}>
                 <div>
                   <u style={{ fontWeight: 900, fontSize: 12.5 }}>Signature du client :</u>
                   <div style={{ height: 45 }}></div>
@@ -3752,23 +3952,47 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
       {/* Hidden print template for COMBINED Fiche & Questionnaire (1 Page A4) */}
       {activeCombinedDoc && (
-        <div className="print-only print-a4" style={{ display: "none" }}>
+        <div className="print-only print-a4" style={{ display: "none", position: "relative", overflow: "hidden" }}>
+          {/* Background Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 320,
+            height: 320,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.05,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #000", paddingBottom: 4 }}>
-            <div>
-              <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
-              <div style={{ fontSize: 14, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
-              <div style={{ fontSize: 11, color: "#000", marginTop: 1 }}>
-                Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #000", paddingBottom: 4, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <img 
+                src="/logo-club-sport-sante.jpg" 
+                alt="Logo Club Sport Santé" 
+                style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
+              />
+              <div>
+                <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
+                <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
+                <div style={{ fontSize: 10.5, color: "#000", marginTop: 1 }}>
+                  Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                </div>
               </div>
             </div>
-            <div style={{ border: "1.5px solid #000", width: 85, height: 100, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
+            <div style={{ border: "1.5px solid #000", width: 80, height: 90, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 11 }}>
               PHOTO
             </div>
           </div>
 
           {/* PART 1: FICHE D'INSCRIPTION */}
-          <div>
+          <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 5 }}>
               1. FICHE D'INSCRIPTION DE L'ADHÉRENT(E)
             </div>
@@ -3795,7 +4019,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           </div>
 
           {/* PART 2: QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE */}
-          <div>
+          <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ textAlign: "center", fontSize: 13, fontWeight: 900, letterSpacing: 0.6, textTransform: "uppercase", background: "#000", color: "#FFF", padding: "3px 0", borderRadius: 2, marginBottom: 4 }}>
               2. QUESTIONNAIRE MÉDICAL D'APTITUDE PHYSIQUE (7 QUESTIONS)
             </div>
@@ -3830,7 +4054,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           </div>
 
           {/* Signatures */}
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #000", paddingTop: 6 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 10px", borderTop: "1px solid #000", paddingTop: 6, position: "relative", zIndex: 1 }}>
             <div>
               <u style={{ fontWeight: 900, fontSize: 12 }}>Signature du client :</u>
               <div style={{ height: 45 }}></div>
@@ -3838,6 +4062,302 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div style={{ textAlign: "right" }}>
               <u style={{ fontWeight: 900, fontSize: 12 }}>Cachet et Signature du Coach :</u>
               <div style={{ height: 45 }}></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* PRESTIGE DE PUBLICITÉ - AFFICHE / FLYER A4 */}
+      {/* ========================================== */}
+      {showFlyerModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "95%", maxWidth: 880, borderRadius: 18, padding: "24px 28px", maxHeight: "95vh", overflowY: "auto", background: "#0F172A", color: "#FFF" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.12)", paddingBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 28 }}>📢</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, color: "#FFF", fontWeight: 900 }}>Affiche Publicitaire Prestige (Flyer Officiel A4)</h3>
+                  <div style={{ fontSize: 12, color: "#94A3B8" }}>Support marketing haute définition pour impression A4 & partage client / réseaux sociaux</div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 26, cursor: "pointer" }} onClick={() => setShowFlyerModal(false)}>&times;</button>
+            </div>
+
+            {/* Poster Sheet Preview */}
+            <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(180deg, #090D16 0%, #111827 50%, #090D16 100%)", border: "2px solid #DC2626", borderRadius: 12, padding: "30px 34px", color: "#FFFFFF", fontFamily: "Arial, sans-serif", boxShadow: "0 12px 36px rgba(220, 38, 38, 0.25)" }}>
+              {/* Background Watermark */}
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 380,
+                height: 380,
+                backgroundImage: "url(/logo-club-sport-sante.jpg)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                opacity: 0.08,
+                pointerEvents: "none",
+                zIndex: 0
+              }} />
+
+              {/* Top Banner with Logo */}
+              <div style={{ textAlign: "center", position: "relative", zIndex: 1, borderBottom: "2px solid rgba(220, 38, 38, 0.6)", paddingBottom: 18, marginBottom: 18 }}>
+                <img 
+                  src="/logo-club-sport-sante.jpg" 
+                  alt="Logo Club Sport Santé" 
+                  style={{ width: 110, height: 110, objectFit: "contain", borderRadius: 14, margin: "0 auto 10px auto", display: "block", boxShadow: "0 6px 20px rgba(220,38,38,0.4)" }} 
+                />
+                <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#FFFFFF" }}>
+                  CLUB SPORT SANTÉ
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#EF4444", letterSpacing: 1.5, marginTop: 4 }}>
+                  ★ VOTRE SANTÉ, NOTRE ÉNERGIE ★
+                </div>
+                <div style={{ display: "inline-block", background: "rgba(220, 38, 38, 0.2)", border: "1px solid #DC2626", padding: "4px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, marginTop: 8, color: "#FECACA" }}>
+                  🏆 LE COMPLEXE DE REMISE EN FORME & MUSCULATION DE RÉFÉRENCE À DIVO
+                </div>
+              </div>
+
+              {/* 4 Pillars of Excellence */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, position: "relative", zIndex: 1, marginBottom: 18 }}>
+                <div style={{ background: "rgba(30, 41, 59, 0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 24 }}>🏋️‍♂️</span>
+                    <strong style={{ fontSize: 14, color: "#F87171" }}>MUSCULATION & FORCE</strong>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#E2E8F0", lineHeight: 1.45 }}>
+                    Plateau complet de charges libres, bancs réglables, barres olympiques et machines guidées de haute précision.
+                  </div>
+                </div>
+
+                <div style={{ background: "rgba(30, 41, 59, 0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 24 }}>🏃‍♀️</span>
+                    <strong style={{ fontSize: 14, color: "#F87171" }}>CARDIO & PERTE DE POIDS</strong>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#E2E8F0", lineHeight: 1.45 }}>
+                    Tapis de course professionnels, vélos elliptiques et programmes brûle-graisses pour affiner la silhouette.
+                  </div>
+                </div>
+
+                <div style={{ background: "rgba(30, 41, 59, 0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 24 }}>🧘‍♂️</span>
+                    <strong style={{ fontSize: 14, color: "#F87171" }}>FITNESS & GYM TONIQUE</strong>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#E2E8F0", lineHeight: 1.45 }}>
+                    Cuisses-Abdos-Fessiers (C.A.F.), step, renforcement postural et assouplissements pour tout niveau.
+                  </div>
+                </div>
+
+                <div style={{ background: "rgba(30, 41, 59, 0.7)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 24 }}>🩺</span>
+                    <strong style={{ fontSize: 14, color: "#F87171" }}>COACHING & SUIVI SANTÉ</strong>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "#E2E8F0", lineHeight: 1.45 }}>
+                    Bilan santé, évaluation de l'aptitude physique, conseils nutritionnels et accompagnement sur-mesure.
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing & Subscription Offers */}
+              <div style={{ position: "relative", zIndex: 1, background: "linear-gradient(135deg, rgba(220,38,38,0.15), rgba(15,23,42,0.8))", border: "1.5px solid #DC2626", borderRadius: 12, padding: "16px 20px", marginBottom: 18 }}>
+                <div style={{ textAlign: "center", fontSize: 14, fontWeight: 900, color: "#FDE047", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>
+                  💎 FORMULES D'ADHÉSION & TARIFS EXCLUSIFS 💎
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, textAlign: "center" }}>
+                  <div style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 8px" }}>
+                    <div style={{ fontSize: 11, color: "#94A3B8" }}>Séance Découverte</div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "#FFF", marginTop: 2 }}>1.000 F CFA</div>
+                    <div style={{ fontSize: 9.5, color: "#CBD5E1" }}>Pass journalier</div>
+                  </div>
+                  <div style={{ background: "rgba(220,38,38,0.25)", border: "1.5px solid #EF4444", borderRadius: 8, padding: "10px 8px" }}>
+                    <div style={{ fontSize: 11, color: "#FECACA", fontWeight: 700 }}>Abonnement Mensuel</div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: "#FEF08A", marginTop: 2 }}>10.000 F CFA</div>
+                    <div style={{ fontSize: 9.5, color: "#FFF" }}>Accès illimité / mois</div>
+                  </div>
+                  <div style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 8px" }}>
+                    <div style={{ fontSize: 11, color: "#94A3B8" }}>Trimestre / VIP</div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "#FFF", marginTop: 2 }}>27.000 F CFA</div>
+                    <div style={{ fontSize: 9.5, color: "#4ADE80" }}>Économisez 10% !</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operating Hours & Coach Arthur Ziega Info */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 14, position: "relative", zIndex: 1, borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 14 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#F87171", marginBottom: 4 }}>⏰ HORAIRES D'OUVERTURE :</div>
+                  <div style={{ fontSize: 11, lineHeight: 1.4, color: "#E2E8F0" }}>
+                    &bull; <strong>Lun &ndash; Ven :</strong> 06h00 &ndash; 21h00 (Non-stop)<br />
+                    &bull; <strong>Samedi :</strong> 06h30 &ndash; 20h00<br />
+                    &bull; <strong>Dimanche :</strong> 07h00 &ndash; 13h00
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#F87171", marginBottom: 4 }}>📞 INFOLINE & INSCRIPTIONS :</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 900, color: "#FFF", lineHeight: 1.4 }}>
+                    COACH ARTHUR ZIEGA<br />
+                    <span style={{ fontSize: 11.5, color: "#FEF08A" }}>07 49 74 70 74 &bull; 05 85 74 70 74</span><br />
+                    <span style={{ fontSize: 11.5, color: "#FEF08A" }}>01 02 24 29 00 &bull; 07 07 78 23 29</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 2 }}>📍 Divo, Côte d'Ivoire</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
+              <button type="button" style={{ ...S.btnCancel, color: "#FFF", borderColor: "#475569" }} onClick={() => setShowFlyerModal(false)}>
+                Fermer
+              </button>
+              <a 
+                href="https://api.whatsapp.com/send?text=🏋️‍♂️%20*CLUB%20SPORT%20SANTÉ%20-%20DIVO*%20🏋️‍♂️%0A%0A_Votre%20Santé,%20Notre%20Énergie_%0ALa%20meilleure%20salle%20de%20remise%20en%20forme%20et%20musculation%20à%20Divo%20!%0A%0A💪%20*Disciplines%20:*%0A•%20Musculation%20&%20Force%0A•%20Cardio%20&%20Perte%20de%20Poids%0A•%20Fitness%20&%20Gym%20Tonique%0A•%20Bilan%20Santé%20&%20Coaching%20Personnalisé%0A%0A💰%20*Tarifs%20:*%0A•%20Séance%20:%201.000%20FCFA%0A•%20Abonnement%20Mensuel%20:%2010.000%20FCFA%0A•%20Trimestre%20:%2027.000%20FCFA%0A%0A📍%20*Divo,%20Côte%20d'Ivoire*%0A📞%20*Coach%20Arthur%20Ziega%20:*%2007%2049%2074%2070%2074%20/%2007%2007%2078%2023%2029%0A🌐%20https://clubsportsante.xyz" 
+                target="_blank" 
+                rel="noreferrer"
+                style={{
+                  background: "#22C55E",
+                  color: "#FFFFFF",
+                  padding: "0 18px",
+                  height: 42,
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontWeight: 800,
+                  fontSize: 13
+                }}
+              >
+                <span>📱</span> Partager sur WhatsApp
+              </a>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #DC2626, #991B1B)", display: "flex", alignItems: "center", gap: 6, padding: "0 22px", height: 42, fontWeight: 800 }}
+                onClick={() => window.print()}
+              >
+                <span>🖨️</span> Imprimer cette Affiche (Format A4)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print template for PRESTIGE FLYER (Format A4) */}
+      {showFlyerModal && (
+        <div className="print-only print-a4" style={{ display: "none", position: "relative", overflow: "hidden", border: "3px solid #000", padding: "10mm 12mm" }}>
+          {/* Background Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 380,
+            height: 380,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.06,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
+          {/* Top Banner */}
+          <div style={{ textAlign: "center", position: "relative", zIndex: 1, borderBottom: "2.5px solid #000", paddingBottom: 10, marginBottom: 12 }}>
+            <img 
+              src="/logo-club-sport-sante.jpg" 
+              alt="Logo Club Sport Santé" 
+              style={{ width: 85, height: 85, objectFit: "contain", borderRadius: 10, margin: "0 auto 6px auto", display: "block" }} 
+            />
+            <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase", color: "#000" }}>
+              CLUB SPORT SANTÉ
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1, marginTop: 2, color: "#000" }}>
+              ★ VOTRE SANTÉ, NOTRE ÉNERGIE ★
+            </div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: "#000", marginTop: 4 }}>
+              LE COMPLEXE DE REMISE EN FORME, FITNESS & MUSCULATION DE RÉFÉRENCE À DIVO
+            </div>
+          </div>
+
+          {/* 4 Pillars Grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, position: "relative", zIndex: 1, marginBottom: 12 }}>
+            <div style={{ border: "1.5px solid #000", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 3 }}>🏋️ MUSCULATION & FORCE</div>
+              <div style={{ fontSize: 10.5, lineHeight: 1.35 }}>
+                Poids libres, bancs, barres olympiques et machines guidées professionnelles pour puissance et prise de masse.
+              </div>
+            </div>
+
+            <div style={{ border: "1.5px solid #000", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 3 }}>🏃 CARDIO & PERTE DE POIDS</div>
+              <div style={{ fontSize: 10.5, lineHeight: 1.35 }}>
+                Tapis de course professionnels, vélos elliptiques et circuits minceur pour brûler les calories.
+              </div>
+            </div>
+
+            <div style={{ border: "1.5px solid #000", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 3 }}>🧘 FITNESS & GYM TONIQUE</div>
+              <div style={{ fontSize: 10.5, lineHeight: 1.35 }}>
+                Cuisses-Abdos-Fessiers (C.A.F.), step, renforcement musculaire et souplesse pour tous les âges.
+              </div>
+            </div>
+
+            <div style={{ border: "1.5px solid #000", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 3 }}>🩺 COACHING & SUIVI SANTÉ</div>
+              <div style={{ fontSize: 10.5, lineHeight: 1.35 }}>
+                Bilan santé complet, programmes personnalisés et conseils en nutrition sportive par des experts.
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Box */}
+          <div style={{ border: "2px solid #000", borderRadius: 8, padding: "10px 14px", position: "relative", zIndex: 1, marginBottom: 12 }}>
+            <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
+              ★ TARIFS & FORMULES D'ADHÉSION ★
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, textAlign: "center" }}>
+              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 4px" }}>
+                <div style={{ fontSize: 9.5 }}>Séance Libre</div>
+                <div style={{ fontSize: 13, fontWeight: 900 }}>1.000 F CFA</div>
+              </div>
+              <div style={{ background: "#000", color: "#FFF", borderRadius: 4, padding: "6px 4px" }}>
+                <div style={{ fontSize: 9.5 }}>Abonnement Mensuel</div>
+                <div style={{ fontSize: 14, fontWeight: 900 }}>10.000 F CFA</div>
+              </div>
+              <div style={{ border: "1px dashed #000", borderRadius: 4, padding: "6px 4px" }}>
+                <div style={{ fontSize: 9.5 }}>Trimestre / VIP</div>
+                <div style={{ fontSize: 13, fontWeight: 900 }}>27.000 F CFA</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Horaires & Infoline */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 12, position: "relative", zIndex: 1, borderTop: "1.5px solid #000", paddingTop: 10 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 3 }}>⏰ HORAIRES D'OUVERTURE :</div>
+              <div style={{ fontSize: 10, lineHeight: 1.4 }}>
+                &bull; <strong>Lun &ndash; Ven :</strong> 06h00 &ndash; 21h00<br />
+                &bull; <strong>Samedi :</strong> 06h30 &ndash; 20h00<br />
+                &bull; <strong>Dimanche :</strong> 07h00 &ndash; 13h00
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 900, marginBottom: 3 }}>📞 INFOLINE & CONTACTS :</div>
+              <div style={{ fontSize: 11.5, fontWeight: 900, lineHeight: 1.35 }}>
+                COACH ARTHUR ZIEGA<br />
+                07 49 74 70 74 &bull; 05 85 74 70 74<br />
+                01 02 24 29 00 &bull; 07 07 78 23 29
+              </div>
+              <div style={{ fontSize: 9.5, marginTop: 2 }}>📍 Divo, Côte d'Ivoire &bull; Site web : https://clubsportsante.xyz</div>
             </div>
           </div>
         </div>
@@ -4931,11 +5451,33 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
       
       {/* Hidden print template */}
       {lastTicket && (
-        <div className="print-only print-thermal" style={{ display: "none" }}>
+        <div className="print-only print-thermal" style={{ display: "none", position: "relative" }}>
+          {/* Thermal Ticket Watermark */}
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 140,
+            height: 140,
+            backgroundImage: "url(/logo-club-sport-sante.jpg)",
+            backgroundSize: "contain",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            opacity: 0.05,
+            pointerEvents: "none",
+            zIndex: 0
+          }} />
+
           {lastTicket.isDgGuest ? (
             /* VIP PASS FOR DG GUEST THERMAL RECEIPT */
-            <div style={{ textAlign: "center", color: "#000" }}>
+            <div style={{ textAlign: "center", color: "#000", position: "relative", zIndex: 1 }}>
               <div style={{ marginBottom: 6 }}>
+                <img 
+                  src="/logo-club-sport-sante.jpg" 
+                  alt="Logo Club Sport Santé" 
+                  style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 6, margin: "0 auto 4px auto", display: "block" }} 
+                />
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   👑 PASS VIP INVITÉ DU DG 👑
                 </div>
@@ -5002,13 +5544,21 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
             </div>
           ) : (
             /* STANDARD TICKET THERMAL RECEIPT */
-            <div style={{ textAlign: "center", color: "#000" }}>
+            <div style={{ textAlign: "center", color: "#000", position: "relative", zIndex: 1 }}>
               <div style={{ marginBottom: 6 }}>
+                <img 
+                  src="/logo-club-sport-sante.jpg" 
+                  alt="Logo Club Sport Santé" 
+                  style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 6, margin: "0 auto 4px auto", display: "block" }} 
+                />
                 <div style={{ fontSize: 13, fontWeight: 900, background: "#000", color: "#FFF", padding: "5px 0", letterSpacing: 0.5, borderRadius: 3 }}>
                   {lastTicket.isMember ? "★ PASS MEMBRE ADHÉRENT ★" : "★ TICKET D'ENTRÉE SÉANCE ★"}
                 </div>
                 <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
                   CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                </div>
+                <div style={{ fontSize: 8.5, color: "#000", fontStyle: "italic", marginTop: 1 }}>
+                  Votre Santé, Notre Énergie
                 </div>
                 <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
