@@ -2883,10 +2883,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <div style={{ background: "rgba(255,255,255,0.85)", border: "1px solid rgba(0,0,0,0.1)", padding: "3px 8px", borderRadius: 6, textAlign: "center" }}>
                     <div style={{ fontSize: 8, color: "rgba(15,23,42,0.6)", letterSpacing: 0.5, fontWeight: 600 }}>COTISATION</div>
                     <div className="mono" style={{ fontSize: 12, color: "#0F172A", fontWeight: 800 }}>
-                      {fmt(m.montant || (() => {
-                        const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(m.nom));
-                        return memberTx ? memberTx.montant : tier.price;
-                      })())} F CFA
+                      {fmt((m.montant && Number(m.montant) > 1000) ? Number(m.montant) : (tier ? tier.price : 10000))} F CFA
                     </div>
                   </div>
                   {/* Simulated barcode */}
@@ -3344,10 +3341,9 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "3px 0" }}>
                   <span>COTISATION PAYÉE :</span>
                   <span style={{ fontSize: 14 }}>{(() => {
-                    const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
-                    if (memberTx) return fmt(memberTx.montant);
                     const tier = cardTiers.find(c => c.key === activeReceipt.carte);
-                    return fmt(tier ? tier.price : 0);
+                    const amount = (activeReceipt.montant && Number(activeReceipt.montant) > 1000) ? Number(activeReceipt.montant) : (tier ? tier.price : 10000);
+                    return fmt(amount);
                   })()} F CFA</span>
                 </div>
                 
@@ -3607,10 +3603,9 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, fontWeight: 900, padding: "3px 0" }}>
               <span>COTISATION PAYÉE :</span>
               <span style={{ fontSize: 14 }}>{(() => {
-                const memberTx = (tx || []).find(t => t.type === "recette" && t.description.includes(activeReceipt.nom));
-                if (memberTx) return fmt(memberTx.montant);
                 const tier = cardTiers.find(c => c.key === activeReceipt.carte);
-                return fmt(tier ? tier.price : 0);
+                const amount = (activeReceipt.montant && Number(activeReceipt.montant) > 1000) ? Number(activeReceipt.montant) : (tier ? tier.price : 10000);
+                return fmt(amount);
               })()} F CFA</span>
             </div>
             
