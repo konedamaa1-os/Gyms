@@ -2440,29 +2440,29 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     if (editingMemberId) {
       // UPDATE EXISTING MEMBER
       const updatedData = {
-        nom: form.nom.trim(),
-        prenoms: form.prenoms ? form.prenoms.trim() : "",
+        nom: form.nom.trim().toUpperCase(),
+        prenoms: form.prenoms ? form.prenoms.trim().toUpperCase() : "",
         tel: form.tel.trim(),
-        whatsapp: form.whatsapp.trim(),
-        sexe: form.sexe,
+        whatsapp: form.whatsapp ? form.whatsapp.trim() : "",
+        sexe: form.sexe ? form.sexe.toUpperCase() : "MASCULIN",
         dateNaissance: form.dateNaissance,
-        profession: form.profession.trim(),
-        quartier: form.quartier.trim(),
-        lieu: form.lieu || "Divo",
-        urgenceNom: form.urgenceNom.trim(),
-        urgenceTel: form.urgenceTel.trim(),
-        urgenceLien: form.urgenceLien.trim(),
+        profession: form.profession ? form.profession.trim().toUpperCase() : "",
+        quartier: form.quartier ? form.quartier.trim().toUpperCase() : "",
+        lieu: form.lieu ? form.lieu.trim().toUpperCase() : "DIVO",
+        urgenceNom: form.urgenceNom ? form.urgenceNom.trim().toUpperCase() : "",
+        urgenceTel: form.urgenceTel ? form.urgenceTel.trim() : "",
+        urgenceLien: form.urgenceLien ? form.urgenceLien.trim().toUpperCase() : "",
         carte: form.carte,
         expiration: expDate,
         objectifs: form.objectifs,
-        q1: form.q1,
-        q2: form.q2,
-        q3: form.q3,
-        q4: form.q4,
-        q5: form.q5,
-        q6: form.q6,
-        q7: form.q7,
-        remarques: form.remarques
+        q1: (form.q1 || "NON").toUpperCase(),
+        q2: (form.q2 || "NON").toUpperCase(),
+        q3: (form.q3 || "NON").toUpperCase(),
+        q4: (form.q4 || "NON").toUpperCase(),
+        q5: (form.q5 || "NON").toUpperCase(),
+        q6: (form.q6 || "NON").toUpperCase(),
+        q7: (form.q7 || "NON").toUpperCase(),
+        remarques: form.remarques ? form.remarques.trim().toUpperCase() : ""
       };
 
       const { error: memberError } = await supabase.from("members").update(updatedData).eq("id", editingMemberId);
@@ -2473,38 +2473,38 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       }
 
       setMembers(prev => prev.map(m => m.id === editingMemberId ? { ...m, ...updatedData } : m));
-      triggerToast(`Questionnaire et fiche de ${form.nom} mis à jour avec succès !`);
+      triggerToast(`Questionnaire et fiche de ${updatedData.nom} mis à jour avec succès !`);
       setShowAddModal(false);
-      openMemberQuestionnaireDoc({ ...form, id: editingMemberId, inscription: today(), expiration: expDate });
+      openMemberQuestionnaireDoc({ ...form, ...updatedData, id: editingMemberId, inscription: today(), expiration: expDate });
     } else {
       // CREATE NEW MEMBER
       const newId = uid();
       const newMember = {
         id: newId,
-        nom: form.nom.trim(),
-        prenoms: form.prenoms ? form.prenoms.trim() : "",
+        nom: form.nom.trim().toUpperCase(),
+        prenoms: form.prenoms ? form.prenoms.trim().toUpperCase() : "",
         tel: form.tel.trim(),
-        whatsapp: form.whatsapp.trim(),
-        sexe: form.sexe,
+        whatsapp: form.whatsapp ? form.whatsapp.trim() : "",
+        sexe: form.sexe ? form.sexe.toUpperCase() : "MASCULIN",
         dateNaissance: form.dateNaissance,
-        profession: form.profession.trim(),
-        quartier: form.quartier.trim(),
-        lieu: form.lieu || "Divo",
-        urgenceNom: form.urgenceNom.trim(),
-        urgenceTel: form.urgenceTel.trim(),
-        urgenceLien: form.urgenceLien.trim(),
+        profession: form.profession ? form.profession.trim().toUpperCase() : "",
+        quartier: form.quartier ? form.quartier.trim().toUpperCase() : "",
+        lieu: form.lieu ? form.lieu.trim().toUpperCase() : "DIVO",
+        urgenceNom: form.urgenceNom ? form.urgenceNom.trim().toUpperCase() : "",
+        urgenceTel: form.urgenceTel ? form.urgenceTel.trim() : "",
+        urgenceLien: form.urgenceLien ? form.urgenceLien.trim().toUpperCase() : "",
         carte: form.carte,
         inscription: today(),
         expiration: expDate,
         objectifs: form.objectifs,
-        q1: form.q1,
-        q2: form.q2,
-        q3: form.q3,
-        q4: form.q4,
-        q5: form.q5,
-        q6: form.q6,
-        q7: form.q7,
-        remarques: form.remarques
+        q1: (form.q1 || "NON").toUpperCase(),
+        q2: (form.q2 || "NON").toUpperCase(),
+        q3: (form.q3 || "NON").toUpperCase(),
+        q4: (form.q4 || "NON").toUpperCase(),
+        q5: (form.q5 || "NON").toUpperCase(),
+        q6: (form.q6 || "NON").toUpperCase(),
+        q7: (form.q7 || "NON").toUpperCase(),
+        remarques: form.remarques ? form.remarques.trim().toUpperCase() : ""
       };
 
       const { error: memberError } = await supabase.from("members").insert([newMember]);
@@ -5188,7 +5188,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const newId = uid();
     const newMember = {
       id: newId,
-      nom: memberForm.nom.trim(),
+      nom: memberForm.nom.trim().toUpperCase(),
       tel: memberForm.tel.trim(),
       carte: memberForm.carte,
       inscription: today(),
@@ -5203,7 +5203,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     }
 
     if (setMembers) {
-      setMembers(prev => [...prev, newMember]);
+      setMembers(prev => [newMember, ...prev.filter(m => m.id !== newMember.id)]);
     }
 
     // Auto post subscription transaction to accountant ledger
@@ -5211,7 +5211,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
       const newTx = {
         id: uid(),
         type: "recette",
-        description: `Adhésion ${memberForm.carte} - ${memberForm.nom.trim()}`,
+        description: `Adhésion ${memberForm.carte} - ${newMember.nom}`,
         montant: pricePaid,
         date: today()
       };
@@ -5265,9 +5265,10 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const price = isActiveMember ? 0 : Number(montant);
     const newId = `T-${Math.random().toString(36).substring(3, 8).toUpperCase()}`;
     const now = new Date();
+    const cleanNom = name.trim().toUpperCase();
     const t = {
       id: newId,
-      nom: name.trim(),
+      nom: cleanNom,
       date: today(),
       heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
       montant: price,
@@ -5289,7 +5290,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
       const newTx = {
         id: uid(),
         type: "recette",
-        description: `Ticket Entrée - ${name.trim()} (${newId})`,
+        description: `Ticket Entrée - ${cleanNom} (${newId})`,
         montant: price,
         date: today()
       };
@@ -5342,7 +5343,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const now = new Date();
     const dgTicket = {
       id: newId,
-      nom: dgForm.nom.trim(),
+      nom: dgForm.nom.trim().toUpperCase(),
       tel: dgForm.tel.trim(),
       date: today(),
       heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
@@ -5352,7 +5353,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
       startDate: start,
       endDate: end,
       dgPeriod: start === end ? `Le ${start}` : `Du ${start} au ${end}`,
-      dgNote: dgForm.note || "Invité personnel de Monsieur le Directeur Général (DG)",
+      dgNote: (dgForm.note || "Invité personnel de Monsieur le Directeur Général (DG)").trim().toUpperCase(),
       timestamp: Date.now()
     };
 
@@ -7069,7 +7070,8 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
     
     if (editingStaffId) {
       // Modify existing staff member
-      const updatedStaff = { nom: form.nom, role: form.role, tel: form.tel, salaire: Number(form.salaire) };
+      const cleanNom = form.nom.trim().toUpperCase();
+      const updatedStaff = { nom: cleanNom, role: form.role, tel: form.tel, salaire: Number(form.salaire) };
       const { error } = await supabase.from("staff").update(updatedStaff).eq("id", editingStaffId);
       if (error) {
         triggerToast("Erreur lors de la modification sur Supabase");
@@ -7077,13 +7079,14 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
         return;
       }
       setStaff(prev => prev.map(s => s.id === editingStaffId ? { ...s, ...updatedStaff } : s));
-      triggerToast(`Profil de ${form.nom} mis à jour !`);
+      triggerToast(`Profil de ${cleanNom} mis à jour !`);
     } else {
       // Create new staff member
       staffId = uid();
+      const cleanNom = form.nom.trim().toUpperCase();
       const newStaff = {
         id: staffId,
-        nom: form.nom,
+        nom: cleanNom,
         role: form.role,
         tel: form.tel,
         salaire: Number(form.salaire),
@@ -7095,7 +7098,7 @@ function Personnel({ staff, setStaff, tx, setTx, users, setUsers, currentUser, t
         return;
       }
       setStaff([...staff, newStaff]);
-      triggerToast(`Employé ${form.nom} inscrit avec succès.`);
+      triggerToast(`Employé ${cleanNom} inscrit avec succès.`);
     }
 
     // Dynamic Access Login management linked directly inside Staff form
@@ -7956,6 +7959,7 @@ const S = {
     fontSize: 13.5,
     background: "#FFFFFF",
     color: "#0F172A",
+    textTransform: "uppercase",
     transition: "all 0.2s ease",
   },
   btnPrimary: {
