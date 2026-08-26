@@ -149,7 +149,8 @@ export default function GymApp() {
         if (usersErr) console.error("Error loading users:", usersErr);
         if (cardTiersErr) console.error("Error loading card tiers:", cardTiersErr);
 
-        setMembers(membersData || []);
+        const sortedMembers = (membersData || []).slice().reverse();
+        setMembers(sortedMembers);
         setStaff(staffData || []);
         setSchedule(scheduleData || []);
         setTx(txData || []);
@@ -2513,7 +2514,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         return;
       }
 
-      setMembers([...members, newMember]);
+      setMembers(prev => [newMember, ...prev.filter(m => m.id !== newMember.id)]);
       
       // Auto post subscription transaction to accountant ledger
       const newTx = {
@@ -2531,7 +2532,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         setTx(prev => [...prev, newTx]);
       }
 
-      triggerToast(`Adhérent inscrit ! Questionnaire et fiche générés.`);
+      triggerToast(`Adhérent ${newMember.nom} inscrit ! Questionnaire et fiche générés.`);
       setShowAddModal(false);
       openMemberQuestionnaireDoc(newMember);
     }
@@ -2566,7 +2567,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   };
 
   const filteredMembers = members.filter(m => {
-    const matchSearch = m.nom.toLowerCase().includes(search.toLowerCase()) || (m.tel && m.tel.includes(search));
+    const fullName = `${m.nom || ""} ${m.prenoms || ""}`.toLowerCase();
+    const searchLower = search.toLowerCase().trim();
+    const matchSearch = !searchLower ||
+      fullName.includes(searchLower) ||
+      (m.tel && m.tel.includes(searchLower)) ||
+      (m.whatsapp && m.whatsapp.includes(searchLower)) ||
+      (m.profession && m.profession.toLowerCase().includes(searchLower));
     const matchFilter = filterTier === "Tous" || m.carte === filterTier;
     return matchSearch && matchFilter;
   });
