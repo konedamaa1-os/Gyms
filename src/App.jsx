@@ -61,14 +61,16 @@ const formatPeriodFr = (start, end) => {
 
 const getMemberStatus = (m) => {
   const t = today();
-  if (m.expiration < t) return { label: "Expiré", color: "#EF4444", bg: "#FEE2E2" };
+  if (!m.expiration || m.expiration < t) return { label: "Expiré", color: "#EF4444", bg: "#FEE2E2", daysLeft: 0, expired: true };
   
   const expTime = new Date(m.expiration).getTime();
   const todayTime = new Date(t).getTime();
-  const diffDays = (expTime - todayTime) / (1000 * 60 * 60 * 24);
-  if (diffDays <= 7) return { label: "Expire Bientôt", color: "#D97706", bg: "#FEF3C7" };
+  const diffDays = Math.ceil((expTime - todayTime) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return { label: "Expire Aujourd'hui !", color: "#DC2626", bg: "#FEE2E2", daysLeft: 0, urgent: true };
+  if (diffDays <= 5) return { label: `Expire dans ${diffDays} jour${diffDays > 1 ? "s" : ""}`, color: "#DC2626", bg: "#FEE2E2", daysLeft: diffDays, urgent: true };
+  if (diffDays <= 7) return { label: "Expire Bientôt (≤ 7j)", color: "#D97706", bg: "#FEF3C7", daysLeft: diffDays };
   
-  return { label: "Actif", color: "#059669", bg: "#D1FAE5" };
+  return { label: "Actif", color: "#059669", bg: "#D1FAE5", daysLeft: diffDays };
 };
 
 export default function GymApp() {
@@ -2564,6 +2566,19 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     });
   };
 
+  // Calculate members expiring in 5 days or less
+  const membersExpiringIn5Days = members.filter(m => {
+    if (!m.expiration) return false;
+    const t = today();
+    if (m.expiration < t) return false;
+    const expTime = new Date(m.expiration).getTime();
+    const todayTime = new Date(t).getTime();
+    const diffDays = Math.ceil((expTime - todayTime) / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 5;
+  });
+
+  const expiredMembersList = members.filter(m => m.expiration && m.expiration < today());
+
   const filteredMembers = members.filter(m => {
     const fullName = `${m.nom || ""} ${m.prenoms || ""}`.toLowerCase();
     const searchLower = search.toLowerCase().trim();
@@ -2572,7 +2587,23 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       (m.tel && m.tel.includes(searchLower)) ||
       (m.whatsapp && m.whatsapp.includes(searchLower)) ||
       (m.profession && m.profession.toLowerCase().includes(searchLower));
-    const matchFilter = filterTier === "Tous" || m.carte === filterTier;
+    
+    let matchFilter = true;
+    if (filterTier === "expire-5j") {
+      const t = today();
+      if (!m.expiration || m.expiration < t) matchFilter = false;
+      else {
+        const diff = Math.ceil((new Date(m.expiration).getTime() - new Date(t).getTime()) / (1000 * 60 * 60 * 24));
+        matchFilter = diff >= 0 && diff <= 5;
+      }
+    } else if (filterTier === "expire") {
+      matchFilter = m.expiration && m.expiration < today();
+    } else if (filterTier === "actif") {
+      matchFilter = m.expiration && m.expiration >= today();
+    } else if (filterTier !== "Tous") {
+      matchFilter = m.carte === filterTier;
+    }
+
     return matchSearch && matchFilter;
   });
 
@@ -2686,25 +2717,124 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
         </div>
       </div>
 
+      {/* Alert Banner for Members Expiring in <= 5 Days */}
+      {membersExpiringIn5Days.length > 0 && (
+        <div style={{
+          background: "linear-gradient(135deg, #FEF2F2, #FFF1F2)",
+          border: "1px solid #FECACA",
+          borderRadius: 12,
+          padding: "14px 18px",
+          marginBottom: 20,
+          boxShadow: "0 2px 8px rgba(220, 38, 38, 0.08)"
+        }} className="no-print">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#DC2626" }}>
+                ⏰
+              </div>
+              <div>
+                <strong style={{ color: "#991B1B", fontSize: 14 }}>
+                  {membersExpiringIn5Days.length} membre(s) arrivent à expiration dans 5 jours ou moins !
+                </strong>
+                <div style={{ fontSize: 12, color: "#7F1D1D", marginTop: 2 }}>
+                  N'oubliez pas de leur envoyer un rappel WhatsApp / SMS pour renouveler leur abonnement.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFilterTier(filterTier === "expire-5j" ? "Tous" : "expire-5j")}
+              style={{
+                background: filterTier === "expire-5j" ? "#DC2626" : "#FFFFFF",
+                color: filterTier === "expire-5j" ? "#FFFFFF" : "#DC2626",
+                border: "1px solid #DC2626",
+                padding: "8px 16px",
+                borderRadius: 6,
+                fontWeight: 700,
+                fontSize: 12.5,
+                cursor: "pointer",
+                boxShadow: "0 2px 6px rgba(220, 38, 38, 0.15)"
+              }}
+            >
+              {filterTier === "expire-5j" ? "✓ Affichage des 5 jours (Voir tous)" : `🔍 Voir ces ${membersExpiringIn5Days.length} membre(s)`}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter and Search Section */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         <input
           style={{ ...S.input, flex: 1, minWidth: 220 }}
-          placeholder="Rechercher par nom ou téléphone..."
+          placeholder="Rechercher par nom, prénom, téléphone, whatsapp..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {["Tous", ...cardTiers.map(c => c.key)].map(tier => (
+          <button
+            key="Tous"
+            onClick={() => setFilterTier("Tous")}
+            style={{
+              ...S.btnFilter,
+              ...(filterTier === "Tous" ? S.btnFilterActive : {})
+            }}
+          >
+            Tous ({members.length})
+          </button>
+
+          <button
+            key="expire-5j"
+            onClick={() => setFilterTier(filterTier === "expire-5j" ? "Tous" : "expire-5j")}
+            style={{
+              ...S.btnFilter,
+              background: filterTier === "expire-5j" ? "#DC2626" : "#FEF2F2",
+              color: filterTier === "expire-5j" ? "#FFFFFF" : "#DC2626",
+              borderColor: "#FECACA",
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            <span>⏰ Expire ≤ 5 jours</span>
+            <span style={{
+              background: filterTier === "expire-5j" ? "#FFFFFF" : "#DC2626",
+              color: filterTier === "expire-5j" ? "#DC2626" : "#FFFFFF",
+              borderRadius: 10,
+              padding: "1px 6px",
+              fontSize: 10.5,
+              fontWeight: 900
+            }}>
+              {membersExpiringIn5Days.length}
+            </span>
+          </button>
+
+          {expiredMembersList.length > 0 && (
             <button
-              key={tier}
-              onClick={() => setFilterTier(tier)}
+              key="expire"
+              onClick={() => setFilterTier(filterTier === "expire" ? "Tous" : "expire")}
               style={{
                 ...S.btnFilter,
-                ...(filterTier === tier ? S.btnFilterActive : {})
+                background: filterTier === "expire" ? "#64748B" : "#F1F5F9",
+                color: filterTier === "expire" ? "#FFFFFF" : "#475569",
+                borderColor: "#CBD5E1",
+                fontWeight: 700
               }}
             >
-              {tier.split(" (")[0]}
+              ⚠️ Expirés ({expiredMembersList.length})
+            </button>
+          )}
+
+          {cardTiers.map(c => (
+            <button
+              key={c.key}
+              onClick={() => setFilterTier(c.key)}
+              style={{
+                ...S.btnFilter,
+                ...(filterTier === c.key ? S.btnFilterActive : {})
+              }}
+            >
+              {c.key.split(" (")[0]}
             </button>
           ))}
         </div>
