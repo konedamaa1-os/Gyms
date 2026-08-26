@@ -28,10 +28,29 @@ CREATE TABLE users (
 CREATE TABLE members (
     id TEXT PRIMARY KEY,
     nom TEXT NOT NULL,
+    prenoms TEXT DEFAULT '',
     tel TEXT,
+    whatsapp TEXT DEFAULT '',
+    sexe TEXT DEFAULT 'Homme',
+    "dateNaissance" TEXT DEFAULT '',
+    profession TEXT DEFAULT '',
+    quartier TEXT DEFAULT '',
+    lieu TEXT DEFAULT 'Divo',
+    "urgenceNom" TEXT DEFAULT '',
+    "urgenceTel" TEXT DEFAULT '',
+    "urgenceLien" TEXT DEFAULT '',
     carte TEXT,
     inscription TEXT,
-    expiration TEXT
+    expiration TEXT,
+    objectifs JSONB DEFAULT '[]'::jsonb,
+    q1 TEXT DEFAULT 'Non',
+    q2 TEXT DEFAULT 'Non',
+    q3 TEXT DEFAULT 'Non',
+    q4 TEXT DEFAULT 'Non',
+    q5 TEXT DEFAULT 'Non',
+    q6 TEXT DEFAULT 'Non',
+    q7 TEXT DEFAULT 'Non',
+    remarques TEXT DEFAULT ''
 );
 
 -- 4. Create Schedule Table (Classes/Emploi du temps)
@@ -58,10 +77,17 @@ CREATE TABLE tx (
 CREATE TABLE tickets (
     id TEXT PRIMARY KEY,
     nom TEXT NOT NULL,
+    tel TEXT,
     date TEXT,
     heure TEXT,
     montant NUMERIC DEFAULT 0,
-    "isMember" BOOLEAN DEFAULT FALSE
+    "isMember" BOOLEAN DEFAULT FALSE,
+    "isDgGuest" BOOLEAN DEFAULT FALSE,
+    "startDate" TEXT,
+    "endDate" TEXT,
+    "dgPeriod" TEXT,
+    "dgNote" TEXT,
+    timestamp NUMERIC
 );
 
 -- --- SEED DATA ---
