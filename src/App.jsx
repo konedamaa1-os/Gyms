@@ -747,6 +747,7 @@ export default function GymApp() {
             {tab === "accueil" && (
               <Accueil
                 members={members}
+                setMembers={setMembers}
                 tickets={tickets}
                 setTickets={setTickets}
                 setTx={setTx}
@@ -5114,7 +5115,7 @@ function Planning({ schedule, setSchedule, staff, triggerToast, currentUser }) {
 // ==========================================
 // ACCUEIL / TICKETS (SECRETAIRE)
 // ==========================================
-function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUser, cardTiers = [] }) {
+function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast, currentUser, cardTiers = [] }) {
   const ticketTier = cardTiers?.find(t => 
     t.duration === 0 ||
     t.key?.toLowerCase().includes("ticket unique") || 
@@ -5138,6 +5139,89 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
   });
 
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [memberForm, setMemberForm] = useState({
+    nom: "",
+    tel: "",
+    carte: cardTiers[0]?.key || "Bronze (Mensuel)",
+    montant: (cardTiers[0]?.price || 15000).toString(),
+    expiration: ""
+  });
+
+  const openMemberRegistration = (initialName = "", initialTel = "") => {
+    const defaultTier = cardTiers[0] || { key: "Bronze (Mensuel)", price: 15000 };
+    setMemberForm({
+      nom: initialName || name || "",
+      tel: initialTel || "",
+      carte: defaultTier.key,
+      montant: (defaultTier.price || 15000).toString(),
+      expiration: ""
+    });
+    setShowTicketModal(false);
+    setShowMemberModal(true);
+  };
+
+  const handleRegisterMember = async (e) => {
+    if (e) e.preventDefault();
+    if (!memberForm.nom.trim()) {
+      triggerToast("Le nom du membre est obligatoire");
+      return;
+    }
+
+    const selectedTier = cardTiers.find(c => c.key === memberForm.carte) || cardTiers[0];
+    const pricePaid = memberForm.montant ? Number(memberForm.montant) : (selectedTier?.price || 15000);
+
+    let expDate = memberForm.expiration;
+    if (!expDate) {
+      const exp = new Date();
+      exp.setMonth(exp.getMonth() + (selectedTier?.duration || 1));
+      expDate = exp.toISOString().slice(0, 10);
+    }
+
+    const newId = uid();
+    const newMember = {
+      id: newId,
+      nom: memberForm.nom.trim(),
+      tel: memberForm.tel.trim(),
+      carte: memberForm.carte,
+      inscription: today(),
+      expiration: expDate,
+    };
+
+    const { error: memberError } = await supabase.from("members").insert([newMember]);
+    if (memberError) {
+      triggerToast("Erreur lors de l'inscription sur Supabase");
+      console.error(memberError);
+      return;
+    }
+
+    if (setMembers) {
+      setMembers(prev => [...prev, newMember]);
+    }
+
+    // Auto post subscription transaction to accountant ledger
+    if (pricePaid > 0) {
+      const newTx = {
+        id: uid(),
+        type: "recette",
+        description: `Adhésion ${memberForm.carte} - ${memberForm.nom.trim()}`,
+        montant: pricePaid,
+        date: today()
+      };
+
+      const { error: txError } = await supabase.from("tx").insert([newTx]);
+      if (txError) {
+        console.error("Failed to post tx to Supabase:", txError);
+      } else if (setTx) {
+        setTx(prev => [...prev, newTx]);
+      }
+    }
+
+    triggerToast(`Membre ${newMember.nom} inscrit avec succès ! Carte ${memberForm.carte} active.`);
+    setName(newMember.nom);
+    setMontant(0);
+    setShowMemberModal(false);
+  };
 
   useEffect(() => {
     setMontant(ticketPrice);
@@ -5398,6 +5482,28 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
           <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Enregistrement direct des passages membres, tickets visiteurs et pass VIP.</p>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-glow"
+            onClick={() => openMemberRegistration()}
+            style={{
+              background: "linear-gradient(135deg, #10B981, #059669)",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: 8,
+              padding: "9px 16px",
+              fontSize: 13.5,
+              fontWeight: 800,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)"
+            }}
+          >
+            <span>➕</span> Inscription Membre
+          </button>
+
           <button
             type="button"
             className="btn-glow"
@@ -5778,12 +5884,34 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                       </div>
                     ) : (
                       <div style={{ background: "#FEF2F2", color: "#B91C1C", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                        ⚠️ Abonnement Expiré depuis le {matchedMember.expiration} — Ticket d'entrée payant requis ({fmt(ticketPrice)} F CFA)
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                          <div>
+                            ⚠️ Abonnement Expiré depuis le {matchedMember.expiration} ({fmt(ticketPrice)} F CFA)
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openMemberRegistration(matchedMember.nom, matchedMember.tel)}
+                            style={{ background: "#DC2626", color: "#fff", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11.5, fontWeight: 700, cursor: "pointer" }}
+                          >
+                            🔄 Réabonner
+                          </button>
+                        </div>
                       </div>
                     )
                   ) : (
                     <div style={{ background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>
-                      👤 Visiteur sans abonnement — Séance unique ({fmt(ticketPrice)} F CFA)
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                        <div>
+                          👤 Visiteur sans abonnement — Séance unique ({fmt(ticketPrice)} F CFA)
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openMemberRegistration(name)}
+                          style={{ background: "#059669", color: "#fff", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11.5, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                        >
+                          ➕ Inscrire membre
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -5850,42 +5978,26 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                 <label style={S.labelStyle}>Numéro de Téléphone (Optionnel)</label>
                 <input
                   style={S.input}
-                  placeholder="Ex: 07 55 66 77 88"
+                  placeholder="Ex: 07 00 00 00 00"
                   value={dgForm.tel}
                   onChange={e => setDgForm({ ...dgForm, tel: e.target.value })}
                 />
               </div>
 
               <div>
-                <label style={S.labelStyle}>Période de gratuité accordée par le DG *</label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginBottom: 8 }}>
-                  {[
-                    { id: "1", label: "1 Séance (1j)" },
-                    { id: "3", label: "3 Jours" },
-                    { id: "7", label: "1 Semaine (7j)" },
-                    { id: "14", label: "2 Semaines" },
-                    { id: "30", label: "1 Mois (30j)" },
-                    { id: "custom", label: "Date libre" }
-                  ].map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setDgForm({ ...dgForm, periodType: p.id })}
-                      style={{
-                        padding: "8px 4px",
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        borderRadius: 6,
-                        border: dgForm.periodType === p.id ? "2px solid #D97706" : "1px solid #CBD5E1",
-                        background: dgForm.periodType === p.id ? "#FEF3C7" : "#FFFFFF",
-                        color: dgForm.periodType === p.id ? "#B45309" : "#334155",
-                        cursor: "pointer"
-                      }}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
+                <label style={S.labelStyle}>Durée de Validité de la Gratuité</label>
+                <select
+                  style={S.input}
+                  value={dgForm.periodType}
+                  onChange={e => setDgForm({ ...dgForm, periodType: e.target.value })}
+                >
+                  <option value="1">1 Séance / Aujourd'hui uniquement</option>
+                  <option value="3">3 Jours consécutifs</option>
+                  <option value="7">1 Semaine (7 Jours VIP)</option>
+                  <option value="14">2 Semaines (14 Jours)</option>
+                  <option value="30">1 Mois (30 Jours VIP)</option>
+                  <option value="custom">Période personnalisée (Dates au choix)</option>
+                </select>
 
                 {dgForm.periodType === "custom" ? (
                   <div style={{ display: "flex", gap: 8 }}>
@@ -5951,6 +6063,110 @@ function Accueil({ members, tickets, setTickets, setTx, triggerToast, currentUse
                   }}
                 >
                   👑 Valider & Imprimer le Pass DG
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Member Registration Modal */}
+      {showMemberModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "92%", maxWidth: 520, borderRadius: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "1px solid #E2E8F0", paddingBottom: 12 }}>
+              <h2 className="disp" style={{ color: "#0F172A", fontSize: 20, margin: 0 }}>
+                💳 Inscription Rapide d'un Membre
+              </h2>
+              <button 
+                type="button" 
+                style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 24, cursor: "pointer" }} 
+                onClick={() => setShowMemberModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleRegisterMember} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={S.labelStyle}>Nom Complet du Membre *</label>
+                <input
+                  style={S.input}
+                  placeholder="Ex: Jean Yao"
+                  value={memberForm.nom}
+                  onChange={e => setMemberForm({ ...memberForm, nom: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Numéro de Téléphone</label>
+                <input
+                  style={S.input}
+                  placeholder="Ex: 07 44 55 66 77"
+                  value={memberForm.tel}
+                  onChange={e => setMemberForm({ ...memberForm, tel: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 220px" }}>
+                  <label style={S.labelStyle}>Formule d'Abonnement</label>
+                  <select
+                    style={S.input}
+                    value={memberForm.carte}
+                    onChange={e => {
+                      const tier = cardTiers.find(c => c.key === e.target.value);
+                      setMemberForm({
+                        ...memberForm,
+                        carte: e.target.value,
+                        montant: tier ? tier.price.toString() : ""
+                      });
+                    }}
+                  >
+                    {cardTiers.map(c => (
+                      <option key={c.key} value={c.key}>
+                        {c.key} ({fmt(c.price)} F)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: "1 1 140px" }}>
+                  <label style={S.labelStyle}>Montant Encaissé (F)</label>
+                  <input
+                    style={S.input}
+                    type="number"
+                    value={memberForm.montant}
+                    onChange={e => setMemberForm({ ...memberForm, montant: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={S.labelStyle}>Date d'Expiration (Auto si vide)</label>
+                <input
+                  style={S.input}
+                  type="date"
+                  value={memberForm.expiration}
+                  onChange={e => setMemberForm({ ...memberForm, expiration: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 10, borderTop: "1px solid #E2E8F0", paddingTop: 16 }}>
+                <button
+                  type="button"
+                  style={S.btnCancel}
+                  onClick={() => setShowMemberModal(false)}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="btn-glow"
+                  style={{ ...S.btnPrimary, padding: "10px 24px" }}
+                >
+                  Enregistrer & Valider l'accès
                 </button>
               </div>
             </form>
