@@ -1331,29 +1331,12 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 }
 
 // ==========================================
-// PRESTIGE FLYER REUSABLE COMPONENT
+// WHATSAPP SHARE URL (Lien direct d'aperçu uniquement)
 // ==========================================
 const getFlyerWhatsAppUrl = () => {
   const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://clubsportsante.ci";
   const publicLink = `${origin}/?affiche=1`;
-  const text = 
-    `🏋️‍♂️ *CLUB SPORT SANTÉ - DIVO* 🏋️‍♂️\n` +
-    `_Votre Santé, Notre Énergie_\n` +
-    `🏆 *Complexe Officiel de Remise en Forme & Musculation à Divo*\n\n` +
-    `👤 *Coach Arthur Ziega*\n` +
-    `• Musculation & Force\n` +
-    `• Cardio & Perte de Poids\n` +
-    `• Fitness & Gym Tonique (C.A.F.)\n` +
-    `• Bilan Santé Offert\n\n` +
-    `⏰ *Horaires d'Ouverture :*\n` +
-    `• Lundi - Vendredi : 17h00 - 21h00\n` +
-    `• Samedi : 06h30 - 09h30 & 17h00 - 21h00\n` +
-    `• Dimanche : 06h30 - 09h30\n\n` +
-    `💰 *Tarif :* 10.000 FCFA / mois (Séance : 1.000 F)\n` +
-    `📍 *Lieu :* Divo, Côte d'Ivoire (Salle Climatisée & Pro)\n` +
-    `📞 *Infoline :* 07 49 74 70 74 / 05 04 21 21 04\n\n` +
-    `👉 *Consultez l'Affiche Officielle en direct ici :*\n${publicLink}`;
-  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(publicLink)}`;
 };
 
 function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
