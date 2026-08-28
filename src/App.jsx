@@ -1331,12 +1331,36 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
 }
 
 // ==========================================
-// WHATSAPP SHARE URL (Lien direct d'aperçu uniquement)
+// WHATSAPP SHARE URL (Lien court masqué automatique)
 // ==========================================
+let cachedMaskedFlyerUrl = "";
+
 const getFlyerWhatsAppUrl = () => {
+  if (cachedMaskedFlyerUrl) {
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(cachedMaskedFlyerUrl)}`;
+  }
   const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://clubsportsante.ci";
   const publicLink = `${origin}/?affiche=1`;
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(publicLink)}`;
+};
+
+const fetchMaskedFlyerUrl = async () => {
+  if (cachedMaskedFlyerUrl) return cachedMaskedFlyerUrl;
+  const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://clubsportsante.ci";
+  const publicLink = `${origin}/?affiche=1`;
+  try {
+    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(publicLink)}`);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.startsWith("http")) {
+        cachedMaskedFlyerUrl = text.trim();
+        return cachedMaskedFlyerUrl;
+      }
+    }
+  } catch (e) {
+    // fallback if offline
+  }
+  return publicLink;
 };
 
 function PrestigeFlyerCard({ isPrint = false }) {
@@ -1597,8 +1621,23 @@ function PrestigeFlyerCard({ isPrint = false }) {
 // PUBLIC AFFICHE VIEW (Landing page for WhatsApp links & direct promotion)
 // ==========================================
 function PublicAfficheView({ onGoHome, onGoLogin }) {
-  const waUrl = getFlyerWhatsAppUrl();
+  const [waUrl, setWaUrl] = useState(() => getFlyerWhatsAppUrl());
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [flyerPrintLayout, setFlyerPrintLayout] = useState("dual"); // "dual" (2 flyers A5 / A4) or "single" (1 grand A4)
+
+  useEffect(() => {
+    fetchMaskedFlyerUrl().then((shortLink) => {
+      if (shortLink) setWaUrl(`https://api.whatsapp.com/send?text=${encodeURIComponent(shortLink)}`);
+    });
+  }, []);
+
+  const handleShareWhatsApp = async (e) => {
+    e.preventDefault();
+    setIsGeneratingLink(true);
+    const link = await fetchMaskedFlyerUrl();
+    setIsGeneratingLink(false);
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#0B0F19", color: "#FFF", display: "flex", flexDirection: "column" }}>
@@ -1721,26 +1760,27 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
             >
               <span>💬</span> Discuter sur WhatsApp
             </a>
-            <a 
-              href={waUrl}
-              target="_blank"
-              rel="noreferrer"
+            <button 
+              type="button"
+              onClick={handleShareWhatsApp}
+              disabled={isGeneratingLink}
               style={{
                 background: "rgba(255,255,255,0.12)",
                 color: "#FFF",
                 border: "1px solid rgba(255,255,255,0.25)",
                 padding: "8px 14px",
                 borderRadius: 8,
-                textDecoration: "none",
                 fontWeight: 800,
                 fontSize: 12.5,
                 display: "flex",
                 alignItems: "center",
-                gap: 6
+                gap: 6,
+                cursor: "pointer",
+                opacity: isGeneratingLink ? 0.7 : 1
               }}
             >
-              <span>📱</span> Partager
-            </a>
+              <span>📱</span> {isGeneratingLink ? "Lien masqué..." : "Partager"}
+            </button>
             <button 
               type="button" 
               onClick={() => window.print()}
@@ -2858,6 +2898,20 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   // Prestige Advertising Flyer A4
   const [showFlyerModal, setShowFlyerModal] = useState(false);
   const [flyerPrintLayout, setFlyerPrintLayout] = useState("dual"); // "dual" (2 flyers A5 / A4) or "single" (1 grand A4)
+  const [isGeneratingFlyerLink, setIsGeneratingFlyerLink] = useState(false);
+
+  useEffect(() => {
+    if (showFlyerModal) {
+      fetchMaskedFlyerUrl();
+    }
+  }, [showFlyerModal]);
+
+  const handleShareFlyerFromModal = async () => {
+    setIsGeneratingFlyerLink(true);
+    const link = await fetchMaskedFlyerUrl();
+    setIsGeneratingFlyerLink(false);
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(link)}`, "_blank");
+  };
 
   const openFlyerModal = () => {
     setActiveReceipt(null);
@@ -4884,26 +4938,28 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               <button type="button" style={{ ...S.btnCancel, color: "#FFF", borderColor: "#475569" }} onClick={() => setShowFlyerModal(false)}>
                 Fermer
               </button>
-              <a 
-                href={getFlyerWhatsAppUrl()} 
-                target="_blank" 
-                rel="noreferrer"
+              <button 
+                type="button" 
+                onClick={handleShareFlyerFromModal}
+                disabled={isGeneratingFlyerLink}
                 style={{
                   background: "#22C55E",
                   color: "#FFFFFF",
                   padding: "0 18px",
                   height: 40,
                   borderRadius: 8,
-                  textDecoration: "none",
+                  border: "none",
+                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                   fontWeight: 800,
-                  fontSize: 12.5
+                  fontSize: 12.5,
+                  opacity: isGeneratingFlyerLink ? 0.7 : 1
                 }}
               >
-                <span>📱</span> Partager avec lien WhatsApp
-              </a>
+                <span>📱</span> {isGeneratingFlyerLink ? "Génération..." : "Partager lien masqué WhatsApp"}
+              </button>
               <button 
                 type="button" 
                 className="btn-glow" 
