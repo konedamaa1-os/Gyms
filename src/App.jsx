@@ -1345,7 +1345,7 @@ const getFlyerWhatsAppUrl = () => {
     `• Fitness & Gym Tonique (C.A.F.)\n` +
     `• Bilan Santé Offert\n\n` +
     `⏰ *Horaires d'Ouverture :*\n` +
-    `• Lundi - Vendredi : 06h00 - 21h00 (Non-stop)\n` +
+    `• Lundi - Vendredi : 17h00 - 21h00\n` +
     `• Samedi : 06h30 - 09h30 & 17h00 - 21h00\n` +
     `• Dimanche : 06h30 - 09h30\n\n` +
     `💰 *Tarif :* 10.000 FCFA / mois (Séance : 1.000 F)\n` +
@@ -1551,8 +1551,8 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
             <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.35fr 1fr", gap: isCompact ? 4 : 6, fontSize: isCompact ? 8 : 10, textAlign: "center" }}>
               <div style={{ background: "#F1F5F9", padding: isCompact ? "3px 2px" : "5px 4px", borderRadius: 4 }}>
                 <div style={{ fontWeight: 900, color: "#0F172A", fontSize: isCompact ? 7.5 : 9.5 }}>LUN &ndash; VEN</div>
-                <div style={{ fontWeight: 800, color: "#2563EB", marginTop: 1, fontSize: isCompact ? 7.5 : 9.5 }}>06h00 &ndash; 21h00</div>
-                <div style={{ fontSize: isCompact ? 6.5 : 8, color: "#64748B", fontWeight: 700 }}>NON-STOP</div>
+                <div style={{ fontWeight: 800, color: "#2563EB", marginTop: 1, fontSize: isCompact ? 7.5 : 9.5 }}>17h00 &ndash; 21h00</div>
+                <div style={{ fontSize: isCompact ? 6.5 : 8, color: "#64748B", fontWeight: 700 }}>SOIRÉE</div>
               </div>
               <div style={{ background: "#FFF7ED", padding: isCompact ? "3px 2px" : "5px 4px", borderRadius: 4, border: "1px solid #FFEDD5" }}>
                 <div style={{ fontWeight: 900, color: "#C2410C", fontSize: isCompact ? 7.5 : 9.5 }}>SAMEDI</div>
