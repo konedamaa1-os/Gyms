@@ -494,19 +494,20 @@ export default function GymApp() {
             color-adjust: exact !important;
           }
 
-          /* DUAL FLYER A4: 2 Flyers side by side on 1 A4 landscape page (A5 x 2) */
+          /* DUAL FLYER A4: 2 Flyers on 1 A4 Portrait Sheet (Top & Bottom halves: A5 x 2) */
           .print-flyer-dual {
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
-            width: 297mm !important;
-            height: 210mm !important;
-            max-height: 210mm !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            max-height: 297mm !important;
             box-sizing: border-box !important;
-            padding: 5mm 6mm !important;
+            padding: 5mm 10mm !important;
             display: flex !important;
-            align-items: center !important;
+            flex-direction: column !important;
             justify-content: space-between !important;
+            align-items: center !important;
             background: #FFFFFF !important;
             z-index: 2147483647 !important;
             page-break-inside: avoid !important;
@@ -1782,16 +1783,18 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
 
         {/* The Prestige Flyer Preview */}
         {flyerPrintLayout === "dual" ? (
-          <div style={{ width: "100%", maxWidth: 920, display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "stretch", background: "rgba(255,255,255,0.03)", padding: "12px 10px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
-            <div>
+          <div style={{ width: "100%", maxWidth: 540, display: "flex", flexDirection: "column", gap: 8, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "14px 12px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ width: "100%" }}>
               <PrestigeFlyerCard isPrint={false} isCompact={true} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", height: "92%", borderLeft: "1.5px dashed #64748B", padding: "0 4px", color: "#94A3B8" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", color: "#94A3B8", fontSize: 11, fontWeight: 800, margin: "6px 0" }}>
               <span>✂</span>
-              <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 2, fontSize: 8.5, fontWeight: 800 }}>DÉCOUPE</span>
+              <span style={{ borderBottom: "1.5px dashed #64748B", flex: 1 }}></span>
+              <span style={{ letterSpacing: 2, fontSize: 8.5 }}>LIGNE DE DÉCOUPE</span>
+              <span style={{ borderBottom: "1.5px dashed #64748B", flex: 1 }}></span>
               <span>✂</span>
             </div>
-            <div>
+            <div style={{ width: "100%" }}>
               <PrestigeFlyerCard isPrint={false} isCompact={true} />
             </div>
           </div>
@@ -1808,7 +1811,7 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
           <style>{`
             @media print {
               @page {
-                size: A4 landscape !important;
+                size: A4 portrait !important;
                 margin: 0mm !important;
               }
               body {
@@ -1817,15 +1820,17 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
             }
           `}</style>
           <div className="print-only print-flyer-dual" style={{ display: "none" }}>
-            <div style={{ width: "138mm", height: "196mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <PrestigeFlyerCard isPrint={true} isCompact={true} />
             </div>
-            <div style={{ height: "190mm", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", borderLeft: "1.5px dashed #94A3B8", padding: "0 2px", color: "#64748B", fontSize: 10, fontWeight: 700 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, margin: "2mm 0" }}>
               <span>✂</span>
-              <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
+              <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
+              <span style={{ letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
+              <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
               <span>✂</span>
             </div>
-            <div style={{ width: "138mm", height: "196mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
               <PrestigeFlyerCard isPrint={true} isCompact={true} />
             </div>
           </div>
@@ -4870,16 +4875,18 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
             {/* Poster Sheet Preview */}
             {flyerPrintLayout === "dual" ? (
-              <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 12, alignItems: "stretch", background: "rgba(255,255,255,0.03)", padding: "12px 10px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.1)" }}>
-                <div>
+              <div style={{ width: "100%", maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "14px 12px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ width: "100%" }}>
                   <PrestigeFlyerCard isPrint={false} isCompact={true} />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", height: "92%", borderLeft: "1.5px dashed #64748B", padding: "0 4px", color: "#94A3B8" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", color: "#94A3B8", fontSize: 11, fontWeight: 800, margin: "6px 0" }}>
                   <span>✂</span>
-                  <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 2, fontSize: 8.5, fontWeight: 800 }}>DÉCOUPE</span>
+                  <span style={{ borderBottom: "1.5px dashed #64748B", flex: 1 }}></span>
+                  <span style={{ letterSpacing: 2, fontSize: 8.5 }}>LIGNE DE DÉCOUPE</span>
+                  <span style={{ borderBottom: "1.5px dashed #64748B", flex: 1 }}></span>
                   <span>✂</span>
                 </div>
-                <div>
+                <div style={{ width: "100%" }}>
                   <PrestigeFlyerCard isPrint={false} isCompact={true} />
                 </div>
               </div>
@@ -4920,7 +4927,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #2563EB, #1D4ED8)", display: "flex", alignItems: "center", gap: 6, padding: "0 20px", height: 40, fontWeight: 800, fontSize: 12.5 }}
                 onClick={() => window.print()}
               >
-                <span>🖨️</span> {flyerPrintLayout === "dual" ? "Imprimer 2 Flyers sur Page A4 (2x A5)" : "Imprimer Format A4 Pleine Page"}
+                <span>🖨️</span> {flyerPrintLayout === "dual" ? "Imprimer 2 Flyers sur Page A4 Portrait" : "Imprimer Format A4 Pleine Page"}
               </button>
             </div>
           </div>
@@ -4934,7 +4941,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <style>{`
               @media print {
                 @page {
-                  size: A4 landscape !important;
+                  size: A4 portrait !important;
                   margin: 0mm !important;
                 }
                 body {
@@ -4943,15 +4950,17 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               }
             `}</style>
             <div className="print-only print-flyer-dual" style={{ display: "none" }}>
-              <div style={{ width: "138mm", height: "196mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <PrestigeFlyerCard isPrint={true} isCompact={true} />
               </div>
-              <div style={{ height: "190mm", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", borderLeft: "1.5px dashed #94A3B8", padding: "0 2px", color: "#64748B", fontSize: 10, fontWeight: 700 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, margin: "2mm 0" }}>
                 <span>✂</span>
-                <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
+                <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
+                <span style={{ letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
+                <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
                 <span>✂</span>
               </div>
-              <div style={{ width: "138mm", height: "196mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <PrestigeFlyerCard isPrint={true} isCompact={true} />
               </div>
             </div>
