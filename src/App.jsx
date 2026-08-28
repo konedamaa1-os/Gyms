@@ -503,11 +503,11 @@ export default function GymApp() {
             height: 297mm !important;
             max-height: 297mm !important;
             box-sizing: border-box !important;
-            padding: 5mm 10mm !important;
+            padding: 3mm 6mm !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            align-items: center !important;
+            align-items: stretch !important;
             background: #FFFFFF !important;
             z-index: 2147483647 !important;
             page-break-inside: avoid !important;
@@ -1339,7 +1339,7 @@ const getFlyerWhatsAppUrl = () => {
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(publicLink)}`;
 };
 
-function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
+function PrestigeFlyerCard({ isPrint = false }) {
   return (
     <div style={{ 
       position: "relative", 
@@ -1350,7 +1350,7 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
       fontFamily: "'Montserrat', Arial, sans-serif", 
       boxShadow: isPrint ? "none" : "0 10px 30px rgba(0,0,0,0.3)",
       border: isPrint ? "none" : "2px solid #1E3A8A",
-      maxWidth: isPrint ? "100%" : (isCompact ? 440 : 620),
+      maxWidth: isPrint ? "100%" : 620,
       width: "100%",
       margin: "0 auto",
       display: "flex",
@@ -1362,9 +1362,9 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
         background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
         color: "#FFFFFF", 
         fontWeight: 900, 
-        fontSize: isCompact ? 9 : (isPrint ? 11.5 : 11), 
-        letterSpacing: isCompact ? 1 : 1.5, 
-        padding: isCompact ? "4px 0" : "5px 0", 
+        fontSize: 11, 
+        letterSpacing: 1.5, 
+        padding: "5px 0", 
         textAlign: "center", 
         textTransform: "uppercase",
         boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
@@ -1376,7 +1376,7 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
       {/* 2. TOP HERO AREA WITH GRADIENT & GRID */}
       <div style={{ 
         background: "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.95) 75%), linear-gradient(135deg, #1E40AF 0%, #172554 100%)", 
-        padding: isCompact ? "8px 12px 6px 12px" : (isPrint ? "14px 18px 12px 18px" : "12px 16px 12px 16px"), 
+        padding: isPrint ? "11px 16px 10px 16px" : "12px 16px 12px 16px", 
         position: "relative",
         color: "#FFFFFF",
         overflow: "hidden"
@@ -1391,45 +1391,45 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
         }} />
 
         {/* Top Logo & Certification Seals */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2, marginBottom: isCompact ? 6 : 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: isCompact ? 6 : 10, background: "rgba(255,255,255,0.95)", padding: isCompact ? "3px 8px" : "5px 12px", borderRadius: 7, boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.95)", padding: "4px 10px", borderRadius: 7, boxShadow: "0 3px 10px rgba(0,0,0,0.15)" }}>
             <img 
               src="/logo-club-sport-sante.jpg" 
               alt="Logo Club Sport Santé" 
-              style={{ width: isCompact ? 32 : 42, height: isCompact ? 32 : 42, objectFit: "contain", borderRadius: 5 }} 
+              style={{ width: 40, height: 40, objectFit: "contain", borderRadius: 5 }} 
             />
             <div>
-              <div style={{ fontSize: isCompact ? 10.5 : 12.5, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
-              <div style={{ fontSize: isCompact ? 7.5 : 9, fontWeight: 800, color: "#DC2626" }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
+              <div style={{ fontSize: 12.5, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
+              <div style={{ fontSize: 8.5, fontWeight: 800, color: "#DC2626" }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
             </div>
           </div>
 
-          <div style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1.5px solid rgba(255,255,255,0.45)", borderRadius: 7, padding: isCompact ? "3px 8px" : "5px 12px", textAlign: "right" }}>
-            <div style={{ fontSize: isCompact ? 8.5 : 10, fontWeight: 900, color: "#FDE047", letterSpacing: 0.8 }}>🏆 COMPLEXE OFFICIEL</div>
-            <div style={{ fontSize: isCompact ? 7.5 : 8.5, color: "#F1F5F9" }}>Divo &bull; Côte d'Ivoire</div>
+          <div style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1.5px solid rgba(255,255,255,0.45)", borderRadius: 7, padding: "4px 10px", textAlign: "right" }}>
+            <div style={{ fontSize: 9.5, fontWeight: 900, color: "#FDE047", letterSpacing: 0.8 }}>🏆 COMPLEXE OFFICIEL</div>
+            <div style={{ fontSize: 8.5, color: "#F1F5F9" }}>Divo &bull; Côte d'Ivoire</div>
           </div>
         </div>
 
         {/* Hero Middle: Price Badge + Coach Presentation */}
-        <div style={{ display: "grid", gridTemplateColumns: isCompact ? "105px 1fr" : (isPrint ? "150px 1fr" : "140px 1fr"), gap: isCompact ? 8 : 14, alignItems: "center", position: "relative", zIndex: 2 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "135px 1fr", gap: 12, alignItems: "center", position: "relative", zIndex: 2 }}>
           {/* Left: 3D Price Badge */}
           <div style={{ 
             background: "#FFFFFF", 
             borderRadius: 10, 
-            padding: isCompact ? "6px 4px" : "10px 6px", 
+            padding: "8px 6px", 
             textAlign: "center", 
             color: "#0F172A", 
             boxShadow: "0 6px 18px rgba(0,0,0,0.3)",
             border: "1.5px solid #E2E8F0"
           }}>
-            <div style={{ fontSize: isCompact ? 8.5 : 10, fontWeight: 900, color: "#2563EB", letterSpacing: 1, textTransform: "uppercase" }}>FORFAIT</div>
-            <div style={{ fontSize: isCompact ? 20 : 27, fontWeight: 950, color: "#DC2626", letterSpacing: -0.5, lineHeight: 1.1, margin: "2px 0 1px 0" }}>
+            <div style={{ fontSize: 9.5, fontWeight: 900, color: "#2563EB", letterSpacing: 1, textTransform: "uppercase" }}>FORFAIT</div>
+            <div style={{ fontSize: 26, fontWeight: 950, color: "#DC2626", letterSpacing: -0.5, lineHeight: 1.1, margin: "2px 0 1px 0" }}>
               10 000
             </div>
-            <div style={{ fontSize: isCompact ? 8.5 : 10, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>
+            <div style={{ fontSize: 9.5, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>
               FCFA / MOIS
             </div>
-            <div style={{ marginTop: isCompact ? 3 : 5, borderTop: "1px dashed #CBD5E1", paddingTop: isCompact ? 2 : 4, fontSize: isCompact ? 7.5 : 9, fontWeight: 800, color: "#059669" }}>
+            <div style={{ marginTop: 4, borderTop: "1px dashed #CBD5E1", paddingTop: 3, fontSize: 8.5, fontWeight: 800, color: "#059669" }}>
               Séance : 1.000 F
             </div>
           </div>
@@ -1440,14 +1440,14 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
               display: "inline-block", 
               background: "linear-gradient(90deg, #EA580C, #DC2626)", 
               color: "#FFFFFF", 
-              padding: isCompact ? "3px 10px" : "5px 14px", 
+              padding: "4px 14px", 
               borderRadius: 6, 
               fontWeight: 900, 
-              fontSize: isCompact ? 11 : 13.5, 
+              fontSize: 13, 
               letterSpacing: 1, 
               textTransform: "uppercase", 
               boxShadow: "0 3px 8px rgba(234, 88, 12, 0.4)",
-              marginBottom: isCompact ? 4 : 6
+              marginBottom: 5
             }}>
               COACH ARTHUR ZIEGA
             </div>
@@ -1456,22 +1456,22 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
             <div style={{ 
               background: "linear-gradient(90deg, #F97316 0%, #EA580C 100%)", 
               color: "#FFFFFF", 
-              padding: isCompact ? "3px 8px" : "4px 10px", 
+              padding: "4px 10px", 
               borderRadius: 5, 
-              fontSize: isCompact ? 8.5 : 10.5, 
+              fontSize: 10, 
               fontWeight: 800, 
-              marginBottom: isCompact ? 5 : 8, 
+              marginBottom: 6, 
               boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
             }}>
               PRESTIGE DU CLUB SPORT SANTÉ &bull; ENCADREMENT PRO
             </div>
 
             {/* 4 Feature Tags */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: isCompact ? 3 : 5 }}>
-              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: isCompact ? "2px 5px" : "3px 8px", borderRadius: 4, fontSize: isCompact ? 7.5 : 9.5, fontWeight: 700 }}>🏋️ Musculation</span>
-              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: isCompact ? "2px 5px" : "3px 8px", borderRadius: 4, fontSize: isCompact ? 7.5 : 9.5, fontWeight: 700 }}>🏃 Cardio</span>
-              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: isCompact ? "2px 5px" : "3px 8px", borderRadius: 4, fontSize: isCompact ? 7.5 : 9.5, fontWeight: 700 }}>🧘 Fitness C.A.F.</span>
-              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: isCompact ? "2px 5px" : "3px 8px", borderRadius: 4, fontSize: isCompact ? 7.5 : 9.5, fontWeight: 700 }}>🩺 Bilan Offert</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "2px 7px", borderRadius: 4, fontSize: 9, fontWeight: 700 }}>🏋️ Musculation</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "2px 7px", borderRadius: 4, fontSize: 9, fontWeight: 700 }}>🏃 Cardio</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "2px 7px", borderRadius: 4, fontSize: 9, fontWeight: 700 }}>🧘 Fitness C.A.F.</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "2px 7px", borderRadius: 4, fontSize: 9, fontWeight: 700 }}>🩺 Bilan Offert</span>
             </div>
           </div>
         </div>
@@ -1480,7 +1480,7 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
       {/* 3. LOWER SOLID BLUE BLOCK WITH SCHEDULE & GOALS */}
       <div style={{ 
         background: "linear-gradient(135deg, #0052CC 0%, #1E40AF 100%)", 
-        padding: isCompact ? "8px 12px 10px 12px" : (isPrint ? "12px 18px 14px 18px" : "10px 16px 12px 16px"), 
+        padding: isPrint ? "10px 16px 11px 16px" : "10px 16px 12px 16px", 
         position: "relative",
         color: "#FFFFFF",
         overflow: "hidden"
@@ -1495,21 +1495,21 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
         }} />
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center" }}>
-          <div style={{ fontSize: isCompact ? 8.5 : 10.5, fontWeight: 900, color: "#93C5FD", letterSpacing: 1.2, textTransform: "uppercase" }}>
+          <div style={{ fontSize: 10, fontWeight: 900, color: "#93C5FD", letterSpacing: 1.2, textTransform: "uppercase" }}>
             OBJECTIFS & PROGRAMMES COMPLETS
           </div>
-          <div style={{ fontSize: isCompact ? 15 : 20, fontWeight: 950, lineHeight: 1.15, marginTop: 2, letterSpacing: -0.5, color: "#FFFFFF" }}>
+          <div style={{ fontSize: 18, fontWeight: 950, lineHeight: 1.15, marginTop: 2, letterSpacing: -0.5, color: "#FFFFFF" }}>
             Remise en Forme, Musculation & Santé
           </div>
           <div style={{ 
-            marginTop: isCompact ? 3 : 5, 
+            marginTop: 4, 
             display: "inline-block", 
             background: "linear-gradient(90deg, #EA580C 0%, #DC2626 100%)", 
             color: "#FFFFFF", 
             fontWeight: 900, 
-            fontSize: isCompact ? 9.5 : 11.5, 
+            fontSize: 11, 
             letterSpacing: 1, 
-            padding: isCompact ? "2px 10px" : "4px 16px", 
+            padding: "3px 14px", 
             borderRadius: 4,
             textTransform: "uppercase",
             boxShadow: "0 3px 10px rgba(234, 88, 12, 0.4)"
@@ -1521,53 +1521,53 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
           <div style={{
             background: "rgba(255, 255, 255, 0.96)",
             borderRadius: 8,
-            padding: isCompact ? "5px 8px" : "8px 12px",
+            padding: "6px 10px",
             color: "#0F172A",
             boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             border: "1.5px solid #E2E8F0",
-            marginTop: isCompact ? 6 : 10,
+            marginTop: 8,
             textAlign: "left"
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #E2E8F0", paddingBottom: 3, marginBottom: 4 }}>
-              <span style={{ fontSize: isCompact ? 8.5 : 10, fontWeight: 900, color: "#1E40AF", letterSpacing: 0.8 }}>⏰ HORAIRES D'OUVERTURE</span>
-              <span style={{ fontSize: isCompact ? 7.5 : 9, fontWeight: 900, color: "#DC2626", background: "#FEF2F2", padding: "1px 5px", borderRadius: 3 }}>📍 SALLE CLIMATISÉE &bull; DIVO</span>
+              <span style={{ fontSize: 9.5, fontWeight: 900, color: "#1E40AF", letterSpacing: 0.8 }}>⏰ HORAIRES D'OUVERTURE</span>
+              <span style={{ fontSize: 8.5, fontWeight: 900, color: "#DC2626", background: "#FEF2F2", padding: "1px 6px", borderRadius: 3 }}>📍 SALLE CLIMATISÉE &bull; DIVO</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.35fr 1fr", gap: isCompact ? 4 : 6, fontSize: isCompact ? 8 : 10, textAlign: "center" }}>
-              <div style={{ background: "#F1F5F9", padding: isCompact ? "3px 2px" : "5px 4px", borderRadius: 4 }}>
-                <div style={{ fontWeight: 900, color: "#0F172A", fontSize: isCompact ? 7.5 : 9.5 }}>LUN &ndash; VEN</div>
-                <div style={{ fontWeight: 800, color: "#2563EB", marginTop: 1, fontSize: isCompact ? 7.5 : 9.5 }}>17h00 &ndash; 21h00</div>
-                <div style={{ fontSize: isCompact ? 6.5 : 8, color: "#64748B", fontWeight: 700 }}>SOIRÉE</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.35fr 1fr", gap: 6, fontSize: 9.5, textAlign: "center" }}>
+              <div style={{ background: "#F1F5F9", padding: "4px 3px", borderRadius: 4 }}>
+                <div style={{ fontWeight: 900, color: "#0F172A", fontSize: 9 }}>LUN &ndash; VEN</div>
+                <div style={{ fontWeight: 800, color: "#2563EB", marginTop: 1, fontSize: 9 }}>17h00 &ndash; 21h00</div>
+                <div style={{ fontSize: 7.5, color: "#64748B", fontWeight: 700 }}>SOIRÉE</div>
               </div>
-              <div style={{ background: "#FFF7ED", padding: isCompact ? "3px 2px" : "5px 4px", borderRadius: 4, border: "1px solid #FFEDD5" }}>
-                <div style={{ fontWeight: 900, color: "#C2410C", fontSize: isCompact ? 7.5 : 9.5 }}>SAMEDI</div>
-                <div style={{ fontWeight: 800, color: "#EA580C", marginTop: 1, fontSize: isCompact ? 7 : 9 }}>06h30 &ndash; 09h30</div>
-                <div style={{ fontWeight: 800, color: "#EA580C", fontSize: isCompact ? 7 : 9 }}>17h00 &ndash; 21h00</div>
+              <div style={{ background: "#FFF7ED", padding: "4px 3px", borderRadius: 4, border: "1px solid #FFEDD5" }}>
+                <div style={{ fontWeight: 900, color: "#C2410C", fontSize: 9 }}>SAMEDI</div>
+                <div style={{ fontWeight: 800, color: "#EA580C", marginTop: 1, fontSize: 8.5 }}>06h30 &ndash; 09h30</div>
+                <div style={{ fontWeight: 800, color: "#EA580C", fontSize: 8.5 }}>17h00 &ndash; 21h00</div>
               </div>
-              <div style={{ background: "#FEF2F2", padding: isCompact ? "3px 2px" : "5px 4px", borderRadius: 4, border: "1px solid #FEE2E2" }}>
-                <div style={{ fontWeight: 900, color: "#B91C1C", fontSize: isCompact ? 7.5 : 9.5 }}>DIMANCHE</div>
-                <div style={{ fontWeight: 800, color: "#DC2626", marginTop: 1, fontSize: isCompact ? 7.5 : 9.5 }}>06h30 &ndash; 09h30</div>
-                <div style={{ fontSize: isCompact ? 6.5 : 8, color: "#991B1B", fontWeight: 700 }}>MATINÉE</div>
+              <div style={{ background: "#FEF2F2", padding: "4px 3px", borderRadius: 4, border: "1px solid #FEE2E2" }}>
+                <div style={{ fontWeight: 900, color: "#B91C1C", fontSize: 9 }}>DIMANCHE</div>
+                <div style={{ fontWeight: 800, color: "#DC2626", marginTop: 1, fontSize: 9 }}>06h30 &ndash; 09h30</div>
+                <div style={{ fontSize: 7.5, color: "#991B1B", fontWeight: 700 }}>MATINÉE</div>
               </div>
             </div>
           </div>
 
           {/* 4. BLACK PILL CONTACT BAR */}
           <div style={{ 
-            marginTop: isCompact ? 6 : 9, 
+            marginTop: 8, 
             background: "#0F172A", 
             borderRadius: 24, 
-            padding: isCompact ? "4px 10px" : "6px 14px", 
+            padding: "5px 12px", 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center", 
-            gap: isCompact ? 6 : 10,
+            gap: 8,
             border: "1.5px solid rgba(255,255,255,0.25)",
             boxShadow: "0 3px 10px rgba(0,0,0,0.3)"
           }}>
-            <div style={{ background: "#22C55E", width: isCompact ? 18 : 22, height: isCompact ? 18 : 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: isCompact ? 10 : 12 }}>
+            <div style={{ background: "#22C55E", width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>
               📞
             </div>
-            <div style={{ fontSize: isCompact ? 10.5 : 12.5, fontWeight: 900, letterSpacing: 0.6, color: "#FFFFFF" }}>
+            <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: 0.6, color: "#FFFFFF" }}>
               07 49 74 70 74 / 05 04 21 21 04
             </div>
           </div>
@@ -1579,9 +1579,9 @@ function PrestigeFlyerCard({ isPrint = false, isCompact = false }) {
         background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
         color: "#FFFFFF", 
         fontWeight: 900, 
-        fontSize: isCompact ? 9 : (isPrint ? 11.5 : 11), 
-        letterSpacing: isCompact ? 1 : 1.5, 
-        padding: isCompact ? "4px 0" : "5px 0", 
+        fontSize: 11, 
+        letterSpacing: 1.5, 
+        padding: "5px 0", 
         textAlign: "center", 
         textTransform: "uppercase",
         boxShadow: "0 -2px 8px rgba(0,0,0,0.15)",
@@ -1766,9 +1766,9 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
 
         {/* The Prestige Flyer Preview */}
         {flyerPrintLayout === "dual" ? (
-          <div style={{ width: "100%", maxWidth: 540, display: "flex", flexDirection: "column", gap: 8, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "14px 12px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div style={{ width: "100%", maxWidth: 620, display: "flex", flexDirection: "column", gap: 10, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "16px 14px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
             <div style={{ width: "100%" }}>
-              <PrestigeFlyerCard isPrint={false} isCompact={true} />
+              <PrestigeFlyerCard isPrint={false} />
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", color: "#94A3B8", fontSize: 11, fontWeight: 800, margin: "6px 0" }}>
               <span>✂</span>
@@ -1778,12 +1778,12 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
               <span>✂</span>
             </div>
             <div style={{ width: "100%" }}>
-              <PrestigeFlyerCard isPrint={false} isCompact={true} />
+              <PrestigeFlyerCard isPrint={false} />
             </div>
           </div>
         ) : (
           <div style={{ width: "100%", maxWidth: 620 }}>
-            <PrestigeFlyerCard isPrint={false} isCompact={false} />
+            <PrestigeFlyerCard isPrint={false} />
           </div>
         )}
       </main>
@@ -1803,18 +1803,18 @@ function PublicAfficheView({ onGoHome, onGoLogin }) {
             }
           `}</style>
           <div className="print-only print-flyer-dual" style={{ display: "none" }}>
-            <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <PrestigeFlyerCard isPrint={true} isCompact={true} />
+            <div style={{ width: "100%", height: "142mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <PrestigeFlyerCard isPrint={true} />
             </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, margin: "2mm 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, height: "6mm" }}>
               <span>✂</span>
               <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
               <span style={{ letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
               <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
               <span>✂</span>
             </div>
-            <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <PrestigeFlyerCard isPrint={true} isCompact={true} />
+            <div style={{ width: "100%", height: "142mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <PrestigeFlyerCard isPrint={true} />
             </div>
           </div>
         </>
@@ -4858,9 +4858,9 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
 
             {/* Poster Sheet Preview */}
             {flyerPrintLayout === "dual" ? (
-              <div style={{ width: "100%", maxWidth: 540, margin: "0 auto", display: "flex", flexDirection: "column", gap: 8, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "14px 12px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div style={{ width: "100%", maxWidth: 620, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10, alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "16px 14px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)" }}>
                 <div style={{ width: "100%" }}>
-                  <PrestigeFlyerCard isPrint={false} isCompact={true} />
+                  <PrestigeFlyerCard isPrint={false} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", color: "#94A3B8", fontSize: 11, fontWeight: 800, margin: "6px 0" }}>
                   <span>✂</span>
@@ -4870,12 +4870,12 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <span>✂</span>
                 </div>
                 <div style={{ width: "100%" }}>
-                  <PrestigeFlyerCard isPrint={false} isCompact={true} />
+                  <PrestigeFlyerCard isPrint={false} />
                 </div>
               </div>
             ) : (
               <div style={{ width: "100%", maxWidth: 620, margin: "0 auto" }}>
-                <PrestigeFlyerCard isPrint={false} isCompact={false} />
+                <PrestigeFlyerCard isPrint={false} />
               </div>
             )}
 
@@ -4933,18 +4933,18 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               }
             `}</style>
             <div className="print-only print-flyer-dual" style={{ display: "none" }}>
-              <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <PrestigeFlyerCard isPrint={true} isCompact={true} />
+              <div style={{ width: "100%", height: "142mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <PrestigeFlyerCard isPrint={true} />
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, margin: "2mm 0" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", color: "#64748B", fontSize: 10, fontWeight: 700, height: "6mm" }}>
                 <span>✂</span>
                 <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
                 <span style={{ letterSpacing: 2, fontSize: 8 }}>LIGNE DE DÉCOUPE</span>
                 <span style={{ borderBottom: "1.5px dashed #94A3B8", flex: 1 }}></span>
                 <span>✂</span>
               </div>
-              <div style={{ width: "100%", maxHeight: "138mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <PrestigeFlyerCard isPrint={true} isCompact={true} />
+              <div style={{ width: "100%", height: "142mm", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <PrestigeFlyerCard isPrint={true} />
               </div>
             </div>
           </>
