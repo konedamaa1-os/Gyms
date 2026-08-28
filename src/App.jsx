@@ -459,25 +459,24 @@ export default function GymApp() {
             color: #000000 !important;
           }
 
-          /* PRESTIGE FLYER A4: Full color, full height, exact graphics matching preview */
+          /* PRESTIGE FLYER A4: Full color, natural height, zero empty void, exact graphics */
           .print-flyer-a4 {
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
-            top: 0 !important;
             right: 0 !important;
-            bottom: 0 !important;
+            top: 6mm !important;
             margin: 0 auto !important;
-            width: 196mm !important;
-            max-width: 196mm !important;
-            height: 284mm !important;
-            max-height: 284mm !important;
+            width: 190mm !important;
+            max-width: 190mm !important;
+            height: auto !important;
+            max-height: 280mm !important;
             padding: 0 !important;
-            border: none !important;
-            background: #172554 !important;
+            border: 2.5px solid #1E3A8A !important;
+            border-radius: 12px !important;
+            background: #FFFFFF !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
             overflow: hidden !important;
             font-family: 'Montserrat', Arial, sans-serif !important;
             -webkit-print-color-adjust: exact !important;
@@ -1349,16 +1348,16 @@ function PrestigeFlyerCard({ isPrint = false }) {
       margin: "0 auto",
       display: "flex",
       flexDirection: "column",
-      height: isPrint ? "100%" : "auto"
+      height: "auto"
     }}>
       {/* 1. TOP TICKER RIBBON */}
       <div style={{ 
         background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
         color: "#FFFFFF", 
         fontWeight: 900, 
-        fontSize: isPrint ? 12 : 11, 
+        fontSize: isPrint ? 11.5 : 11, 
         letterSpacing: 1.5, 
-        padding: isPrint ? "8px 0" : "6px 0", 
+        padding: isPrint ? "6px 0" : "5px 0", 
         textAlign: "center", 
         textTransform: "uppercase",
         boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
@@ -1367,11 +1366,10 @@ function PrestigeFlyerCard({ isPrint = false }) {
         ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
       </div>
 
-      {/* 2. TOP HERO AREA WITH GRADIENT & GRID */}
+      {/* 2. TOP HERO AREA WITH GRADIENT & GRID (Compact, zero empty void) */}
       <div style={{ 
-        flex: isPrint ? 1.05 : "initial",
         background: "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.95) 75%), linear-gradient(135deg, #1E40AF 0%, #172554 100%)", 
-        padding: isPrint ? "18px 22px" : "14px 18px", 
+        padding: isPrint ? "14px 18px 12px 18px" : "12px 16px 12px 16px", 
         position: "relative",
         color: "#FFFFFF",
         overflow: "hidden"
@@ -1472,11 +1470,10 @@ function PrestigeFlyerCard({ isPrint = false }) {
         </div>
       </div>
 
-      {/* 3. LOWER SOLID BLUE BLOCK WITH SCHEDULE & GOALS */}
+      {/* 3. LOWER SOLID BLUE BLOCK WITH SCHEDULE & GOALS (Compact, zero empty void) */}
       <div style={{ 
-        flex: isPrint ? 1 : "initial",
         background: "linear-gradient(135deg, #0052CC 0%, #1E40AF 100%)", 
-        padding: isPrint ? "16px 22px" : "14px 18px", 
+        padding: isPrint ? "12px 18px 14px 18px" : "10px 16px 12px 16px", 
         position: "relative",
         color: "#FFFFFF",
         overflow: "hidden"
@@ -4756,7 +4753,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 margin: 0mm !important;
               }
               body {
-                background: #172554 !important;
+                background: #FFFFFF !important;
               }
             }
           `}</style>
