@@ -84,6 +84,13 @@ export default function GymApp() {
   });
   const [view, setView] = useState(() => {
     try {
+      if (typeof window !== "undefined") {
+        const search = window.location.search || "";
+        const hash = window.location.hash || "";
+        if (search.includes("affiche") || hash.includes("affiche")) {
+          return "affiche";
+        }
+      }
       const savedUser = localStorage.getItem("gyms_user");
       return savedUser ? "dashboard" : "public";
     } catch (e) {
@@ -457,11 +464,13 @@ export default function GymApp() {
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
-            width: 210mm !important;
-            max-width: 210mm !important;
-            height: 297mm !important;
-            max-height: 297mm !important;
-            margin: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            margin: 0 auto !important;
+            width: 196mm !important;
+            max-width: 196mm !important;
+            height: 284mm !important;
+            max-height: 284mm !important;
             padding: 0 !important;
             border: none !important;
             background: #172554 !important;
@@ -634,6 +643,23 @@ export default function GymApp() {
       )}
 
       {/* View router switcher */}
+      {view === "affiche" && (
+        <PublicAfficheView 
+          onGoHome={() => {
+            if (typeof window !== "undefined" && window.history.pushState) {
+              window.history.pushState({}, "", window.location.pathname);
+            }
+            setView("public");
+          }} 
+          onGoLogin={() => {
+            if (typeof window !== "undefined" && window.history.pushState) {
+              window.history.pushState({}, "", window.location.pathname);
+            }
+            setView("login");
+          }} 
+        />
+      )}
+
       {view === "public" && (
         <PublicLanding setView={setView} schedule={schedule} cardTiers={cardTiers} staff={staff} />
       )}
@@ -1276,6 +1302,431 @@ function LoginScreen({ loginForm, setLoginForm, loginError, onSubmit, onCancel, 
       {/* Footer */}
       <div style={{ textAlign: "center", color: "#94A3B8", fontSize: 12, zIndex: 2, marginTop: 20 }}>
         © 2026 CLUB SPORT SANTE. Tous droits réservés. <span style={{ margin: "0 8px" }}>•</span> Mentions légales <span style={{ margin: "0 8px" }}>•</span> Politique de confidentialité
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// PRESTIGE FLYER REUSABLE COMPONENT
+// ==========================================
+const getFlyerWhatsAppUrl = () => {
+  const origin = typeof window !== "undefined" && window.location.origin ? window.location.origin : "https://clubsportsante.ci";
+  const publicLink = `${origin}/?affiche=1`;
+  const text = 
+    `🏋️‍♂️ *CLUB SPORT SANTÉ - DIVO* 🏋️‍♂️\n` +
+    `_Votre Santé, Notre Énergie_\n` +
+    `🏆 *Complexe Officiel de Remise en Forme & Musculation à Divo*\n\n` +
+    `👤 *Coach Arthur Ziega*\n` +
+    `• Musculation & Force\n` +
+    `• Cardio & Perte de Poids\n` +
+    `• Fitness & Gym Tonique (C.A.F.)\n` +
+    `• Bilan Santé Offert\n\n` +
+    `⏰ *Horaires d'Ouverture :*\n` +
+    `• Lundi - Vendredi : 06h00 - 21h00 (Non-stop)\n` +
+    `• Samedi : 06h30 - 09h30 & 17h00 - 21h00\n` +
+    `• Dimanche : 06h30 - 09h30\n\n` +
+    `💰 *Tarif :* 10.000 FCFA / mois (Séance : 1.000 F)\n` +
+    `📍 *Lieu :* Divo, Côte d'Ivoire (Salle Climatisée & Pro)\n` +
+    `📞 *Infoline :* 07 49 74 70 74 / 05 04 21 21 04\n\n` +
+    `👉 *Consultez l'Affiche Officielle en direct ici :*\n${publicLink}`;
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+};
+
+function PrestigeFlyerCard({ isPrint = false }) {
+  return (
+    <div style={{ 
+      position: "relative", 
+      overflow: "hidden", 
+      background: "#FFFFFF", 
+      borderRadius: isPrint ? 0 : 14, 
+      color: "#0F172A", 
+      fontFamily: "'Montserrat', Arial, sans-serif", 
+      boxShadow: isPrint ? "none" : "0 14px 40px rgba(0,0,0,0.35)",
+      border: isPrint ? "none" : "2.5px solid #1E3A8A",
+      maxWidth: isPrint ? "100%" : 620,
+      width: "100%",
+      margin: "0 auto",
+      display: "flex",
+      flexDirection: "column",
+      height: isPrint ? "100%" : "auto"
+    }}>
+      {/* 1. TOP TICKER RIBBON */}
+      <div style={{ 
+        background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
+        color: "#FFFFFF", 
+        fontWeight: 900, 
+        fontSize: isPrint ? 12 : 11, 
+        letterSpacing: 1.5, 
+        padding: isPrint ? "8px 0" : "6px 0", 
+        textAlign: "center", 
+        textTransform: "uppercase",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        flexShrink: 0
+      }}>
+        ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
+      </div>
+
+      {/* 2. TOP HERO AREA WITH GRADIENT & GRID */}
+      <div style={{ 
+        flex: isPrint ? 1.05 : "initial",
+        background: "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.95) 75%), linear-gradient(135deg, #1E40AF 0%, #172554 100%)", 
+        padding: isPrint ? "18px 22px" : "14px 18px", 
+        position: "relative",
+        color: "#FFFFFF",
+        overflow: "hidden"
+      }}>
+        {/* Tech Grid Pattern */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+          pointerEvents: "none"
+        }} />
+
+        {/* Top Logo & Certification Seals */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2, marginBottom: isPrint ? 12 : 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.95)", padding: "5px 12px", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            <img 
+              src="/logo-club-sport-sante.jpg" 
+              alt="Logo Club Sport Santé" 
+              style={{ width: isPrint ? 46 : 42, height: isPrint ? 46 : 42, objectFit: "contain", borderRadius: 6 }} 
+            />
+            <div>
+              <div style={{ fontSize: isPrint ? 13.5 : 12.5, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
+              <div style={{ fontSize: isPrint ? 9.5 : 9, fontWeight: 800, color: "#DC2626" }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
+            </div>
+          </div>
+
+          <div style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1.5px solid rgba(255,255,255,0.45)", borderRadius: 8, padding: "5px 12px", textAlign: "right" }}>
+            <div style={{ fontSize: isPrint ? 11 : 10, fontWeight: 900, color: "#FDE047", letterSpacing: 1 }}>🏆 COMPLEXE OFFICIEL</div>
+            <div style={{ fontSize: isPrint ? 9.5 : 8.5, color: "#F1F5F9" }}>Divo &bull; Côte d'Ivoire</div>
+          </div>
+        </div>
+
+        {/* Hero Middle: Price Badge + Coach Presentation */}
+        <div style={{ display: "grid", gridTemplateColumns: isPrint ? "150px 1fr" : "140px 1fr", gap: 14, alignItems: "center", position: "relative", zIndex: 2 }}>
+          {/* Left: 3D Price Badge */}
+          <div style={{ 
+            background: "#FFFFFF", 
+            borderRadius: 12, 
+            padding: isPrint ? "12px 8px" : "10px 6px", 
+            textAlign: "center", 
+            color: "#0F172A", 
+            boxShadow: "0 8px 22px rgba(0,0,0,0.3)",
+            border: "2px solid #E2E8F0"
+          }}>
+            <div style={{ fontSize: isPrint ? 11 : 10, fontWeight: 900, color: "#2563EB", letterSpacing: 1.5, textTransform: "uppercase" }}>FORFAIT</div>
+            <div style={{ fontSize: isPrint ? 30 : 27, fontWeight: 950, color: "#DC2626", letterSpacing: -0.5, lineHeight: 1.1, margin: "3px 0 1px 0" }}>
+              10 000
+            </div>
+            <div style={{ fontSize: isPrint ? 11 : 10, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>
+              FCFA / MOIS
+            </div>
+            <div style={{ marginTop: 5, borderTop: "1.5px dashed #CBD5E1", paddingTop: 4, fontSize: isPrint ? 10 : 9, fontWeight: 800, color: "#059669" }}>
+              Séance : 1.000 F
+            </div>
+          </div>
+
+          {/* Right / Center: Coach Identity Presentation */}
+          <div>
+            <div style={{ 
+              display: "inline-block", 
+              background: "linear-gradient(90deg, #EA580C, #DC2626)", 
+              color: "#FFFFFF", 
+              padding: isPrint ? "6px 18px" : "5px 14px", 
+              borderRadius: 8, 
+              fontWeight: 900, 
+              fontSize: isPrint ? 14.5 : 13.5, 
+              letterSpacing: 1.2, 
+              textTransform: "uppercase", 
+              boxShadow: "0 3px 10px rgba(234, 88, 12, 0.4)",
+              marginBottom: 6
+            }}>
+              COACH ARTHUR ZIEGA
+            </div>
+
+            {/* Subtitle tag */}
+            <div style={{ 
+              background: "linear-gradient(90deg, #F97316 0%, #EA580C 100%)", 
+              color: "#FFFFFF", 
+              padding: isPrint ? "5px 12px" : "4px 10px", 
+              borderRadius: 6, 
+              fontSize: isPrint ? 11 : 10.5, 
+              fontWeight: 800, 
+              marginBottom: 8, 
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
+            }}>
+              PRESTIGE DU CLUB SPORT SANTÉ &bull; ENCADREMENT PRO
+            </div>
+
+            {/* 4 Feature Tags */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "3px 8px", borderRadius: 4, fontSize: isPrint ? 10 : 9.5, fontWeight: 700 }}>🏋️ Musculation</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "3px 8px", borderRadius: 4, fontSize: isPrint ? 10 : 9.5, fontWeight: 700 }}>🏃 Cardio</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "3px 8px", borderRadius: 4, fontSize: isPrint ? 10 : 9.5, fontWeight: 700 }}>🧘 Fitness C.A.F.</span>
+              <span style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.35)", color: "#FFFFFF", padding: "3px 8px", borderRadius: 4, fontSize: isPrint ? 10 : 9.5, fontWeight: 700 }}>🩺 Bilan Offert</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. LOWER SOLID BLUE BLOCK WITH SCHEDULE & GOALS */}
+      <div style={{ 
+        flex: isPrint ? 1 : "initial",
+        background: "linear-gradient(135deg, #0052CC 0%, #1E40AF 100%)", 
+        padding: isPrint ? "16px 22px" : "14px 18px", 
+        position: "relative",
+        color: "#FFFFFF",
+        overflow: "hidden"
+      }}>
+        {/* Tech Grid */}
+        <div style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+          pointerEvents: "none"
+        }} />
+
+        <div style={{ position: "relative", zIndex: 2, textAlign: "center" }}>
+          <div style={{ fontSize: isPrint ? 11 : 10.5, fontWeight: 900, color: "#93C5FD", letterSpacing: 1.5, textTransform: "uppercase" }}>
+            OBJECTIFS & PROGRAMMES COMPLETS
+          </div>
+          <div style={{ fontSize: isPrint ? 23 : 20, fontWeight: 950, lineHeight: 1.15, marginTop: 3, letterSpacing: -0.5, color: "#FFFFFF" }}>
+            Remise en Forme, Musculation & Santé
+          </div>
+          <div style={{ 
+            marginTop: 5, 
+            display: "inline-block", 
+            background: "linear-gradient(90deg, #EA580C 0%, #DC2626 100%)", 
+            color: "#FFFFFF", 
+            fontWeight: 900, 
+            fontSize: isPrint ? 13 : 11.5, 
+            letterSpacing: 1.2, 
+            padding: "4px 16px", 
+            borderRadius: 5,
+            textTransform: "uppercase",
+            boxShadow: "0 3px 12px rgba(234, 88, 12, 0.45)"
+          }}>
+            ★ VOTRE SANTÉ, NOTRE ÉNERGIE ★
+          </div>
+
+          {/* PETIT HORAIRE CARD (Exact requested schedule) */}
+          <div style={{
+            background: "rgba(255, 255, 255, 0.96)",
+            borderRadius: 10,
+            padding: isPrint ? "9px 12px" : "8px 12px",
+            color: "#0F172A",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.25)",
+            border: "1.5px solid #E2E8F0",
+            marginTop: 10,
+            textAlign: "left"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #E2E8F0", paddingBottom: 4, marginBottom: 5 }}>
+              <span style={{ fontSize: isPrint ? 10.5 : 10, fontWeight: 900, color: "#1E40AF", letterSpacing: 1 }}>⏰ HORAIRES D'OUVERTURE</span>
+              <span style={{ fontSize: isPrint ? 9.5 : 9, fontWeight: 900, color: "#DC2626", background: "#FEF2F2", padding: "2px 7px", borderRadius: 4 }}>📍 SALLE CLIMATISÉE &bull; DIVO</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.35fr 1fr", gap: 6, fontSize: isPrint ? 10.5 : 10, textAlign: "center" }}>
+              <div style={{ background: "#F1F5F9", padding: "5px 4px", borderRadius: 6 }}>
+                <div style={{ fontWeight: 900, color: "#0F172A", fontSize: isPrint ? 10 : 9.5 }}>LUN &ndash; VEN</div>
+                <div style={{ fontWeight: 800, color: "#2563EB", marginTop: 2, fontSize: isPrint ? 10 : 9.5 }}>06h00 &ndash; 21h00</div>
+                <div style={{ fontSize: 8, color: "#64748B", fontWeight: 700 }}>NON-STOP</div>
+              </div>
+              <div style={{ background: "#FFF7ED", padding: "5px 4px", borderRadius: 6, border: "1px solid #FFEDD5" }}>
+                <div style={{ fontWeight: 900, color: "#C2410C", fontSize: isPrint ? 10 : 9.5 }}>SAMEDI</div>
+                <div style={{ fontWeight: 800, color: "#EA580C", marginTop: 2, fontSize: isPrint ? 9.5 : 9 }}>06h30 &ndash; 09h30</div>
+                <div style={{ fontWeight: 800, color: "#EA580C", fontSize: isPrint ? 9.5 : 9 }}>17h00 &ndash; 21h00</div>
+              </div>
+              <div style={{ background: "#FEF2F2", padding: "5px 4px", borderRadius: 6, border: "1px solid #FEE2E2" }}>
+                <div style={{ fontWeight: 900, color: "#B91C1C", fontSize: isPrint ? 10 : 9.5 }}>DIMANCHE</div>
+                <div style={{ fontWeight: 800, color: "#DC2626", marginTop: 2, fontSize: isPrint ? 10 : 9.5 }}>06h30 &ndash; 09h30</div>
+                <div style={{ fontSize: 8, color: "#991B1B", fontWeight: 700 }}>MATINÉE</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. BLACK PILL CONTACT BAR */}
+          <div style={{ 
+            marginTop: 9, 
+            background: "#0F172A", 
+            borderRadius: 30, 
+            padding: isPrint ? "7px 16px" : "6px 14px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            gap: 10,
+            border: "1.5px solid rgba(255,255,255,0.25)",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.3)"
+          }}>
+            <div style={{ background: "#22C55E", width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
+              📞
+            </div>
+            <div style={{ fontSize: isPrint ? 13.5 : 12.5, fontWeight: 900, letterSpacing: 0.8, color: "#FFFFFF" }}>
+              07 49 74 70 74 / 05 04 21 21 04
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. BOTTOM TICKER RIBBON */}
+      <div style={{ 
+        background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
+        color: "#FFFFFF", 
+        fontWeight: 900, 
+        fontSize: isPrint ? 12 : 11, 
+        letterSpacing: 1.5, 
+        padding: isPrint ? "8px 0" : "6px 0", 
+        textAlign: "center", 
+        textTransform: "uppercase",
+        boxShadow: "0 -2px 8px rgba(0,0,0,0.15)",
+        flexShrink: 0
+      }}>
+        ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// PUBLIC AFFICHE VIEW (Landing page for WhatsApp links & direct promotion)
+// ==========================================
+function PublicAfficheView({ onGoHome, onGoLogin }) {
+  const waUrl = getFlyerWhatsAppUrl();
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0B0F19", color: "#FFF", display: "flex", flexDirection: "column" }}>
+      {/* Top Bar */}
+      <header className="no-print" style={{
+        background: "rgba(15, 23, 42, 0.92)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid rgba(255,255,255,0.1)",
+        padding: "12px 20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 100
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/logo-club-sport-sante.jpg" alt="Logo" style={{ width: 34, height: 34, borderRadius: 6, objectFit: "contain" }} />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
+            <div style={{ fontSize: 10.5, color: "#94A3B8" }}>Complexe Officiel &bull; Divo</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button 
+            type="button" 
+            onClick={onGoHome}
+            style={{ ...S.btnCancel, color: "#FFF", borderColor: "rgba(255,255,255,0.2)", fontSize: 12, padding: "6px 12px" }}
+          >
+            🏠 Accueil
+          </button>
+          <button 
+            type="button" 
+            onClick={onGoLogin}
+            style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #2563EB, #1D4ED8)", fontSize: 12, padding: "6px 12px" }}
+          >
+            🔑 Connexion
+          </button>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main style={{ flex: 1, padding: "20px 14px 36px 14px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {/* Actions Bar above poster */}
+        <div className="no-print" style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, width: "100%", maxWidth: 620 }}>
+          <a 
+            href="tel:0749747074"
+            style={{
+              background: "#2563EB",
+              color: "#FFF",
+              padding: "8px 16px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 800,
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 4px 12px rgba(37,99,235,0.3)"
+            }}
+          >
+            <span>📞</span> Appeler le Club
+          </a>
+          <a 
+            href="https://wa.me/2250749747074"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: "#22C55E",
+              color: "#FFF",
+              padding: "8px 16px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 800,
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              boxShadow: "0 4px 12px rgba(34,197,94,0.3)"
+            }}
+          >
+            <span>💬</span> Discuter sur WhatsApp
+          </a>
+          <a 
+            href={waUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              color: "#FFF",
+              border: "1px solid rgba(255,255,255,0.25)",
+              padding: "8px 14px",
+              borderRadius: 8,
+              textDecoration: "none",
+              fontWeight: 800,
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            }}
+          >
+            <span>📱</span> Partager
+          </a>
+          <button 
+            type="button" 
+            onClick={() => window.print()}
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              color: "#FFF",
+              border: "1px solid rgba(255,255,255,0.25)",
+              padding: "8px 14px",
+              borderRadius: 8,
+              fontWeight: 800,
+              fontSize: 12.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              cursor: "pointer"
+            }}
+          >
+            <span>🖨️</span> Imprimer A4
+          </button>
+        </div>
+
+        {/* The Prestige Flyer */}
+        <div style={{ width: "100%", maxWidth: 620 }}>
+          <PrestigeFlyerCard isPrint={false} />
+        </div>
+      </main>
+
+      {/* Hidden Print Flyer for A4 */}
+      <div className="print-only print-flyer-a4" style={{ display: "none" }}>
+        <PrestigeFlyerCard isPrint={true} />
       </div>
     </div>
   );
@@ -4237,298 +4688,58 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       {/* ========================================== */}
       {/* PRESTIGE DE PUBLICITÉ - AFFICHE / FLYER A4 */}
       {/* ========================================== */}
+      {/* PRESTIGE DE PUBLICITÉ - AFFICHE / FLYER A4 */}
       {showFlyerModal && (
         <div style={S.modalOverlay} className="no-print">
-          <div style={{ ...S.modalContent, width: "96%", maxWidth: 860, borderRadius: 20, padding: "20px 24px", maxHeight: "96vh", overflowY: "auto", background: "#0B0F19", color: "#FFF" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.12)", paddingBottom: 10 }}>
+          <div style={{ ...S.modalContent, width: "96%", maxWidth: 660, borderRadius: 20, padding: "18px 20px", maxHeight: "96vh", overflowY: "auto", background: "#0B0F19", color: "#FFF" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.12)", paddingBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 26 }}>📢</span>
+                <span style={{ fontSize: 24 }}>📢</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, color: "#FFF", fontWeight: 900 }}>Affiche Publicitaire Prestige (Flyer Officiel A4)</h3>
-                  <div style={{ fontSize: 11.5, color: "#94A3B8" }}>Design conférence & prestige haute visibilité &bull; Optimisé pour impression A4 & partage WhatsApp</div>
+                  <h3 style={{ margin: 0, fontSize: 16, color: "#FFF", fontWeight: 900 }}>Affiche Publicitaire Prestige (Flyer Officiel A4)</h3>
+                  <div style={{ fontSize: 11, color: "#94A3B8" }}>Design conférence & prestige haute visibilité &bull; Optimisé pour impression A4 & lien public WhatsApp</div>
                 </div>
               </div>
               <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 26, cursor: "pointer" }} onClick={() => setShowFlyerModal(false)}>&times;</button>
             </div>
 
-            {/* Poster Sheet Preview (Faithful to the user's conference flyer design) */}
-            <div style={{ 
-              position: "relative", 
-              overflow: "hidden", 
-              background: "#FFFFFF", 
-              borderRadius: 12, 
-              color: "#0F172A", 
-              fontFamily: "'Montserrat', Arial, sans-serif", 
-              boxShadow: "0 14px 40px rgba(0,0,0,0.35)",
-              border: "3px solid #1E3A8A"
-            }}>
-              {/* 1. TOP DIAGONAL SLANTED TICKER RIBBON */}
-              <div style={{ 
-                background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
-                color: "#FFFFFF", 
-                fontWeight: 900, 
-                fontSize: 11, 
-                letterSpacing: 1.5, 
-                padding: "6px 0", 
-                textAlign: "center", 
-                textTransform: "uppercase",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
-              }}>
-                ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
-              </div>
-
-              {/* 2. TOP HERO AREA WITH GRADIENT & GRID */}
-              <div style={{ 
-                background: "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.95) 75%), linear-gradient(135deg, #1E40AF 0%, #172554 100%)", 
-                padding: "16px 20px 20px 20px", 
-                position: "relative",
-                color: "#FFFFFF",
-                overflow: "hidden"
-              }}>
-                {/* Tech Grid Pattern */}
-                <div style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px)",
-                  backgroundSize: "24px 24px",
-                  pointerEvents: "none"
-                }} />
-
-                {/* Top Logo & Certification Seals */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2, marginBottom: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.92)", padding: "5px 12px", borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-                    <img 
-                      src="/logo-club-sport-sante.jpg" 
-                      alt="Logo Club Sport Santé" 
-                      style={{ width: 44, height: 44, objectFit: "contain", borderRadius: 6 }} 
-                    />
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
-                      <div style={{ fontSize: 9.5, fontWeight: 800, color: "#DC2626" }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
-                    </div>
-                  </div>
-
-                  <div style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.4)", borderRadius: 8, padding: "6px 14px", textAlign: "right" }}>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: "#FDE047", letterSpacing: 1 }}>🏆 COMPLEXE OFFICIEL</div>
-                    <div style={{ fontSize: 9, color: "#E2E8F0" }}>Divo &bull; Côte d'Ivoire</div>
-                  </div>
-                </div>
-
-                {/* Hero Middle: Side Vertical Price Badge + Central Persona Coach Arthur Ziega */}
-                <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: 18, alignItems: "center", position: "relative", zIndex: 2 }}>
-                  {/* Left: 3D Price Badge */}
-                  <div style={{ 
-                    background: "#FFFFFF", 
-                    borderRadius: 12, 
-                    padding: "14px 10px", 
-                    textAlign: "center", 
-                    color: "#0F172A", 
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
-                    border: "2px solid #E2E8F0"
-                  }}>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#2563EB", letterSpacing: 1.5, textTransform: "uppercase" }}>FORFAIT</div>
-                    <div style={{ fontSize: 28, fontWeight: 950, color: "#DC2626", letterSpacing: -0.5, lineHeight: 1.1, margin: "4px 0 2px 0" }}>
-                      10 000
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>
-                      FCFA / MOIS
-                    </div>
-                    <div style={{ marginTop: 6, borderTop: "1.5px dashed #CBD5E1", paddingTop: 5, fontSize: 9.5, fontWeight: 800, color: "#059669" }}>
-                      Séance : 1.000 F
-                    </div>
-                  </div>
-
-                  {/* Right / Center: Coach Identity Presentation */}
-                  <div>
-                    {/* Orange/Red Coach Badge */}
-                    <div style={{ 
-                      display: "inline-block", 
-                      background: "linear-gradient(90deg, #EA580C, #DC2626)", 
-                      color: "#FFFFFF", 
-                      padding: "6px 18px", 
-                      borderRadius: 8, 
-                      fontWeight: 900, 
-                      fontSize: 14, 
-                      letterSpacing: 1.2, 
-                      textTransform: "uppercase", 
-                      boxShadow: "0 3px 10px rgba(234, 88, 12, 0.4)",
-                      marginBottom: 8
-                    }}>
-                      COACH ARTHUR ZIEGA
-                    </div>
-
-                    {/* Subtitle tag */}
-                    <div style={{ 
-                      background: "linear-gradient(90deg, #F97316 0%, #EA580C 100%)", 
-                      color: "#FFFFFF", 
-                      padding: "6px 14px", 
-                      borderRadius: 6, 
-                      fontSize: 11.5, 
-                      fontWeight: 800, 
-                      marginBottom: 10,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
-                    }}>
-                      PRESTIGE DU CLUB SPORT SANTÉ &bull; ENCADREMENT PROFESSIONNEL
-                    </div>
-
-                    {/* 4 Feature Tags */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      <span style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.3)", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>🏋️ Musculation & Force</span>
-                      <span style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.3)", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>🏃 Cardio & Minceur</span>
-                      <span style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.3)", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>🧘 Fitness & C.A.F.</span>
-                      <span style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.3)", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>🩺 Bilan Santé Offert</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. LOWER SOLID BLUE BLOCK WITH LARGE CIRCULAR TIME BADGE (Exact match with reference) */}
-              <div style={{ 
-                background: "linear-gradient(135deg, #0052CC 0%, #1E40AF 100%)", 
-                padding: "16px 20px", 
-                position: "relative",
-                color: "#FFFFFF",
-                overflow: "hidden"
-              }}>
-                {/* Tech Grid */}
-                <div style={{
-                  position: "absolute",
-                  inset: 0,
-                  backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
-                  backgroundSize: "20px 20px",
-                  pointerEvents: "none"
-                }} />
-
-                <div style={{ display: "grid", gridTemplateColumns: "135px 1fr", gap: 16, alignItems: "center", position: "relative", zIndex: 2 }}>
-                  {/* Left: Large Pure White Circle with Schedule & Location (Like '09H30 MAPE' circle) */}
-                  <div style={{ 
-                    width: 130, 
-                    height: 130, 
-                    borderRadius: "50%", 
-                    background: "#FFFFFF", 
-                    color: "#0F172A", 
-                    display: "flex", 
-                    flexDirection: "column", 
-                    alignItems: "center", 
-                    justifyContent: "center", 
-                    textAlign: "center", 
-                    boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
-                    padding: 8,
-                    border: "3px solid #F8FAFC"
-                  }}>
-                    <div style={{ fontSize: 17, fontWeight: 950, color: "#000000", lineHeight: 1.1, letterSpacing: -0.5 }}>
-                      06H &ndash; 21H
-                    </div>
-                    <div style={{ fontSize: 10, fontWeight: 900, color: "#DC2626", letterSpacing: 1, marginTop: 2 }}>
-                      NON-STOP
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 3, marginTop: 4 }}>
-                      <span style={{ fontSize: 13 }}>📍</span>
-                      <strong style={{ fontSize: 12.5, fontWeight: 950, color: "#EA580C" }}>DIVO</strong>
-                    </div>
-                    <div style={{ fontSize: 7.5, fontWeight: 700, color: "#64748B", marginTop: 2, textTransform: "uppercase" }}>
-                      Salle Climatisée & Pro
-                    </div>
-                  </div>
-
-                  {/* Right: Big Display Headline & Orange Banner */}
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 900, color: "#93C5FD", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                      OBJECTIFS & PROGRAMMES COMPLETS
-                    </div>
-                    <div style={{ fontSize: 24, fontWeight: 950, lineHeight: 1.15, marginTop: 4, letterSpacing: -0.5 }}>
-                      Remise en Forme, <br />
-                      Musculation & Santé
-                    </div>
-                    {/* Orange Highlight Banner */}
-                    <div style={{ 
-                      marginTop: 8, 
-                      display: "inline-block", 
-                      background: "linear-gradient(90deg, #EA580C 0%, #DC2626 100%)", 
-                      color: "#FFFFFF", 
-                      fontWeight: 900, 
-                      fontSize: 13, 
-                      letterSpacing: 1.2, 
-                      padding: "5px 16px", 
-                      borderRadius: 4,
-                      textTransform: "uppercase",
-                      boxShadow: "0 4px 12px rgba(234, 88, 12, 0.4)"
-                    }}>
-                      ★ VOTRE SANTÉ, NOTRE ÉNERGIE ★
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. BLACK PILL CONTACT BAR WITH PHONE ICON (Exact match with reference) */}
-                <div style={{ 
-                  marginTop: 14, 
-                  background: "#0F172A", 
-                  borderRadius: 30, 
-                  padding: "8px 18px", 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center", 
-                  gap: 10,
-                  border: "1.5px solid rgba(255,255,255,0.2)",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.3)"
-                }}>
-                  <div style={{ background: "#22C55E", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                    📞
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 0.8, color: "#FFFFFF" }}>
-                    07 49 74 70 74 / 05 04 21 21 04
-                  </div>
-                </div>
-              </div>
-
-              {/* 5. BOTTOM DIAGONAL SLANTED TICKER RIBBON */}
-              <div style={{ 
-                background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
-                color: "#FFFFFF", 
-                fontWeight: 900, 
-                fontSize: 11, 
-                letterSpacing: 1.5, 
-                padding: "6px 0", 
-                textAlign: "center", 
-                textTransform: "uppercase",
-                boxShadow: "0 -2px 8px rgba(0,0,0,0.15)"
-              }}>
-                ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
-              </div>
+            {/* Poster Sheet Preview */}
+            <div style={{ width: "100%", maxWidth: 620, margin: "0 auto" }}>
+              <PrestigeFlyerCard isPrint={false} />
             </div>
 
             {/* Modal Actions */}
-            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14 }}>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
               <button type="button" style={{ ...S.btnCancel, color: "#FFF", borderColor: "#475569" }} onClick={() => setShowFlyerModal(false)}>
                 Fermer
               </button>
               <a 
-                href="https://api.whatsapp.com/send?text=🏋️‍♂️%20*CLUB%20SPORT%20SANTÉ%20-%20DIVO*%20🏋️‍♂️%0A%0A_Votre%20Santé,%20Notre%20Énergie_%0A🏆%20*Complexe%20Officiel%20de%20Remise%20en%20Forme%20&%20Musculation%20à%20Divo*%0A%0A👤%20*Coach%20Arthur%20Ziega*%0A•%20Musculation%20&%20Force%0A•%20Cardio%20&%20Perte%20de%20Poids%0A•%20Fitness%20&%20Gym%20Tonique%20(C.A.F.)%0A•%20Bilan%20Santé%20Offert%0A%0A⏰%20*Horaires%20:*%2006h00%20-%2021h00%20(Non-stop)%0A💰%20*Tarif%20:*%2010.000%20FCFA%20/%20mois%20(Séance%20:%201.000%20F)%0A📍%20*Lieu%20:*%20Divo,%20Côte%20d'Ivoire%0A📞%20*Infoline%20:*%2007%2049%2074%2070%2074%20/%2005%2004%2021%2021%2004%0A🌐%20https://clubsportsante.xyz" 
+                href={getFlyerWhatsAppUrl()} 
                 target="_blank" 
                 rel="noreferrer"
                 style={{
                   background: "#22C55E",
                   color: "#FFFFFF",
                   padding: "0 18px",
-                  height: 42,
+                  height: 40,
                   borderRadius: 8,
                   textDecoration: "none",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                   fontWeight: 800,
-                  fontSize: 13
+                  fontSize: 12.5
                 }}
               >
-                <span>📱</span> Partager sur WhatsApp
+                <span>📱</span> Partager avec lien WhatsApp
               </a>
               <button 
                 type="button" 
                 className="btn-glow" 
-                style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #2563EB, #1D4ED8)", display: "flex", alignItems: "center", gap: 6, padding: "0 22px", height: 42, fontWeight: 800 }}
+                style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #2563EB, #1D4ED8)", display: "flex", alignItems: "center", gap: 6, padding: "0 20px", height: 40, fontWeight: 800, fontSize: 12.5 }}
                 onClick={() => window.print()}
               >
-                <span>🖨️</span> Imprimer cette Affiche Prestige (Format A4)
+                <span>🖨️</span> Imprimer Format A4
               </button>
             </div>
           </div>
@@ -4549,253 +4760,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               }
             }
           `}</style>
-          <div className="print-only print-flyer-a4" style={{ display: "none", position: "relative", overflow: "hidden", background: "#FFFFFF", padding: 0 }}>
-            {/* 1. TOP DIAGONAL SLANTED TICKER RIBBON */}
-            <div style={{ 
-              background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
-              color: "#FFFFFF", 
-              fontWeight: 900, 
-              fontSize: 13, 
-              letterSpacing: 2, 
-              padding: "10px 0", 
-              textAlign: "center", 
-              textTransform: "uppercase",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
-            }}>
-              ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
-            </div>
-
-            {/* 2. TOP HERO AREA WITH GRADIENT & GRID */}
-            <div style={{ 
-              flex: 1.1,
-              background: "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.95) 75%), linear-gradient(135deg, #1E40AF 0%, #172554 100%)", 
-              padding: "24px 28px 24px 28px", 
-              position: "relative",
-              color: "#FFFFFF",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-around",
-              overflow: "hidden"
-            }}>
-              {/* Tech Grid Pattern */}
-              <div style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
-                backgroundSize: "28px 28px",
-                pointerEvents: "none"
-              }} />
-
-              {/* Top Logo & Certification Seals */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2, marginBottom: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,255,255,0.95)", padding: "8px 16px", borderRadius: 10, boxShadow: "0 4px 14px rgba(0,0,0,0.2)" }}>
-                  <img 
-                    src="/logo-club-sport-sante.jpg" 
-                    alt="Logo Club Sport Santé" 
-                    style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 8 }} 
-                  />
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ</div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: "#DC2626" }}>VOTRE SANTÉ, NOTRE ÉNERGIE</div>
-                  </div>
-                </div>
-
-                <div style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 10, padding: "8px 18px", textAlign: "right" }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#FDE047", letterSpacing: 1 }}>🏆 COMPLEXE OFFICIEL</div>
-                  <div style={{ fontSize: 11, color: "#F1F5F9", marginTop: 2 }}>Divo &bull; Côte d'Ivoire</div>
-                </div>
-              </div>
-
-              {/* Hero Middle: Side Vertical Price Badge + Central Persona Coach Arthur Ziega */}
-              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: 24, alignItems: "center", position: "relative", zIndex: 2 }}>
-                {/* Left: Stacked 3D Badge */}
-                <div style={{ 
-                  background: "#FFFFFF", 
-                  borderRadius: 14, 
-                  padding: "16px 12px", 
-                  textAlign: "center", 
-                  color: "#0F172A", 
-                  boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
-                  border: "2px solid #E2E8F0"
-                }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#2563EB", letterSpacing: 1.5, textTransform: "uppercase" }}>FORFAIT</div>
-                  <div style={{ fontSize: 36, fontWeight: 950, lineHeight: 1.1, color: "#DC2626", letterSpacing: -1, margin: "6px 0 2px 0" }}>
-                    10 000
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>
-                    FCFA / MOIS
-                  </div>
-                  <div style={{ marginTop: 8, borderTop: "1.5px dashed #CBD5E1", paddingTop: 6, fontSize: 11.5, fontWeight: 800, color: "#059669" }}>
-                    Séance : 1.000 F
-                  </div>
-                </div>
-
-                {/* Right / Center: Coach Identity Presentation */}
-                <div>
-                  {/* Orange/Red Coach Badge */}
-                  <div style={{ 
-                    display: "inline-block", 
-                    background: "linear-gradient(90deg, #EA580C, #DC2626)", 
-                    color: "#FFFFFF", 
-                    padding: "8px 22px", 
-                    borderRadius: 10, 
-                    fontWeight: 900, 
-                    fontSize: 18, 
-                    letterSpacing: 1.5, 
-                    textTransform: "uppercase", 
-                    boxShadow: "0 3px 10px rgba(234, 88, 12, 0.4)",
-                    marginBottom: 12
-                  }}>
-                    COACH ARTHUR ZIEGA
-                  </div>
-
-                  {/* Subtitle tag */}
-                  <div style={{ 
-                    background: "linear-gradient(90deg, #F97316 0%, #EA580C 100%)", 
-                    color: "#FFFFFF", 
-                    padding: "8px 18px", 
-                    borderRadius: 8, 
-                    fontSize: 13.5, 
-                    fontWeight: 800, 
-                    marginBottom: 14, 
-                    boxShadow: "0 3px 10px rgba(0,0,0,0.2)"
-                  }}>
-                    PRESTIGE DU CLUB SPORT SANTÉ &bull; ENCADREMENT PROFESSIONNEL
-                  </div>
-
-                  {/* 4 Feature Tags */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    <span style={{ background: "rgba(255,255,255,0.22)", border: "1.5px solid rgba(255,255,255,0.4)", color: "#FFFFFF", padding: "6px 14px", borderRadius: 6, fontSize: 12.5, fontWeight: 700 }}>🏋️ Musculation & Force</span>
-                    <span style={{ background: "rgba(255,255,255,0.22)", border: "1.5px solid rgba(255,255,255,0.4)", color: "#FFFFFF", padding: "6px 14px", borderRadius: 6, fontSize: 12.5, fontWeight: 700 }}>🏃 Cardio & Minceur</span>
-                    <span style={{ background: "rgba(255,255,255,0.22)", border: "1.5px solid rgba(255,255,255,0.4)", color: "#FFFFFF", padding: "6px 14px", borderRadius: 6, fontSize: 12.5, fontWeight: 700 }}>🧘 Fitness & C.A.F.</span>
-                    <span style={{ background: "rgba(255,255,255,0.22)", border: "1.5px solid rgba(255,255,255,0.4)", color: "#FFFFFF", padding: "6px 14px", borderRadius: 6, fontSize: 12.5, fontWeight: 700 }}>🩺 Bilan Santé Offert</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          {/* 3. LOWER SOLID BLUE BLOCK WITH LARGE CIRCULAR TIME BADGE */}
-          <div style={{ 
-            flex: 1,
-            background: "linear-gradient(135deg, #0052CC 0%, #1E40AF 100%)", 
-            padding: "24px 28px", 
-            position: "relative",
-            color: "#FFFFFF",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-around",
-            overflow: "hidden"
-          }}>
-            {/* Tech Grid */}
-            <div style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.08) 1px, transparent 1px)",
-              backgroundSize: "24px 24px",
-              pointerEvents: "none"
-            }} />
-
-            <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 24, alignItems: "center", position: "relative", zIndex: 2 }}>
-              {/* Left: Large Pure White Circle with Schedule & Location */}
-              <div style={{ 
-                width: 155, 
-                height: 155, 
-                borderRadius: "50%", 
-                background: "#FFFFFF", 
-                color: "#0F172A", 
-                display: "flex", 
-                flexDirection: "column", 
-                alignItems: "center", 
-                justifyContent: "center", 
-                textAlign: "center", 
-                boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-                padding: 10,
-                border: "4px solid #F8FAFC"
-              }}>
-                <div style={{ fontSize: 20, fontWeight: 950, color: "#000000", lineHeight: 1.1, letterSpacing: -0.5 }}>
-                  06H &ndash; 21H
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 900, color: "#DC2626", letterSpacing: 1.2, marginTop: 3 }}>
-                  NON-STOP
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 5 }}>
-                  <span style={{ fontSize: 16 }}>📍</span>
-                  <strong style={{ fontSize: 15, fontWeight: 950, color: "#EA580C" }}>DIVO</strong>
-                </div>
-                <div style={{ fontSize: 9.5, fontWeight: 800, color: "#64748B", marginTop: 3, textTransform: "uppercase" }}>
-                  Salle Climatisée & Pro
-                </div>
-              </div>
-
-              {/* Right: Big Display Headline & Orange Banner */}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: "#93C5FD", letterSpacing: 2, textTransform: "uppercase" }}>
-                  OBJECTIFS & PROGRAMMES COMPLETS
-                </div>
-                <div style={{ fontSize: 30, fontWeight: 950, lineHeight: 1.15, marginTop: 6, letterSpacing: -0.5, color: "#FFFFFF" }}>
-                  Remise en Forme, <br />
-                  Musculation & Santé
-                </div>
-                {/* Orange Highlight Banner */}
-                <div style={{ 
-                  marginTop: 10, 
-                  display: "inline-block", 
-                  background: "linear-gradient(90deg, #EA580C 0%, #DC2626 100%)", 
-                  color: "#FFFFFF", 
-                  fontWeight: 900, 
-                  fontSize: 16, 
-                  letterSpacing: 1.5, 
-                  padding: "7px 22px", 
-                  borderRadius: 6,
-                  textTransform: "uppercase",
-                  boxShadow: "0 4px 14px rgba(234, 88, 12, 0.45)"
-                }}>
-                  ★ VOTRE SANTÉ, NOTRE ÉNERGIE ★
-                </div>
-              </div>
-            </div>
-
-            {/* 4. BLACK PILL CONTACT BAR WITH PHONE ICON */}
-            <div style={{ 
-              marginTop: 16, 
-              background: "#0F172A", 
-              borderRadius: 35, 
-              padding: "10px 24px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              gap: 12,
-              border: "2px solid rgba(255,255,255,0.25)",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
-              position: "relative",
-              zIndex: 2
-            }}>
-              <div style={{ background: "#22C55E", width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
-                📞
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: 1, color: "#FFFFFF" }}>
-                07 49 74 70 74 / 05 04 21 21 04
-              </div>
-            </div>
+          <div className="print-only print-flyer-a4" style={{ display: "none" }}>
+            <PrestigeFlyerCard isPrint={true} />
           </div>
-
-          {/* 5. BOTTOM DIAGONAL SLANTED TICKER RIBBON */}
-          <div style={{ 
-            background: "linear-gradient(90deg, #F97316 0%, #EF4444 35%, #2563EB 70%, #1D4ED8 100%)", 
-            color: "#FFFFFF", 
-            fontWeight: 900, 
-            fontSize: 13, 
-            letterSpacing: 2, 
-            padding: "10px 0", 
-            textAlign: "center", 
-            textTransform: "uppercase",
-            boxShadow: "0 -2px 8px rgba(0,0,0,0.15)"
-          }}>
-            ✦ CLUB SPORT SANTÉ ✦ REMISE EN FORME ✦ MUSCULATION ✦ FITNESS ✦ BIEN-ÊTRE ✦ SANTÉ ✦
-          </div>
-        </div>
-      </>
-    )}
+        </>
+      )}
     </div>
   );
 }
