@@ -1734,7 +1734,7 @@ function PublicLanding({ setView, schedule, cardTiers, staff }) {
           </div>
           <div style={{ textAlign: "right", fontSize: 12, color: "#64748B" }}>
             <div>Divo, Côte d'Ivoire</div>
-            <div style={{ marginTop: 4 }}>Contact: info@clubsportsante.ci | Tel: +225 07 07 78 23 29</div>
+            <div style={{ marginTop: 4 }}>Contact: info@clubsportsante.ci | Tel: +225 07 49 74 70 74 / 05 04 21 21 04</div>
           </div>
         </div>
         <div style={{ borderTop: "1px solid #E2E8F0", marginTop: 24, paddingTop: 18, textAlign: "center", fontSize: 11, color: "#94A3B8" }}>
@@ -2440,29 +2440,29 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     if (editingMemberId) {
       // UPDATE EXISTING MEMBER
       const updatedData = {
-        nom: form.nom.trim().toUpperCase(),
-        prenoms: form.prenoms ? form.prenoms.trim().toUpperCase() : "",
+        nom: form.nom.trim(),
+        prenoms: form.prenoms ? form.prenoms.trim() : "",
         tel: form.tel.trim(),
         whatsapp: form.whatsapp ? form.whatsapp.trim() : "",
-        sexe: form.sexe ? form.sexe.toUpperCase() : "MASCULIN",
+        sexe: form.sexe || "Masculin",
         dateNaissance: form.dateNaissance,
-        profession: form.profession ? form.profession.trim().toUpperCase() : "",
-        quartier: form.quartier ? form.quartier.trim().toUpperCase() : "",
-        lieu: form.lieu ? form.lieu.trim().toUpperCase() : "DIVO",
-        urgenceNom: form.urgenceNom ? form.urgenceNom.trim().toUpperCase() : "",
+        profession: form.profession ? form.profession.trim() : "",
+        quartier: form.quartier ? form.quartier.trim() : "",
+        lieu: form.lieu ? form.lieu.trim() : "Divo",
+        urgenceNom: form.urgenceNom ? form.urgenceNom.trim() : "",
         urgenceTel: form.urgenceTel ? form.urgenceTel.trim() : "",
-        urgenceLien: form.urgenceLien ? form.urgenceLien.trim().toUpperCase() : "",
+        urgenceLien: form.urgenceLien ? form.urgenceLien.trim() : "",
         carte: form.carte,
         expiration: expDate,
         objectifs: form.objectifs,
-        q1: (form.q1 || "NON").toUpperCase(),
-        q2: (form.q2 || "NON").toUpperCase(),
-        q3: (form.q3 || "NON").toUpperCase(),
-        q4: (form.q4 || "NON").toUpperCase(),
-        q5: (form.q5 || "NON").toUpperCase(),
-        q6: (form.q6 || "NON").toUpperCase(),
-        q7: (form.q7 || "NON").toUpperCase(),
-        remarques: form.remarques ? form.remarques.trim().toUpperCase() : ""
+        q1: form.q1 || "Non",
+        q2: form.q2 || "Non",
+        q3: form.q3 || "Non",
+        q4: form.q4 || "Non",
+        q5: form.q5 || "Non",
+        q6: form.q6 || "Non",
+        q7: form.q7 || "Non",
+        remarques: form.remarques ? form.remarques.trim() : ""
       };
 
       const { error: memberError } = await supabase.from("members").update(updatedData).eq("id", editingMemberId);
@@ -2481,30 +2481,30 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
       const newId = uid();
       const newMember = {
         id: newId,
-        nom: form.nom.trim().toUpperCase(),
-        prenoms: form.prenoms ? form.prenoms.trim().toUpperCase() : "",
+        nom: form.nom.trim(),
+        prenoms: form.prenoms ? form.prenoms.trim() : "",
         tel: form.tel.trim(),
         whatsapp: form.whatsapp ? form.whatsapp.trim() : "",
-        sexe: form.sexe ? form.sexe.toUpperCase() : "MASCULIN",
+        sexe: form.sexe || "Masculin",
         dateNaissance: form.dateNaissance,
-        profession: form.profession ? form.profession.trim().toUpperCase() : "",
-        quartier: form.quartier ? form.quartier.trim().toUpperCase() : "",
-        lieu: form.lieu ? form.lieu.trim().toUpperCase() : "DIVO",
-        urgenceNom: form.urgenceNom ? form.urgenceNom.trim().toUpperCase() : "",
+        profession: form.profession ? form.profession.trim() : "",
+        quartier: form.quartier ? form.quartier.trim() : "",
+        lieu: form.lieu ? form.lieu.trim() : "Divo",
+        urgenceNom: form.urgenceNom ? form.urgenceNom.trim() : "",
         urgenceTel: form.urgenceTel ? form.urgenceTel.trim() : "",
-        urgenceLien: form.urgenceLien ? form.urgenceLien.trim().toUpperCase() : "",
+        urgenceLien: form.urgenceLien ? form.urgenceLien.trim() : "",
         carte: form.carte,
         inscription: today(),
         expiration: expDate,
         objectifs: form.objectifs,
-        q1: (form.q1 || "NON").toUpperCase(),
-        q2: (form.q2 || "NON").toUpperCase(),
-        q3: (form.q3 || "NON").toUpperCase(),
-        q4: (form.q4 || "NON").toUpperCase(),
-        q5: (form.q5 || "NON").toUpperCase(),
-        q6: (form.q6 || "NON").toUpperCase(),
-        q7: (form.q7 || "NON").toUpperCase(),
-        remarques: form.remarques ? form.remarques.trim().toUpperCase() : ""
+        q1: form.q1 || "Non",
+        q2: form.q2 || "Non",
+        q3: form.q3 || "Non",
+        q4: form.q4 || "Non",
+        q5: form.q5 || "Non",
+        q6: form.q6 || "Non",
+        q7: form.q7 || "Non",
+        remarques: form.remarques ? form.remarques.trim() : ""
       };
 
       const { error: memberError } = await supabase.from("members").insert([newMember]);
@@ -3302,7 +3302,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   ★ REÇU D'ADHÉSION ★
                 </div>
                 <div style={{ fontSize: 10, fontWeight: 700, marginTop: 3, color: "#334155" }}>
-                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                  CLUB SPORT SANTE &bull; Tél : 07 49 74 70 74 / 05 04 21 21 04
                 </div>
                 <div style={{ fontSize: 9, color: "#64748B", fontStyle: "italic", marginTop: 1 }}>
                   Votre Santé, Notre Énergie
@@ -3437,14 +3437,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <img 
                     src="/logo-club-sport-sante.jpg" 
                     alt="Logo Club Sport Santé" 
-                    style={{ width: 68, height: 68, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
+                    style={{ width: 82, height: 82, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
                   />
                   <div>
                     <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
                     <div style={{ fontSize: 14.5, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
                     <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 3, lineHeight: 1.5 }}>
-                      Tél: 07 49 74 70 74 &bull; 05 85 74 70 74<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                      Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
                     </div>
                   </div>
                 </div>
@@ -3564,7 +3563,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               ★ REÇU D'ADHÉSION ★
             </div>
             <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
-              CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+              CLUB SPORT SANTE &bull; Tél : 07 49 74 70 74 / 05 04 21 21 04
             </div>
             <div style={{ fontSize: 8.5, color: "#000", fontStyle: "italic", marginTop: 1 }}>
               Votre Santé, Notre Énergie
@@ -3662,14 +3661,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               <img 
                 src="/logo-club-sport-sante.jpg" 
                 alt="Logo Club Sport Santé" 
-                style={{ width: 62, height: 62, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
+                style={{ width: 78, height: 78, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
               />
               <div>
                 <div style={{ fontStyle: "italic", fontSize: 16, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
                 <div style={{ fontSize: 14, fontWeight: 900, marginTop: 2 }}>COACH ARTHUR ZIEGA</div>
                 <div style={{ fontSize: 10.5, color: "#000", marginTop: 2, lineHeight: 1.4 }}>
-                  Tél: 07 49 74 70 74 &bull; 05 85 74 70 74<br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                  Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
                 </div>
               </div>
             </div>
@@ -3783,11 +3781,11 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                 <img 
                   src="/logo-club-sport-sante.jpg" 
                   alt="Logo Club Sport Santé" 
-                  style={{ width: 70, height: 70, objectFit: "contain", borderRadius: 8, margin: "0 auto 6px auto", display: "block" }} 
+                  style={{ width: 84, height: 84, objectFit: "contain", borderRadius: 8, margin: "0 auto 6px auto", display: "block" }} 
                 />
                 <div style={{ fontSize: 21, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE MÉDICAL</div>
                 <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
-                  CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 / 07 07 78 23 29
+                  CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
                 </div>
               </div>
 
@@ -3882,7 +3880,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             />
             <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase" }}>QUESTIONNAIRE MÉDICAL</div>
             <div style={{ fontSize: 10.5, color: "#000", marginTop: 2 }}>
-              CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 / 07 07 78 23 29
+              CLUB SPORT SANTE &bull; COACH ARTHUR ZIEGA &bull; Divo &bull; Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
             </div>
           </div>
 
@@ -3973,13 +3971,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                   <img 
                     src="/logo-club-sport-sante.jpg" 
                     alt="Logo Club Sport Santé" 
-                    style={{ width: 66, height: 66, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
+                    style={{ width: 80, height: 80, objectFit: "contain", borderRadius: 8, border: "1px solid #E2E8F0" }} 
                   />
                   <div>
                     <div style={{ fontStyle: "italic", fontSize: 17, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
                     <div style={{ fontSize: 15, fontWeight: 900, marginTop: 1, letterSpacing: 0.5 }}>COACH ARTHUR ZIEGA</div>
                     <div style={{ fontSize: 11.5, color: "#1E293B", marginTop: 2, lineHeight: 1.4 }}>
-                      Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                      Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
                     </div>
                   </div>
                 </div>
@@ -4107,13 +4105,13 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
               <img 
                 src="/logo-club-sport-sante.jpg" 
                 alt="Logo Club Sport Santé" 
-                style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
+                style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 6, border: "1px solid #000" }} 
               />
               <div>
                 <div style={{ fontStyle: "italic", fontSize: 15, fontFamily: "serif", fontWeight: 700 }}>Club - Sport - Santé</div>
                 <div style={{ fontSize: 13.5, fontWeight: 900, marginTop: 1 }}>COACH ARTHUR ZIEGA</div>
                 <div style={{ fontSize: 10.5, color: "#000", marginTop: 1 }}>
-                  Tél : 07 49 74 70 74 &bull; 05 85 74 70 74 &bull; 01 02 24 29 00 &bull; 07 07 78 23 29 (Divo)
+                  Tél : 07 49 74 70 74 &bull; 05 04 21 21 04
                 </div>
               </div>
             </div>
@@ -4452,7 +4450,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
                     📞
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 0.8, color: "#FFFFFF" }}>
-                    07 49 74 70 74 / 05 85 74 70 74 / 01 02 24 29 00 / 07 07 78 23 29
+                    07 49 74 70 74 / 05 04 21 21 04
                   </div>
                 </div>
               </div>
@@ -4598,7 +4596,7 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             <div style={{ marginTop: 14, background: "#000000", borderRadius: 25, padding: "7px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <span style={{ fontSize: 14 }}>📞</span>
               <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 0.5, color: "#FFFFFF" }}>
-                07 49 74 70 74 / 05 85 74 70 74 / 01 02 24 29 00 / 07 07 78 23 29
+                07 49 74 70 74 / 05 04 21 21 04
               </span>
             </div>
           </div>
@@ -5311,7 +5309,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const newId = uid();
     const newMember = {
       id: newId,
-      nom: memberForm.nom.trim().toUpperCase(),
+      nom: memberForm.nom.trim(),
       tel: memberForm.tel.trim(),
       carte: memberForm.carte,
       inscription: today(),
@@ -5388,7 +5386,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const price = isActiveMember ? 0 : Number(montant);
     const newId = `T-${Math.random().toString(36).substring(3, 8).toUpperCase()}`;
     const now = new Date();
-    const cleanNom = name.trim().toUpperCase();
+    const cleanNom = name.trim();
     const t = {
       id: newId,
       nom: cleanNom,
@@ -5466,7 +5464,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
     const now = new Date();
     const dgTicket = {
       id: newId,
-      nom: dgForm.nom.trim().toUpperCase(),
+      nom: dgForm.nom.trim(),
       tel: dgForm.tel.trim(),
       date: today(),
       heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
@@ -5847,7 +5845,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
                   AUTORISATION EXCLUSIVE DIRECTION GÉNÉRALE
                 </div>
                 <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 2, color: "#000" }}>
-                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                  CLUB SPORT SANTE &bull; Tél : 07 49 74 70 74 / 05 04 21 21 04
                 </div>
                 <div style={{ borderBottom: "1px dashed #000", margin: "5px 0 8px 0" }} />
               </div>
@@ -5917,7 +5915,7 @@ function Accueil({ members, setMembers, tickets, setTickets, setTx, triggerToast
                   {lastTicket.isMember ? "★ PASS MEMBRE ADHÉRENT ★" : "★ TICKET D'ENTRÉE SÉANCE ★"}
                 </div>
                 <div style={{ fontSize: 9.5, fontWeight: 700, marginTop: 3, color: "#000" }}>
-                  CLUB SPORT SANTE &bull; Tél : 07 07 78 23 29
+                  CLUB SPORT SANTE &bull; Tél : 07 49 74 70 74 / 05 04 21 21 04
                 </div>
                 <div style={{ fontSize: 8.5, color: "#000", fontStyle: "italic", marginTop: 1 }}>
                   Votre Santé, Notre Énergie

@@ -8,17 +8,4 @@ body {
   width: 100%;
 }
 
-/* Force all standard text inputs, search fields and textareas to display uppercase */
-input[type="text"],
-input[type="search"],
-input:not([type]),
-textarea {
-  text-transform: uppercase;
-}
-
-/* Exceptions for passwords and credentials */
-input[type="password"],
-input[type="email"],
-.no-uppercase {
-  text-transform: none !important;
-}
+/* Clean text inputs without forcing uppercase */
