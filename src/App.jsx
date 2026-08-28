@@ -454,9 +454,54 @@ export default function GymApp() {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
-          .print-only:not(.print-flyer-a4):not(.print-flyer-dual) {
+          .print-only:not(.print-flyer-a4):not(.print-flyer-dual):not(.print-members-sheet) {
             background: #FFFFFF !important;
             color: #000000 !important;
+          }
+
+          /* PRINTABLE MEMBERS LIST (Clean table) */
+          .print-members-sheet {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            z-index: 2147483647 !important;
+            font-family: Arial, sans-serif !important;
+          }
+          .print-members-sheet table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          .print-members-sheet th {
+            background: #0F172A !important;
+            color: #FFFFFF !important;
+            padding: 6px 8px !important;
+            font-size: 10.5px !important;
+            font-weight: 800 !important;
+            border: 1px solid #000000 !important;
+            text-align: left !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .print-members-sheet td {
+            padding: 5px 8px !important;
+            font-size: 10px !important;
+            border: 1px solid #CBD5E1 !important;
+            color: #000000 !important;
+          }
+          .print-members-sheet tr:nth-child(even) td {
+            background: #F8FAFC !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .print-members-sheet tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
 
           /* PRESTIGE FLYER A4: 1 Large flyer format */
@@ -2905,6 +2950,24 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
   const [showCombinedDocModal, setShowCombinedDocModal] = useState(false);
   const [isBlankCombinedDoc, setIsBlankCombinedDoc] = useState(false);
 
+  // Registre des Membres A4 (Impression avec Date Début & Fin)
+  const [showPrintMembersModal, setShowPrintMembersModal] = useState(false);
+  const [printScope, setPrintScope] = useState("all"); // "all" | "active" | "expired" | "filtered"
+  const [printOrientation, setPrintOrientation] = useState("landscape"); // "landscape" | "portrait"
+
+  const openPrintMembersModal = () => {
+    setActiveReceipt(null);
+    setShowReceiptModal(false);
+    setActiveFiche(null);
+    setShowFicheModal(false);
+    setActiveQuestionnaireDoc(null);
+    setShowQuestionnaireDocModal(false);
+    setActiveCombinedDoc(null);
+    setShowCombinedDocModal(false);
+    setShowFlyerModal(false);
+    setShowPrintMembersModal(true);
+  };
+
   // Prestige Advertising Flyer A4
   const [showFlyerModal, setShowFlyerModal] = useState(false);
   const [flyerPrintLayout, setFlyerPrintLayout] = useState("dual"); // "dual" (2 flyers A5 / A4) or "single" (1 grand A4)
@@ -3269,6 +3332,16 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
     return matchSearch && matchFilter;
   });
 
+  const membersToPrint = 
+    printScope === "active" ? members.filter(m => m.expiration && m.expiration >= today()) :
+    printScope === "expired" ? members.filter(m => !m.expiration || m.expiration < today()) :
+    printScope === "filtered" ? filteredMembers :
+    members;
+  
+  const printTotalMembers = membersToPrint.length;
+  const printActiveCount = membersToPrint.filter(m => m.expiration && m.expiration >= today()).length;
+  const printExpiredCount = membersToPrint.filter(m => !m.expiration || m.expiration < today()).length;
+
   return (
     <div>
       {/* Streamlined Top Ribbon */}
@@ -3278,6 +3351,27 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
           <p style={{ fontSize: 13, color: "#64748B", margin: "4px 0 0 0" }}>Adhérents, fiches de renseignement, questionnaire médical officiel et cartes d'accès.</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn-glow"
+            onClick={openPrintMembersModal}
+            style={{
+              background: "linear-gradient(135deg, #059669, #047857)",
+              color: "#FFFFFF",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "9px 15px",
+              fontSize: 13,
+              fontWeight: 800,
+              borderRadius: 8,
+              boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)",
+              cursor: "pointer"
+            }}
+          >
+            <span>🖨️</span> Imprimer Registre des Membres (A4)
+          </button>
           <button
             type="button"
             className="btn-glow"
@@ -4856,6 +4950,367 @@ function Membres({ members, setMembers, setTx, triggerToast, cardTiers, tx, curr
             </div>
           </div>
         </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL IMPRESSION REGISTRE DES MEMBRES A4   */}
+      {/* ========================================== */}
+      {showPrintMembersModal && (
+        <div style={S.modalOverlay} className="no-print">
+          <div style={{ ...S.modalContent, width: "98%", maxWidth: printOrientation === "landscape" ? 1100 : 860, borderRadius: 16, padding: "20px 24px", maxHeight: "94vh", overflowY: "auto", transition: "max-width 0.25s ease" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, borderBottom: "1px solid #E2E8F0", paddingBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 24 }}>🖨️</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 17, color: "#0F172A", fontWeight: 900 }}>
+                    Impression du Registre des Membres (Format A4)
+                  </h3>
+                  <div style={{ fontSize: 11.5, color: "#64748B" }}>
+                    Liste complète des adhérents avec dates d'inscription (début), expiration (fin) et statuts.
+                  </div>
+                </div>
+              </div>
+              <button style={{ background: "transparent", border: "none", color: "#94A3B8", fontSize: 26, cursor: "pointer" }} onClick={() => setShowPrintMembersModal(false)}>&times;</button>
+            </div>
+
+            {/* Filter Scope & Orientation Toolbar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 10, background: "#F8FAFC", padding: "8px 12px", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>Sélection :</span>
+                <button
+                  type="button"
+                  onClick={() => setPrintScope("all")}
+                  style={{
+                    background: printScope === "all" ? "#0F172A" : "#FFFFFF",
+                    color: printScope === "all" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printScope === "all" ? "#0F172A" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  👥 Tous ({members.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrintScope("active")}
+                  style={{
+                    background: printScope === "active" ? "#059669" : "#FFFFFF",
+                    color: printScope === "active" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printScope === "active" ? "#059669" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  🟢 Actifs ({members.filter(m => m.expiration && m.expiration >= today()).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrintScope("expired")}
+                  style={{
+                    background: printScope === "expired" ? "#DC2626" : "#FFFFFF",
+                    color: printScope === "expired" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printScope === "expired" ? "#DC2626" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  🔴 Expirés ({members.filter(m => !m.expiration || m.expiration < today()).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrintScope("filtered")}
+                  style={{
+                    background: printScope === "filtered" ? "#2563EB" : "#FFFFFF",
+                    color: printScope === "filtered" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printScope === "filtered" ? "#2563EB" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  🔍 Filtre recherche ({filteredMembers.length})
+                </button>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>Orientation :</span>
+                <button
+                  type="button"
+                  onClick={() => setPrintOrientation("landscape")}
+                  style={{
+                    background: printOrientation === "landscape" ? "#2563EB" : "#FFFFFF",
+                    color: printOrientation === "landscape" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printOrientation === "landscape" ? "#2563EB" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  📄 Paysage (Recommandé)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrintOrientation("portrait")}
+                  style={{
+                    background: printOrientation === "portrait" ? "#2563EB" : "#FFFFFF",
+                    color: printOrientation === "portrait" ? "#FFFFFF" : "#334155",
+                    border: "1px solid " + (printOrientation === "portrait" ? "#2563EB" : "#CBD5E1"),
+                    borderRadius: 6,
+                    padding: "5px 10px",
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: "pointer"
+                  }}
+                >
+                  📄 Portrait
+                </button>
+              </div>
+            </div>
+
+            {/* Paper Preview on Screen */}
+            <div style={{ background: "#FFFFFF", border: "1.5px solid #CBD5E1", borderRadius: 8, padding: "18px 20px", color: "#000", fontFamily: "Arial, sans-serif", boxShadow: "0 4px 14px rgba(0,0,0,0.06)", overflowX: "auto" }}>
+              {/* Sheet Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2.5px solid #0F172A", paddingBottom: 8, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <img src="/logo-club-sport-sante.jpg" alt="Logo" style={{ width: 50, height: 50, objectFit: "contain", borderRadius: 6, border: "1px solid #CBD5E1" }} />
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ &bull; DIVO</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#1E40AF" }}>REGISTRE OFFICIEL DES MEMBRES & ÉCHÉANCES</div>
+                    <div style={{ fontSize: 10, color: "#64748B" }}>Complexe de Remise en Forme & Musculation &bull; Infoline : 07 49 74 70 74 / 05 04 21 21 04</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", fontSize: 11 }}>
+                  <div style={{ fontWeight: 800, color: "#0F172A" }}>Édité le : {formatDateFr(today())}</div>
+                  <div style={{ fontSize: 10, color: "#64748B" }}>Document administratif officiel</div>
+                  <div style={{ marginTop: 3, display: "inline-block", background: "#F1F5F9", padding: "2px 8px", borderRadius: 4, fontWeight: 700, fontSize: 10.5 }}>
+                    Total : {printTotalMembers} adhérent{printTotalMembers > 1 ? "s" : ""}
+                  </div>
+                </div>
+              </div>
+
+              {/* KPI Recap Bar */}
+              <div style={{ display: "flex", gap: 12, marginBottom: 10, fontSize: 11, background: "#F8FAFC", border: "1px solid #E2E8F0", padding: "6px 12px", borderRadius: 6 }}>
+                <div><strong>Total dans la liste :</strong> <span style={{ color: "#0F172A", fontWeight: 800 }}>{printTotalMembers}</span></div>
+                <div>&bull;</div>
+                <div><strong>Actifs :</strong> <span style={{ color: "#059669", fontWeight: 800 }}>{printActiveCount}</span></div>
+                <div>&bull;</div>
+                <div><strong>Expirés :</strong> <span style={{ color: "#DC2626", fontWeight: 800 }}>{printExpiredCount}</span></div>
+                <div>&bull;</div>
+                <div><strong>Formule Standard :</strong> <span style={{ color: "#2563EB", fontWeight: 800 }}>10 000 FCFA / MOIS</span></div>
+              </div>
+
+              {/* Table */}
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: "#0F172A", color: "#FFFFFF" }}>
+                    <th style={{ padding: "6px 6px", textAlign: "center", width: 32, border: "1px solid #000" }}>N°</th>
+                    <th style={{ padding: "6px 8px", textAlign: "left", border: "1px solid #000" }}>NOM & PRÉNOM(S)</th>
+                    <th style={{ padding: "6px 8px", textAlign: "left", width: 120, border: "1px solid #000" }}>TÉLÉPHONE</th>
+                    <th style={{ padding: "6px 8px", textAlign: "left", width: 130, border: "1px solid #000" }}>FORMULE</th>
+                    <th style={{ padding: "6px 8px", textAlign: "center", width: 105, border: "1px solid #000" }}>📅 DATE DÉBUT</th>
+                    <th style={{ padding: "6px 8px", textAlign: "center", width: 105, border: "1px solid #000" }}>⏳ DATE FIN</th>
+                    <th style={{ padding: "6px 8px", textAlign: "center", width: 85, border: "1px solid #000" }}>STATUT</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right", width: 95, border: "1px solid #000" }}>COTISATION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {membersToPrint.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: 20, textAlign: "center", color: "#64748B", fontStyle: "italic", border: "1px solid #CBD5E1" }}>
+                        Aucun membre trouvé pour ce filtre.
+                      </td>
+                    </tr>
+                  ) : (
+                    membersToPrint.map((m, idx) => {
+                      const isExp = !m.expiration || m.expiration < today();
+                      const dateDebut = m.inscription ? formatDateFr(m.inscription) : "-";
+                      const dateFin = m.expiration ? formatDateFr(m.expiration) : "-";
+                      return (
+                        <tr key={m.id || idx} style={{ background: idx % 2 === 1 ? "#F8FAFC" : "#FFFFFF" }}>
+                          <td style={{ padding: "5px 6px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700 }}>{idx + 1}</td>
+                          <td style={{ padding: "5px 8px", border: "1px solid #CBD5E1", fontWeight: 700, color: "#0F172A" }}>
+                            {m.nom ? m.nom.toUpperCase() : ""} {m.prenoms || ""}
+                          </td>
+                          <td style={{ padding: "5px 8px", border: "1px solid #CBD5E1" }}>{m.tel || m.whatsapp || "-"}</td>
+                          <td style={{ padding: "5px 8px", border: "1px solid #CBD5E1" }}>{m.carte || "Bronze (Mensuel)"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700, color: "#2563EB" }}>{dateDebut}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700, color: isExp ? "#DC2626" : "#059669" }}>{dateFin}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "center", border: "1px solid #CBD5E1" }}>
+                            <span style={{
+                              display: "inline-block",
+                              padding: "2px 7px",
+                              borderRadius: 4,
+                              fontWeight: 800,
+                              fontSize: 10,
+                              background: isExp ? "#FEE2E2" : "#D1FAE5",
+                              color: isExp ? "#B91C1C" : "#065F46"
+                            }}>
+                              {isExp ? "Expiré" : "Actif"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", border: "1px solid #CBD5E1", fontWeight: 700 }}>
+                            {fmt(m.montant || 10000)} F
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+
+              {/* Signatures & Footer */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 18, borderTop: "1.5px solid #0F172A", paddingTop: 8 }}>
+                <div style={{ fontSize: 10, color: "#64748B" }}>
+                  Document administratif officiel &bull; CLUB SPORT SANTÉ DIVO &bull; Infoline: 07 49 74 70 74 / 05 04 21 21 04
+                </div>
+                <div style={{ textAlign: "right", minWidth: 220 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800 }}>Visa & Cachet de la Direction :</div>
+                  <div style={{ height: 42 }}></div>
+                  <div style={{ fontSize: 10.5, fontStyle: "italic", color: "#475569" }}>Coach Arthur Ziega</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 14 }}>
+              <button type="button" style={S.btnCancel} onClick={() => setShowPrintMembersModal(false)}>
+                Fermer
+              </button>
+              <button 
+                type="button" 
+                className="btn-glow" 
+                style={{ ...S.btnPrimary, background: "linear-gradient(135deg, #059669, #047857)", display: "flex", alignItems: "center", gap: 6, padding: "0 22px", height: 42, fontWeight: 800 }}
+                onClick={() => window.print()}
+              >
+                <span>🖨️</span> Imprimer ce Registre ({printTotalMembers} membres - A4 {printOrientation === "landscape" ? "Paysage" : "Portrait"})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print template for MEMBERS LIST */}
+      {showPrintMembersModal && (
+        <>
+          <style>{`
+            @media print {
+              @page {
+                size: A4 ${printOrientation} !important;
+                margin: 6mm 8mm !important;
+              }
+              body {
+                background: #FFFFFF !important;
+              }
+            }
+          `}</style>
+          <div className="print-only print-members-sheet" style={{ display: "none" }}>
+            {/* Sheet Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2.5px solid #0F172A", paddingBottom: 6, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <img src="/logo-club-sport-sante.jpg" alt="Logo" style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 6, border: "1px solid #CBD5E1" }} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: "#0F172A", letterSpacing: 0.5 }}>CLUB SPORT SANTÉ &bull; DIVO</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, color: "#1E40AF" }}>REGISTRE OFFICIEL DES MEMBRES & ÉCHÉANCES</div>
+                  <div style={{ fontSize: 9.5, color: "#64748B" }}>Complexe de Remise en Forme & Musculation &bull; Infoline : 07 49 74 70 74 / 05 04 21 21 04</div>
+                </div>
+              </div>
+              <div style={{ textAlign: "right", fontSize: 10.5 }}>
+                <div style={{ fontWeight: 800, color: "#0F172A" }}>Édité le : {formatDateFr(today())}</div>
+                <div style={{ fontSize: 9.5, color: "#64748B" }}>Document administratif certifié</div>
+                <div style={{ marginTop: 2, display: "inline-block", background: "#F1F5F9", padding: "1px 6px", borderRadius: 4, fontWeight: 700, fontSize: 10 }}>
+                  Total : {printTotalMembers} adhérent{printTotalMembers > 1 ? "s" : ""}
+                </div>
+              </div>
+            </div>
+
+            {/* KPI Recap Bar */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 8, fontSize: 10.5, background: "#F8FAFC", border: "1px solid #E2E8F0", padding: "4px 10px", borderRadius: 4 }}>
+              <div><strong>Total dans la liste :</strong> <span style={{ color: "#0F172A", fontWeight: 800 }}>{printTotalMembers}</span></div>
+              <div>&bull;</div>
+              <div><strong>Actifs :</strong> <span style={{ color: "#059669", fontWeight: 800 }}>{printActiveCount}</span></div>
+              <div>&bull;</div>
+              <div><strong>Expirés :</strong> <span style={{ color: "#DC2626", fontWeight: 800 }}>{printExpiredCount}</span></div>
+              <div>&bull;</div>
+              <div><strong>Formule Standard :</strong> <span style={{ color: "#2563EB", fontWeight: 800 }}>10 000 FCFA / MOIS</span></div>
+            </div>
+
+            {/* Table */}
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+              <thead>
+                <tr style={{ background: "#0F172A", color: "#FFFFFF" }}>
+                  <th style={{ padding: "5px 6px", textAlign: "center", width: 30, border: "1px solid #000" }}>N°</th>
+                  <th style={{ padding: "5px 8px", textAlign: "left", border: "1px solid #000" }}>NOM & PRÉNOM(S)</th>
+                  <th style={{ padding: "5px 8px", textAlign: "left", width: 110, border: "1px solid #000" }}>TÉLÉPHONE</th>
+                  <th style={{ padding: "5px 8px", textAlign: "left", width: 110, border: "1px solid #000" }}>FORMULE</th>
+                  <th style={{ padding: "5px 8px", textAlign: "center", width: 95, border: "1px solid #000" }}>📅 DATE DÉBUT</th>
+                  <th style={{ padding: "5px 8px", textAlign: "center", width: 95, border: "1px solid #000" }}>⏳ DATE FIN</th>
+                  <th style={{ padding: "5px 8px", textAlign: "center", width: 75, border: "1px solid #000" }}>STATUT</th>
+                  <th style={{ padding: "5px 8px", textAlign: "right", width: 85, border: "1px solid #000" }}>COTISATION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {membersToPrint.map((m, idx) => {
+                  const isExp = !m.expiration || m.expiration < today();
+                  const dateDebut = m.inscription ? formatDateFr(m.inscription) : "-";
+                  const dateFin = m.expiration ? formatDateFr(m.expiration) : "-";
+                  return (
+                    <tr key={m.id || idx} style={{ background: idx % 2 === 1 ? "#F8FAFC" : "#FFFFFF" }}>
+                      <td style={{ padding: "4px 6px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700 }}>{idx + 1}</td>
+                      <td style={{ padding: "4px 8px", border: "1px solid #CBD5E1", fontWeight: 700, color: "#0F172A" }}>
+                        {m.nom ? m.nom.toUpperCase() : ""} {m.prenoms || ""}
+                      </td>
+                      <td style={{ padding: "4px 8px", border: "1px solid #CBD5E1" }}>{m.tel || m.whatsapp || "-"}</td>
+                      <td style={{ padding: "4px 8px", border: "1px solid #CBD5E1" }}>{m.carte || "Bronze (Mensuel)"}</td>
+                      <td style={{ padding: "4px 8px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700, color: "#2563EB" }}>{dateDebut}</td>
+                      <td style={{ padding: "4px 8px", textAlign: "center", border: "1px solid #CBD5E1", fontWeight: 700, color: isExp ? "#DC2626" : "#059669" }}>{dateFin}</td>
+                      <td style={{ padding: "4px 8px", textAlign: "center", border: "1px solid #CBD5E1" }}>
+                        <span style={{
+                          display: "inline-block",
+                          padding: "1px 6px",
+                          borderRadius: 3,
+                          fontWeight: 800,
+                          fontSize: 9.5,
+                          background: isExp ? "#FEE2E2" : "#D1FAE5",
+                          color: isExp ? "#B91C1C" : "#065F46"
+                        }}>
+                          {isExp ? "Expiré" : "Actif"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "4px 8px", textAlign: "right", border: "1px solid #CBD5E1", fontWeight: 700 }}>
+                        {fmt(m.montant || 10000)} F
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Signatures & Footer */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 14, borderTop: "1.5px solid #0F172A", paddingTop: 6 }}>
+              <div style={{ fontSize: 9, color: "#64748B" }}>
+                Document administratif officiel &bull; CLUB SPORT SANTÉ DIVO &bull; Infoline: 07 49 74 70 74 / 05 04 21 21 04
+              </div>
+              <div style={{ textAlign: "right", minWidth: 200 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 800 }}>Visa & Cachet de la Direction :</div>
+                <div style={{ height: 38 }}></div>
+                <div style={{ fontSize: 10, fontStyle: "italic", color: "#475569" }}>Coach Arthur Ziega</div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* ========================================== */}
