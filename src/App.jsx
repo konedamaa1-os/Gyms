@@ -1607,9 +1607,8 @@ function PrestigeFlyerCard({ isPrint = false }) {
             marginTop: 8,
             textAlign: "left"
           }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #E2E8F0", paddingBottom: 3, marginBottom: 4 }}>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", borderBottom: "1px solid #E2E8F0", paddingBottom: 3, marginBottom: 4 }}>
               <span style={{ fontSize: isPrint ? 10.5 : 9.5, fontWeight: 900, color: "#1E40AF", letterSpacing: 1 }}>⏰ HORAIRES D'OUVERTURE</span>
-              <span style={{ fontSize: isPrint ? 9.5 : 8.5, fontWeight: 900, color: "#DC2626", background: "#FEF2F2", padding: "2px 7px", borderRadius: 4 }}>📍 SALLE CLIMATISÉE &bull; DIVO</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.35fr 1fr", gap: 6, fontSize: isPrint ? 10.5 : 9.5, textAlign: "center" }}>
               <div style={{ background: "#F1F5F9", padding: "5px 4px", borderRadius: 6 }}>
@@ -1630,23 +1629,25 @@ function PrestigeFlyerCard({ isPrint = false }) {
             </div>
           </div>
 
-          {/* 4. BLACK PILL CONTACT BAR */}
+          {/* 4. WHITE PILL CONTACT BAR */}
           <div style={{ 
             marginTop: 9, 
-            background: "#0F172A", 
+            background: "#FFFFFF", 
             borderRadius: 30, 
-            padding: isPrint ? "7px 18px" : "5px 12px", 
+            padding: isPrint ? "7px 18px" : "5px 14px", 
             display: "flex", 
             alignItems: "center", 
             justifyContent: "center", 
             gap: 10,
-            border: "1.5px solid rgba(255,255,255,0.25)",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.3)"
+            border: "1.5px solid rgba(255,255,255,0.85)",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.2)"
           }}>
-            <div style={{ background: "#22C55E", width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>
-              📞
+            <div style={{ background: "#22C55E", width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 2px 6px rgba(34,197,94,0.4)" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.97.53 1.765.78 2.796.78 3.182 0 5.768-2.587 5.768-5.766.001-3.187-2.575-5.77-5.768-5.766zm9.965 5.765c0 5.509-4.482 9.99-9.965 9.99-1.748 0-3.376-.454-4.802-1.246l-5.229 1.371 1.396-5.105c-.879-1.472-1.39-3.19-1.39-5.01 0-5.517 4.484-9.998 9.965-9.998 5.539 0 10.025 4.481 10.025 9.998z" />
+              </svg>
             </div>
-            <div style={{ fontSize: isPrint ? 13.5 : 12, fontWeight: 900, letterSpacing: 0.8, color: "#FFFFFF" }}>
+            <div style={{ fontSize: isPrint ? 13.5 : 12, fontWeight: 900, letterSpacing: 0.8, color: "#0F172A" }}>
               07 49 74 70 74 / 05 04 21 21 04
             </div>
           </div>
